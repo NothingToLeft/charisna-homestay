@@ -19,3 +19,11 @@
 - PWA manifest and offline app-shell cache.
 - GitHub CI and tag-based Windows/Android release workflow without `upload-artifact`.
 - Indonesian architecture, implementation, Firebase, GitHub, migration, and release documentation.
+
+## [1.0.1] - 2026-08-02
+
+### Fixed
+- Resolved `npm ERESOLVE` by aligning `typescript-eslint` with TypeScript 5.9.2.
+- Updated GitHub Actions runtimes to Node 24-compatible action versions.
+- Preserved separate Windows and Android release jobs with direct GitHub Release uploads.
+
