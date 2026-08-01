@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.3] - 2026-08-02
+
+### Fixed
+
+- Disabled electron-builder's deprecated implicit tag publishing with `--publish never`, preventing successful Windows packaging from failing when `GH_TOKEN` is intentionally reserved for the separate GitHub CLI upload step.
+- Added explicit verification for the NSIS installer, portable executable, and Android APK before release upload.
+- Hardened release uploads so a failed individual asset upload terminates the workflow with a clear error.
+- Added package author metadata to remove the electron-builder package warning.
+
+### Changed
+
+- Kept artifact creation and GitHub Release upload as separate responsibilities: electron-builder only packages the application, while the authenticated `gh release upload` steps publish the final files.
+
 ## [1.0.2] - 2026-08-02
 
 ### Fixed

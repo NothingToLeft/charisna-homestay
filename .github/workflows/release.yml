@@ -26,16 +26,38 @@ jobs:
         with:
           node-version: 22
           package-manager-cache: false
-      - run: npm install --no-audit --no-fund
-      - run: npm run build:desktop:win
-      - name: Upload Windows installer directly to Release
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build Windows installer and portable package
+        run: npm run build:desktop:win
+      - name: Verify Windows packages
+        shell: pwsh
+        run: |
+          $packages = @(
+            Get-ChildItem release -File -Filter *.exe |
+              Where-Object { $_.Name -notlike '*.__uninstaller.exe' }
+          )
+
+          if ($packages.Count -lt 2) {
+            Write-Host 'Isi folder release:'
+            Get-ChildItem release -File | Format-Table Name, Length
+            throw 'Installer NSIS dan portable EXE tidak ditemukan lengkap.'
+          }
+
+          $packages | Format-Table Name, Length
+      - name: Upload Windows packages directly to Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          Get-ChildItem release -Filter *.exe | ForEach-Object {
-            gh release upload $env:GITHUB_REF_NAME $_.FullName --repo $env:GITHUB_REPOSITORY --clobber
-          }
+          Get-ChildItem release -File -Filter *.exe |
+            Where-Object { $_.Name -notlike '*.__uninstaller.exe' } |
+            ForEach-Object {
+              gh release upload $env:GITHUB_REF_NAME $_.FullName --repo $env:GITHUB_REPOSITORY --clobber
+              if ($LASTEXITCODE -ne 0) {
+                throw "Gagal mengunggah $($_.Name) ke GitHub Release."
+              }
+            }
 
   android:
     needs: create-release
@@ -50,14 +72,23 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: npm install --no-audit --no-fund
-      - run: npm run build
-      - run: npx cap add android
-      - run: npx cap sync android
-      - run: chmod +x android/gradlew
-      - run: cd android && ./gradlew assembleDebug
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build web assets
+        run: npm run build
+      - name: Create Android project
+        run: npx cap add android
+      - name: Synchronize Capacitor
+        run: npx cap sync android
+      - name: Build Android debug APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleDebug
       - name: Rename APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk "Management-Offline-${GITHUB_REF_NAME}-debug.apk"
+      - name: Verify APK
+        run: test -s "Management-Offline-${GITHUB_REF_NAME}-debug.apk"
       - name: Upload Android APK directly to Release
         env:
           GH_TOKEN: ${{ github.token }}

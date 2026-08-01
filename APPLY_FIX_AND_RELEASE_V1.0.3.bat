@@ -2,17 +2,24 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
-set "VERSION=1.0.2"
+set "VERSION=1.0.3"
 set "TAG=v%VERSION%"
 
 echo ============================================================
-echo Management Offline Suite - TypeScript Build Fix %TAG%
+echo Management Offline Suite - Desktop Release Fix %TAG%
 echo ============================================================
 echo.
 
 where git >nul 2>nul
 if errorlevel 1 (
   echo ERROR: Git belum terpasang atau belum masuk PATH.
+  pause
+  exit /b 1
+)
+
+where powershell >nul 2>nul
+if errorlevel 1 (
+  echo ERROR: Windows PowerShell tidak ditemukan.
   pause
   exit /b 1
 )
@@ -33,27 +40,34 @@ if not exist .git (
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$p = Get-Content -Raw package.json | ConvertFrom-Json;" ^
-  "if ($p.version -ne '1.0.2') { exit 1 };" ^
-  "if ($p.scripts.typecheck -ne 'tsc -b') { exit 1 };" ^
-  "$t = Get-Content -Raw tsconfig.node.json | ConvertFrom-Json;" ^
-  "if ($t.compilerOptions.noEmit -ne $true) { exit 1 }"
+  "if ($p.version -ne '1.0.3') { Write-Error 'Versi package.json belum 1.0.3'; exit 1 };" ^
+  "if ($p.scripts.'build:desktop:win' -notmatch '--publish never') { Write-Error 'build:desktop:win belum menonaktifkan implicit publish'; exit 1 };" ^
+  "if ($p.scripts.'build:desktop' -notmatch '--publish never') { Write-Error 'build:desktop belum menonaktifkan implicit publish'; exit 1 };" ^
+  "if (-not $p.author.name) { Write-Error 'Metadata author belum tersedia'; exit 1 }"
 if errorlevel 1 (
   echo ERROR: File patch belum tertimpa dengan benar.
-  echo Ekstrak ZIP patch ke folder utama dan pilih Replace files.
+  echo Ekstrak ZIP patch ke folder utama lalu pilih Replace files.
   pause
   exit /b 1
 )
 
-findstr /C:"[db.properties, db.rooms, db.tenants" src\services\backupService.ts >nul
+findstr /C:"--publish never" package.json >nul
 if errorlevel 1 (
-  echo ERROR: backupService.ts belum diperbarui.
+  echo ERROR: package.json belum mengandung --publish never.
   pause
   exit /b 1
 )
 
-findstr /C:"const pageQuery: Query<DocumentData>" src\services\syncService.ts >nul
+findstr /C:"Verify Windows packages" .github\workflows\release.yml >nul
 if errorlevel 1 (
-  echo ERROR: syncService.ts belum diperbarui.
+  echo ERROR: release.yml belum diperbarui.
+  pause
+  exit /b 1
+)
+
+findstr /C:"APP_VERSION = '1.0.3'" src\core\constants.ts >nul
+if errorlevel 1 (
+  echo ERROR: Versi runtime aplikasi belum 1.0.3.
   pause
   exit /b 1
 )
@@ -64,7 +78,7 @@ if errorlevel 1 goto :error
 git rev-parse -q --verify "refs/tags/%TAG%" >nul 2>nul
 if not errorlevel 1 (
   echo ERROR: Tag %TAG% sudah ada di komputer ini.
-  echo Gunakan tag baru hanya jika source juga dinaikkan versinya.
+  echo Jangan menimpa tag rilis yang sudah pernah dibuat.
   pause
   exit /b 1
 )
@@ -72,26 +86,26 @@ if not errorlevel 1 (
 git ls-remote --exit-code --tags origin "refs/tags/%TAG%" >nul 2>nul
 if not errorlevel 1 (
   echo ERROR: Tag %TAG% sudah ada di GitHub.
-  echo Jangan menimpa tag rilis yang sudah ada.
+  echo Gunakan versi baru hanya setelah source dinaikkan versinya.
   pause
   exit /b 1
 )
 
 if exist APPLY_FIX_AND_RELEASE_V1.0.1.bat git rm -f --ignore-unmatch APPLY_FIX_AND_RELEASE_V1.0.1.bat >nul 2>nul
+if exist APPLY_FIX_AND_RELEASE_V1.0.2.bat git rm -f --ignore-unmatch APPLY_FIX_AND_RELEASE_V1.0.2.bat >nul 2>nul
 
-git add package.json CHANGELOG.md tsconfig.node.json ^
+git add package.json CHANGELOG.md ^
+  .github\workflows\release.yml ^
   src\core\constants.ts ^
-  src\services\backupService.ts ^
-  src\services\firebaseService.ts ^
-  src\services\syncService.ts ^
   docs\IMPLEMENTATION_NOTES.md ^
-  docs\BUILD_FIX_V1.0.2.md ^
-  APPLY_FIX_AND_RELEASE_V1.0.2.bat
+  docs\BUILD_FIX_V1.0.3.md ^
+  README_PATCH_V1.0.3.txt ^
+  APPLY_FIX_AND_RELEASE_V1.0.3.bat
 if errorlevel 1 goto :error
 
 git diff --cached --quiet
 if errorlevel 1 (
-  git commit -m "Fix TypeScript release build for %TAG%"
+  git commit -m "Fix Windows release publishing for %TAG%"
   if errorlevel 1 goto :error
 ) else (
   echo Tidak ada perubahan baru untuk di-commit.
@@ -109,7 +123,7 @@ if errorlevel 1 goto :error
 echo.
 echo BERHASIL: Source dan tag %TAG% sudah dikirim ke GitHub.
 echo Buka GitHub ^> Actions ^> Build Release.
-echo Gunakan hasil rilis %TAG%, bukan v1.0.1.
+echo Gunakan hasil rilis %TAG%, bukan v1.0.2.
 pause
 exit /b 0
 

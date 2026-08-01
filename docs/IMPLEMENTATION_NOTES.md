@@ -32,3 +32,10 @@ Pada instalasi kosong, aplikasi membuat satu set data contoh. Data contoh dapat 
 - Pagination Firestore menggunakan anotasi `Query`, `QueryConstraint`, dan `QuerySnapshot` eksplisit untuk menghindari inferensi melingkar TypeScript 5.9 antara cursor dan snapshot.
 - Project TypeScript untuk konfigurasi Vite menggunakan `noEmit`, sesuai kebutuhan `allowImportingTsExtensions`.
 - Perintah `typecheck` menggunakan mode project references (`tsc -b`) agar pemeriksaan lokal dan CI sama dengan pemeriksaan build rilis.
+
+
+## Perbaikan rilis desktop 1.0.3
+
+Build Windows dan publikasi aset dipisahkan secara eksplisit. `electron-builder` selalu dijalankan dengan `--publish never`, sehingga tugasnya hanya menghasilkan installer NSIS dan portable EXE. Workflow kemudian memverifikasi kedua file tersebut dan mengunggahnya ke GitHub Release melalui GitHub CLI dengan token bawaan workflow.
+
+Pemisahan ini mencegah dua mekanisme publikasi bersaing, menghindari kebutuhan Personal Access Token pribadi, dan tetap kompatibel dengan repository privat selama workflow memiliki izin `contents: write`.
