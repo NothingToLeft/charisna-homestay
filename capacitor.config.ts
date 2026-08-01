@@ -1,0 +1,13 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.management.offline',
+  appName: 'Management Offline',
+  webDir: 'dist',
+  android: {
+    allowMixedContent: false,
+    backgroundColor: '#f4f7f5'
+  }
+};
+
+export default config;
