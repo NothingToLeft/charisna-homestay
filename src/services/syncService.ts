@@ -9,7 +9,10 @@ import {
   startAfter,
   where,
   type DocumentData,
-  type QueryDocumentSnapshot
+  type Query,
+  type QueryConstraint,
+  type QueryDocumentSnapshot,
+  type QuerySnapshot
 } from 'firebase/firestore';
 import { AUTO_SYNC_KEY, COLLECTIONS, LAST_SYNC_PREFIX, SYNC_INTERVAL_MS } from '../core/constants';
 import type { AnyEntity, EntityCollection, SyncReport } from '../core/types';
@@ -93,9 +96,15 @@ const pullCollection = async (
 
   while (true) {
     const baseCollection = firestoreCollection(context.firestore, 'users', userId, collectionName);
-    const constraints = [where('updatedAt', '>', lastSyncAt), orderBy('updatedAt', 'asc'), limit(250)];
-    const pageQuery = cursor ? query(baseCollection, ...constraints, startAfter(cursor)) : query(baseCollection, ...constraints);
-    const snapshot = await getDocs(pageQuery);
+    const constraints: QueryConstraint[] = [
+      where('updatedAt', '>', lastSyncAt),
+      orderBy('updatedAt', 'asc'),
+      limit(250)
+    ];
+    if (cursor) constraints.push(startAfter(cursor));
+
+    const pageQuery: Query<DocumentData> = query(baseCollection, ...constraints);
+    const snapshot: QuerySnapshot<DocumentData> = await getDocs(pageQuery);
     for (const documentSnapshot of snapshot.docs) {
       const remote = documentSnapshot.data() as AnyEntity;
       if (!remote.id) continue;

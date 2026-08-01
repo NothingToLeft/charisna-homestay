@@ -75,15 +75,28 @@ export const getFirebaseContext = async (): Promise<FirebaseContext | null> => {
 };
 
 export const subscribeToAuth = (listener: (user: User | null) => void): (() => void) => {
-  let unsubscribe = () => undefined;
-  void getFirebaseContext().then((context) => {
-    if (!context) {
-      listener(null);
-      return;
-    }
-    unsubscribe = onAuthStateChanged(context.auth, listener);
-  });
-  return () => unsubscribe();
+  let disposed = false;
+  let unsubscribe: () => void = () => {};
+
+  void getFirebaseContext()
+    .then((context) => {
+      if (!context) {
+        if (!disposed) listener(null);
+        return;
+      }
+
+      const authUnsubscribe = onAuthStateChanged(context.auth, listener);
+      if (disposed) authUnsubscribe();
+      else unsubscribe = authUnsubscribe;
+    })
+    .catch(() => {
+      if (!disposed) listener(null);
+    });
+
+  return () => {
+    disposed = true;
+    unsubscribe();
+  };
 };
 
 export const registerWithEmail = async (email: string, password: string): Promise<User> => {

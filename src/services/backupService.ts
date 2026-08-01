@@ -71,13 +71,7 @@ export const importBackup = async (content: string, replaceExisting = false): Pr
   const backup = assertBackup(JSON.parse(content));
   await db.transaction(
     'rw',
-    db.properties,
-    db.rooms,
-    db.tenants,
-    db.transactions,
-    db.tasks,
-    db.syncQueue,
-    db.metadata,
+    [db.properties, db.rooms, db.tenants, db.transactions, db.tasks, db.syncQueue, db.metadata],
     async () => {
       if (replaceExisting) {
         await Promise.all([
@@ -146,13 +140,7 @@ export const exportAllCsv = async (): Promise<void> => {
 export const clearAllLocalData = async (): Promise<void> => {
   await db.transaction(
     'rw',
-    db.properties,
-    db.rooms,
-    db.tenants,
-    db.transactions,
-    db.tasks,
-    db.syncQueue,
-    db.metadata,
+    [db.properties, db.rooms, db.tenants, db.transactions, db.tasks, db.syncQueue, db.metadata],
     async () => {
       await Promise.all([
         db.properties.clear(),

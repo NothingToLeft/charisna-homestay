@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.2';
 export const DATABASE_NAME = 'management-offline-db';
 export const FIREBASE_CONFIG_KEY = 'management.firebase.config';
 export const DEVICE_ID_KEY = 'management.device.id';

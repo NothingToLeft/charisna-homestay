@@ -1,6 +1,28 @@
 # Changelog
 
-## 1.0.0 - 2026-08-01
+## [1.0.2] - 2026-08-02
+
+### Fixed
+
+- Switched large Dexie transactions to the table-array overload so backup import and local-data reset compile safely with seven tables.
+- Corrected Firebase auth subscription cleanup typing and prevented a delayed asynchronous subscription from leaking after component disposal.
+- Added explicit Firestore query, constraint, and snapshot types to remove TypeScript 5.9 circular inference errors in paginated synchronization.
+- Enabled `noEmit` for the Vite Node TypeScript project, making `allowImportingTsExtensions` valid during project builds.
+- Synchronized the runtime application version with the package release version.
+
+### Changed
+
+- Added an explicit `typecheck` command and made `build` and `check` use TypeScript project-reference mode, so CI catches configuration and application type errors consistently.
+
+## [1.0.1] - 2026-08-02
+
+### Fixed
+
+- Resolved `npm ERESOLVE` by aligning `typescript-eslint` with TypeScript 5.9.2.
+- Updated GitHub Actions runtimes to Node 24-compatible action versions.
+- Preserved separate Windows and Android release jobs with direct GitHub Release uploads.
+
+## [1.0.0] - 2026-08-01
 
 ### Added
 
@@ -19,11 +41,3 @@
 - PWA manifest and offline app-shell cache.
 - GitHub CI and tag-based Windows/Android release workflow without `upload-artifact`.
 - Indonesian architecture, implementation, Firebase, GitHub, migration, and release documentation.
-
-## [1.0.1] - 2026-08-02
-
-### Fixed
-- Resolved `npm ERESOLVE` by aligning `typescript-eslint` with TypeScript 5.9.2.
-- Updated GitHub Actions runtimes to Node 24-compatible action versions.
-- Preserved separate Windows and Android release jobs with direct GitHub Release uploads.
-

@@ -24,3 +24,11 @@ Pada instalasi kosong, aplikasi membuat satu set data contoh. Data contoh dapat 
 - PDF invoice/receipt lokal.
 - Audit log immutable.
 - Android notification scheduling lokal.
+
+## Perbaikan build 1.0.2
+
+- Dexie menyediakan overload transaksi bertipe untuk jumlah tabel terbatas. Operasi backup dan reset memakai tujuh tabel, sehingga sekarang menggunakan bentuk array agar seluruh tabel tetap berada dalam satu transaksi atomik tanpa melemahkan tipe.
+- Subscription Firebase Auth dibentuk secara asinkron. Cleanup sekarang menangani kondisi komponen sudah dilepas sebelum Firebase selesai diinisialisasi, sehingga listener terlambat tidak bocor.
+- Pagination Firestore menggunakan anotasi `Query`, `QueryConstraint`, dan `QuerySnapshot` eksplisit untuk menghindari inferensi melingkar TypeScript 5.9 antara cursor dan snapshot.
+- Project TypeScript untuk konfigurasi Vite menggunakan `noEmit`, sesuai kebutuhan `allowImportingTsExtensions`.
+- Perintah `typecheck` menggunakan mode project references (`tsc -b`) agar pemeriksaan lokal dan CI sama dengan pemeriksaan build rilis.
