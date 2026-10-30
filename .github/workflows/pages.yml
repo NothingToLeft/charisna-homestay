@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - index.html
+      - public/cloud-sync.js
       - .github/workflows/pages.yml
   workflow_dispatch:
 permissions:
@@ -25,6 +26,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html _site/index.html
+          cp public/cloud-sync.js _site/cloud-sync.js
           touch _site/.nojekyll
           if grep -Eq 'eyJhbGci|__initial_auth_token|data-bard-client-injected' _site/index.html; then
             echo 'Editor session token found in public page' >&2

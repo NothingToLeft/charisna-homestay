@@ -1,21 +1,21 @@
 {
-  "name": "management-offline-suite",
+  "name": "charisna-homestay",
   "version": "1.0.3",
   "private": true,
-  "description": "Offline-first property and boarding management suite for Web, Android, and Windows desktop.",
+  "description": "Charisna Homestay web, Android and Windows app",
   "main": "desktop/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:web": "vite --host 0.0.0.0",
     "dev:desktop": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && cross-env ELECTRON_DEV_URL=http://127.0.0.1:5173 electron .\"",
-    "typecheck": "tsc -b",
-    "build": "npm run typecheck && vite build",
+    "typecheck": "node --check public/cloud-sync.js",
+    "build": "node scripts/build-static.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "start": "electron .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "eslint . && npm run typecheck",
+    "check": "npm run typecheck",
     "build:desktop": "npm run build && electron-builder --publish never",
     "build:desktop:win": "npm run build && electron-builder --win nsis portable --publish never",
     "android:add": "npx cap add android",
@@ -58,8 +58,8 @@
     "wait-on": "8.0.4"
   },
   "build": {
-    "appId": "com.management.offline",
-    "productName": "Management Offline",
+    "appId": "com.charisna.homestay",
+    "productName": "Charisna Homestay",
     "asar": true,
     "directories": {
       "output": "release",

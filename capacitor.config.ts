@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.management.offline',
-  appName: 'Management Offline',
+  appId: 'com.charisna.homestay',
+  appName: 'Charisna Homestay',
   webDir: 'dist',
   android: {
     allowMixedContent: false,
