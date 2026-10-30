@@ -20,7 +20,7 @@ Data disimpan di `localStorage` browser. Buat backup JSON sebelum membersihkan d
 
 ## Firebase
 
-Panel **Cloud** menerima konfigurasi Web App dari project `charisna-kost-manager`. Aktifkan Email/Password Authentication dan deploy `firestore.rules`. **Unggah lokal** dan **Unduh cloud** memerlukan konfirmasi karena mengganti seluruh snapshot. Sinkronisasi otomatis dan penyelesaian konflik antarperangkat belum tersedia. Dokumen dengan foto besar dapat melampaui batas Firestore.
+Konfigurasi Web App project `charisna-kost-manager` sudah tertanam. Buka panel **Cloud** dan login dengan akun Firebase Anda. Aktifkan Email/Password Authentication dan deploy `firestore.rules` bila belum aktif. **Unggah lokal** dan **Unduh cloud** memerlukan konfirmasi karena mengganti seluruh snapshot. Sinkronisasi otomatis dan penyelesaian konflik antarperangkat belum tersedia. Dokumen dengan foto besar dapat melampaui batas Firestore.
 
 ## Build
 
