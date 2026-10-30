@@ -10,7 +10,7 @@ function createWindow() {
     height: 860,
     minWidth: 920,
     minHeight: 620,
-    title: 'Charisna Homestay',
+    title: 'CHARISNA KOST',
     backgroundColor: '#f3f6f4',
     autoHideMenuBar: true,
     icon: path.join(__dirname, '..', 'build', 'icon.png'),

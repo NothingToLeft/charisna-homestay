@@ -1,6 +1,6 @@
-# Charisna Homestay
+# CHARISNA KOST
 
-Aplikasi manajemen kos dan homestay multi-properti. [Buka pratinjau web](https://nothingtoleft.github.io/charisna-homestay/).
+Aplikasi manajemen kos multi-properti. [Buka pratinjau web](https://nothingtoleft.github.io/charisna-homestay/).
 
 ## Fitur aktif
 
@@ -11,6 +11,10 @@ Aplikasi manajemen kos dan homestay multi-properti. [Buka pratinjau web](https:/
 - Backup dan pulihkan JSON; ekspor data penghuni ke CSV.
 - Panel Cloud untuk login Firebase dan transfer data manual dengan konfirmasi.
 - Pratinjau web otomatis lewat GitHub Pages.
+
+## Login dan data
+
+Aplikasi menampilkan halaman login Firebase sebelum dashboard. Alamat repo masih memakai slug lama agar tautan pratinjau tetap berfungsi. Akun harus dibuat atau diaktifkan di Firebase Authentication. Reset password tersedia dari halaman login. Data lokal disimpan terpisah menurut UID akun; saat login pertama, aplikasi menawarkan menyalin data lokal dari versi lama. Login pertama memerlukan internet. Sesi yang sudah tersimpan dapat dipulihkan oleh Firebase, tetapi aset dari CDN tetap memerlukan koneksi bila belum ada dalam cache.
 
 ## Mulai pakai
 
@@ -28,4 +32,4 @@ Konfigurasi Web App project `charisna-kost-manager` sudah tertanam. Buka panel *
 
 Halaman memakai Tailwind, Font Awesome, Google Fonts, dan Firebase SDK dari CDN saat fitur cloud dipakai. Koneksi internet diperlukan untuk aset dan cloud tersebut.
 
-© Charisna Homestay.
+© CHARISNA KOST.

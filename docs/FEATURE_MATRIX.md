@@ -2,6 +2,8 @@
 
 ## Aktif pada desain baru
 
+- Halaman login Firebase Email/Password, pemulihan sesi, reset password, dan data lokal per akun.
+
 - Multi-properti dan lantai: tambah, edit/ubah nama, hapus dengan perlindungan kamar terkait.
 - Kamar dan kapasitas penghuni.
 - Penghuni: KTP, kontak darurat, deposit, awal dan akhir kontrak, pengingat 30 hari, riwayat check-out.

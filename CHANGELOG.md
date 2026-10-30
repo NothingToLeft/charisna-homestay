@@ -2,6 +2,8 @@
 
 ## 2026-10-31
 
+- Halaman login Firebase sebelum dashboard, reset password, pemisahan data lokal per UID, dan rebranding tampilan menjadi CHARISNA KOST.
+
 - Konfigurasi Web App Firebase Charisna tertanam; panel Cloud kini langsung meminta login.
 
 - Desain Charisna menjadi sumber halaman web dan build paket.

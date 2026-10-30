@@ -1,8 +1,8 @@
 {
-  "name": "charisna-homestay",
+  "name": "charisna-kost",
   "version": "1.0.3",
   "private": true,
-  "description": "Charisna Homestay web, Android and Windows app",
+  "description": "CHARISNA KOST web, Android and Windows app",
   "main": "desktop/main.cjs",
   "type": "module",
   "scripts": {
@@ -58,8 +58,8 @@
     "wait-on": "8.0.4"
   },
   "build": {
-    "appId": "com.charisna.homestay",
-    "productName": "Charisna Homestay",
+    "appId": "com.charisna.kost",
+    "productName": "CHARISNA KOST",
     "asar": true,
     "directories": {
       "output": "release",
@@ -99,6 +99,6 @@
     "node": ">=22"
   },
   "author": {
-    "name": "Management Offline Suite Contributors"
+    "name": "CHARISNA KOST"
   }
 }

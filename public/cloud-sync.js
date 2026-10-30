@@ -1,5 +1,5 @@
-import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
-import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
+import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -10,52 +10,90 @@ const firebaseConfig = {
   messagingSenderId: '307208439143',
   appId: '1:307208439143:web:ba437f97b3f3cee0c65bc2'
 };
-const DATA_KEY = 'CHARISNA_HOMESTAY_ENTERPRISE_V6';
-let auth;
-let db;
-let user;
+const DATA_PREFIX = 'CHARISNA_HOMESTAY_ENTERPRISE_V6'; // Legacy key retained so existing local data can be migrated.
+window.CHARISNA_AUTH_READY = true;
+const ACTIVE_UID_KEY = 'CHARISNA_ACTIVE_UID';
+const gate = document.getElementById('auth-gate');
+const error = document.getElementById('auth-error');
+const loginForm = document.getElementById('auth-form');
+const loginButton = document.getElementById('auth-submit');
+const auth = getAuth(initializeApp(firebaseConfig));
+const db = getFirestore(auth.app);
+let user = null;
+const dataKey = () => `${DATA_PREFIX}:${user.uid}`;
+const showError = (message) => { error.textContent = message; };
+
 const status = document.createElement('div');
-status.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:9999;background:#064e3b;color:white;padding:10px;border-radius:10px;max-width:330px;font:13px sans-serif;box-shadow:0 2px 10px #0003';
-status.textContent = 'Cloud: belum dikonfigurasi';
+status.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:9999;background:#064e3b;color:white;padding:10px;border-radius:10px;max-width:330px;font:13px sans-serif';
+status.textContent = 'Cloud: menunggu login';
 document.body.append(status);
 const panel = document.createElement('dialog');
 panel.style.cssText = 'border:0;border-radius:12px;padding:20px;max-width:420px;width:90%;box-shadow:0 10px 40px #0005;font:14px sans-serif';
-panel.innerHTML = `<h2 style="font-weight:bold;font-size:18px">Cloud Charisna</h2><p>Project charisna-kost-manager sudah terhubung. Data tetap lokal sampai Anda memilih unggah atau unduh.</p><input id="cloud-email" type="email" placeholder="Email" autocomplete="username" style="width:100%;border:1px solid #aaa;margin-top:8px;padding:8px"><input id="cloud-password" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;border:1px solid #aaa;margin-top:8px;padding:8px"><p id="cloud-message" role="status" style="min-height:20px"></p><div style="display:flex;flex-wrap:wrap;gap:6px"><button id="cloud-connect">Login</button><button id="cloud-upload">Unggah lokal</button><button id="cloud-download">Unduh cloud</button><button id="cloud-logout">Keluar</button><button id="cloud-close">Tutup</button></div>`;
+panel.innerHTML = `<h2 style="font-weight:bold;font-size:18px">Cloud CHARISNA KOST</h2><p>Data disimpan di perangkat ini. Pilih unggah atau unduh untuk memindahkan snapshot.</p><p id="cloud-message" role="status" style="min-height:20px"></p><div style="display:flex;flex-wrap:wrap;gap:6px"><button id="cloud-upload">Unggah lokal</button><button id="cloud-download">Unduh cloud</button><button id="cloud-logout">Keluar akun</button><button id="cloud-close">Tutup</button></div>`;
 document.body.append(panel);
 for (const button of panel.querySelectorAll('button')) button.style.cssText = 'padding:8px;background:#059669;color:white;border-radius:6px';
-const button = document.createElement('button');
-button.textContent = 'Cloud';
-button.style.cssText = 'position:fixed;bottom:54px;right:12px;z-index:9999;background:#047857;color:white;padding:10px 16px;border-radius:10px';
-button.onclick = () => panel.showModal();
-document.body.append(button);
+const openButton = document.createElement('button');
+openButton.textContent = 'Cloud & Akun';
+openButton.style.cssText = 'position:fixed;bottom:54px;right:12px;z-index:9999;background:#047857;color:white;padding:10px 16px;border-radius:10px';
+openButton.onclick = () => panel.showModal();
+document.body.append(openButton);
 panel.querySelector('#cloud-close').onclick = () => panel.close();
-
 const message = (text) => { panel.querySelector('#cloud-message').textContent = text; status.textContent = `Cloud: ${text}`; };
-function connect(config) {
-  if (!config.apiKey || !config.authDomain || !config.projectId || !config.appId) throw Error('Konfigurasi Firebase belum lengkap.');
-  if (config.projectId !== 'charisna-kost-manager') throw Error('Project ID harus charisna-kost-manager.');
-  const app = getApps()[0] || initializeApp(config);
-  auth = getAuth(app); db = getFirestore(app);
-  onAuthStateChanged(auth, (account) => { user = account; message(account ? `Masuk: ${account.email}` : 'Belum login'); });
-}
-try { connect(firebaseConfig); } catch (error) { message(error.message); }
-panel.querySelector('#cloud-connect').onclick = async () => {
+
+onAuthStateChanged(auth, (account) => {
+  user = account;
+  const activeUid = sessionStorage.getItem(ACTIVE_UID_KEY);
+  if (!account) {
+    if (activeUid) { sessionStorage.removeItem(ACTIVE_UID_KEY); location.reload(); return; }
+    document.body.classList.add('auth-locked');
+    showError('');
+    return;
+  }
+  if (activeUid !== account.uid) {
+    const accountKey = `${DATA_PREFIX}:${account.uid}`;
+    const oldData = localStorage.getItem(DATA_PREFIX);
+    if (!localStorage.getItem(accountKey) && oldData && confirm('Data lama ditemukan di perangkat ini. Salin ke akun yang baru masuk?')) {
+      localStorage.setItem(accountKey, oldData);
+    }
+    sessionStorage.setItem(ACTIVE_UID_KEY, account.uid);
+    location.reload();
+    return;
+  }
+  gate.hidden = true;
+  document.body.classList.remove('auth-locked');
+  message(`Masuk: ${account.email}`);
+}, (authError) => showError(`Login tidak tersedia: ${authError.message}`));
+
+loginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  loginButton.disabled = true;
+  showError('Memeriksa akun...');
   try {
-    if (!auth) connect(firebaseConfig);
     await setPersistence(auth, browserLocalPersistence);
-    await signInWithEmailAndPassword(auth, panel.querySelector('#cloud-email').value, panel.querySelector('#cloud-password').value);
-    panel.querySelector('#cloud-password').value = '';
-  } catch (error) { message(error.message); }
+    await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value.trim(), document.getElementById('auth-password').value);
+    document.getElementById('auth-password').value = '';
+  } catch (loginError) {
+    showError(loginError.code === 'auth/invalid-credential' ? 'Email atau password salah.' : `Gagal masuk: ${loginError.message}`);
+  } finally { loginButton.disabled = false; }
+});
+document.getElementById('auth-reset').onclick = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  if (!email) return showError('Isi email dulu untuk reset password.');
+  try { await sendPasswordResetEmail(auth, email); showError('Jika akun terdaftar, email reset akan dikirim.'); }
+  catch (resetError) { showError(`Reset gagal: ${resetError.message}`); }
 };
-const cloudDoc = () => { if (!user || !db) throw Error('Login dulu.'); return doc(db, 'users', user.uid, 'charisna', 'current'); };
+const cloudDoc = () => {
+  if (!user) throw Error('Login dulu.');
+  return doc(db, 'users', user.uid, 'charisna', 'current');
+};
 panel.querySelector('#cloud-upload').onclick = async () => {
   try {
-    const local = localStorage.getItem(DATA_KEY);
+    const local = localStorage.getItem(dataKey());
     if (!local) throw Error('Belum ada data lokal untuk diunggah.');
-    if (!confirm('Timpa data cloud dengan data lokal browser ini? Buat backup JSON dulu.')) return;
+    if (!confirm('Timpa data cloud dengan data lokal akun ini? Buat backup JSON dulu.')) return;
     await setDoc(cloudDoc(), { data: JSON.parse(local), updatedAt: new Date().toISOString() });
     message('Data lokal berhasil diunggah.');
-  } catch (error) { message(error.message); }
+  } catch (cloudError) { message(cloudError.message); }
 };
 panel.querySelector('#cloud-download').onclick = async () => {
   try {
@@ -63,9 +101,11 @@ panel.querySelector('#cloud-download').onclick = async () => {
     if (!snapshot.exists()) throw Error('Belum ada data cloud.');
     const data = snapshot.data().data;
     if (!data?.rooms || !data?.tenants || !data?.bills) throw Error('Format data cloud tidak valid.');
-    if (!confirm('Timpa data lokal dengan data cloud? Buat backup JSON dulu.')) return;
-    localStorage.setItem(DATA_KEY, JSON.stringify(data));
+    if (!confirm('Timpa data lokal akun ini dengan data cloud? Buat backup JSON dulu.')) return;
+    localStorage.setItem(dataKey(), JSON.stringify(data));
     location.reload();
-  } catch (error) { message(error.message); }
+  } catch (cloudError) { message(cloudError.message); }
 };
-panel.querySelector('#cloud-logout').onclick = async () => { if (auth) await signOut(auth); };
+panel.querySelector('#cloud-logout').onclick = async () => {
+  try { await signOut(auth); } catch (logoutError) { message(logoutError.message); }
+};

@@ -1,6 +1,6 @@
 # Arsitektur aktif
 
-- `index.html`: UI dan logika bisnis aktif, data lokal `CHARISNA_HOMESTAY_ENTERPRISE_V6`.
+- `index.html`: UI dan logika bisnis aktif, dengan login gate Firebase. Data lokal dipisah per UID memakai prefiks legacy `CHARISNA_HOMESTAY_ENTERPRISE_V6`.
 - `public/cloud-sync.js`: konfigurasi Web App publik, login Firebase, dan transfer snapshot manual. Path Firestore: `users/{uid}/charisna/current`.
 - `firestore.rules`: akses dibatasi ke UID pemilik dokumen.
 - `scripts/build-static.mjs`: menyalin aset aktif ke `dist/`.
