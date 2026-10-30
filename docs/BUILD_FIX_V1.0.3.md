@@ -1,3 +1,5 @@
+> ARSIP: Dokumen ini membahas implementasi React lama. Untuk desain Charisna aktif, baca README.md di akar repo, docs/ARCHITECTURE.md, dan docs/FEATURE_MATRIX.md.
+
 # Build Fix v1.0.3
 
 ## Gejala

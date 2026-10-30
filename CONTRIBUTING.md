@@ -1,3 +1,5 @@
+> ARSIP: Panduan ini berasal dari aplikasi React lama. Rujuk README.md untuk sumber desain aktif.
+
 # Contributing
 
 1. Buat branch dari `main`.
