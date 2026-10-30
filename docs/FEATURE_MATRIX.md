@@ -4,7 +4,7 @@
 
 - Multi-properti dan lantai: tambah, edit/ubah nama, hapus dengan perlindungan kamar terkait.
 - Kamar dan kapasitas penghuni.
-- Penghuni: KTP, kontak darurat, deposit, awal dan akhir kontrak, riwayat check-out.
+- Penghuni: KTP, kontak darurat, deposit, awal dan akhir kontrak, pengingat 30 hari, riwayat check-out.
 - Tagihan, bukti bayar, kuitansi, pengeluaran, maintenance, WhatsApp manual.
 - Dashboard, backup JSON, ekspor CSV penghuni, transfer snapshot Firebase manual.
 

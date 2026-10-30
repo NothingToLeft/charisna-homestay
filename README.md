@@ -5,7 +5,7 @@ Aplikasi manajemen kos dan homestay multi-properti. [Buka pratinjau web](https:/
 ## Fitur aktif
 
 - Kelola properti, lantai, kamar, kapasitas, dan status unit.
-- Data penghuni, kontak darurat, foto KTP, deposit, tanggal masuk, akhir kontrak, dan riwayat check-out.
+- Data penghuni, kontak darurat, foto KTP, deposit, tanggal masuk, akhir kontrak, pengingat kontrak yang mendekat, dan riwayat check-out.
 - Tagihan, kuitansi, bukti bayar, pengeluaran, ringkasan okupansi dan keuangan.
 - Pesan WhatsApp disiapkan untuk dibuka di WhatsApp; pengiriman otomatis belum tersedia.
 - Backup dan pulihkan JSON; ekspor data penghuni ke CSV.

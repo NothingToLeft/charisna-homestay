@@ -3386,11 +3386,15 @@
                 const ktpClickHandler = room ? `openRoomInspector('${room.id}')` : `openEditTenantModal('${t.id}')`;
                 const ktpBtnClass = hasKtp ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200';
                 const ktpBtnLabel = hasKtp ? 'Lihat KTP' : 'Upload KTP';
+                const daysLeft = t.endDate ? Math.ceil((new Date(t.endDate + 'T00:00:00') - new Date()) / 86400000) : null;
+                const contractBadge = daysLeft === null ? '' : daysLeft < 0
+                    ? '<span class="text-[10px] text-rose-700 font-bold">Kontrak lewat</span>'
+                    : daysLeft <= 30 ? `<span class="text-[10px] text-amber-700 font-bold">Kontrak berakhir ${daysLeft} hari</span>` : '';
 
                 return `
                     <tr class="hover:bg-slate-50/80 transition">
                         <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800">${t.name}</p>
+                            <p class="font-bold text-slate-800">${escapePropertyText(t.name)}</p>${contractBadge}
                             <p class="text-[11px] font-mono text-slate-400">NIK: ${t.nik || '-'}</p>
                         </td>
                         <td class="py-3.5 px-4">
@@ -3629,9 +3633,9 @@
         }
 
         function exportTenantsCSV() {
-            const headers = ['Nama Penghuni', 'NIK KTP', 'Unit Kamar', 'Kontrak', 'No WhatsApp', 'Darurat', 'Pekerjaan', 'Plat', 'Deposit', 'Tgl Masuk'];
+            const headers = ['Nama Penghuni', 'NIK KTP', 'Unit Kamar', 'Kontrak', 'No WhatsApp', 'Darurat', 'Pekerjaan', 'Plat', 'Deposit', 'Tgl Masuk', 'Akhir Kontrak'];
             const rows = appData.tenants.map(t => [
-                `"${t.name}"`, `"${t.nik || ''}"`, `"${t.roomNumber}"`, `"${t.leaseInterval || 'Bulanan'}"`, `"${t.phone}"`, `"${t.emergency || ''}"`, `"${t.job || ''}"`, `"${t.vehicle || ''}"`, t.deposit || 0, t.entryDate
+                `"${t.name}"`, `"${t.nik || ''}"`, `"${t.roomNumber}"`, `"${t.leaseInterval || 'Bulanan'}"`, `"${t.phone}"`, `"${t.emergency || ''}"`, `"${t.job || ''}"`, `"${t.vehicle || ''}"`, t.deposit || 0, t.entryDate, t.endDate || ''
             ]);
             const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
             const link = document.createElement('a');
