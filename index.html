@@ -1034,6 +1034,7 @@
                             <input type="text" id="searchTenantInput" oninput="renderTenants()" placeholder="Cari nama, NIK KTP, unit, No. WA..." class="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                         </div>
                         <div class="flex items-center gap-2">
+                            <button onclick="showTenantHistory()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold">Riwayat</button>
                             <button onclick="exportTenantsCSV()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5">
                                 <i class="fa-solid fa-file-csv text-emerald-600"></i> Export CSV
                             </button>
@@ -2168,6 +2169,8 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Mulai Masuk *</label>
                     <input type="date" id="tenantFormDate" required="" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                    <label class="block text-xs font-semibold text-slate-700 mt-3 mb-1">Tanggal Akhir Kontrak (opsional)</label>
+                    <input type="date" id="tenantFormEndDate" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                 </div>
 
                 <!-- Upload Foto KTP -->
@@ -3456,6 +3459,7 @@
             document.getElementById('tenantFormVehicle').value = '';
             document.getElementById('tenantFormDeposit').value = '500000';
             document.getElementById('tenantFormDate').valueAsDate = new Date();
+            document.getElementById('tenantFormEndDate').value = '';
 
             const modal = document.getElementById('tenantModal');
             if (modal) {
@@ -3486,6 +3490,7 @@
             document.getElementById('tenantFormVehicle').value = tenant.vehicle || '';
             document.getElementById('tenantFormDeposit').value = tenant.deposit || 0;
             document.getElementById('tenantFormDate').value = tenant.entryDate;
+            document.getElementById('tenantFormEndDate').value = tenant.endDate || '';
 
             const prevContainer = document.getElementById('ktpPreviewContainer');
             const prevImg = document.getElementById('ktpPreviewImg');
@@ -3516,6 +3521,8 @@
             const vehicle = document.getElementById('tenantFormVehicle').value.trim();
             const deposit = Number(document.getElementById('tenantFormDeposit').value || 0);
             const entryDate = document.getElementById('tenantFormDate').value;
+            const endDate = document.getElementById('tenantFormEndDate').value;
+            if (endDate && endDate < entryDate) return showToast('Akhir kontrak harus setelah tanggal masuk.', 'warning');
 
             if (id) {
                 const idx = appData.tenants.findIndex(t => t.id === id);
@@ -3523,7 +3530,7 @@
                     const oldRoomNumber = appData.tenants[idx].roomNumber;
                     appData.tenants[idx] = {
                         ...appData.tenants[idx],
-                        name, nik, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate,
+                        name, nik, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate, endDate,
                         ktpVerified: Boolean(nik.length >= 8 || tempUploadedKtpData || appData.tenants[idx].ktpVerified),
                         ktpImage: tempUploadedKtpData || appData.tenants[idx].ktpImage
                     };
@@ -3540,7 +3547,7 @@
                 const createBill = document.getElementById('tenantFormCreateBill').checked;
                 appData.tenants.push({
                     id: 'T' + Date.now(),
-                    name, nik, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate,
+                    name, nik, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate, endDate,
                     ktpVerified: Boolean(tempUploadedKtpData || nik.length >= 10),
                     ktpImage: tempUploadedKtpData
                 });
@@ -3577,15 +3584,48 @@
 
         function checkoutTenant(tenantId) {
             const tenant = appData.tenants.find(t => t.id === tenantId);
-            if (!tenant) return;
+            if (!tenant || !confirm(`Check-out ${tenant.name}? Riwayat sewa disimpan.`)) return;
+            appData.tenantHistory ||= [];
+            appData.tenantHistory.push({
+                id: tenant.id, name: tenant.name, roomNumber: tenant.roomNumber,
+                entryDate: tenant.entryDate, endDate: tenant.endDate || '',
+                checkoutDate: new Date().toISOString().slice(0, 10),
+                deposit: tenant.deposit || 0
+            });
             appData.tenants = appData.tenants.filter(t => t.id !== tenantId);
-
             const remainingInRoom = appData.tenants.filter(t => t.roomNumber === tenant.roomNumber).length;
             const room = appData.rooms.find(r => r.number === tenant.roomNumber);
             if (room && remainingInRoom === 0) room.status = 'KOSONG';
-
             showToast(`${tenant.name} telah Check-Out.`, 'warning');
             saveData();
+        }
+
+        function showTenantHistory() {
+            let modal = document.getElementById('tenantHistoryModal');
+            if (!modal) {
+                modal = document.createElement('dialog');
+                modal.id = 'tenantHistoryModal';
+                modal.className = 'rounded-2xl p-5 w-[min(95vw,720px)] max-h-[85vh] overflow-auto shadow-2xl';
+                document.body.append(modal);
+            }
+            modal.replaceChildren();
+            const heading = document.createElement('h2');
+            heading.className = 'text-lg font-bold mb-3'; heading.textContent = 'Riwayat Check-Out';
+            const close = document.createElement('button');
+            close.className = 'px-3 py-2 bg-slate-100 rounded-lg mb-3'; close.textContent = 'Tutup';
+            close.onclick = () => modal.close();
+            modal.append(heading, close);
+            const history = [...(appData.tenantHistory || [])].reverse();
+            if (!history.length) {
+                const empty = document.createElement('p'); empty.textContent = 'Belum ada riwayat check-out.'; modal.append(empty);
+            }
+            for (const item of history) {
+                const row = document.createElement('div');
+                row.className = 'border-b py-2 text-sm';
+                row.textContent = `${item.name} • Unit ${item.roomNumber} • ${item.entryDate} → ${item.checkoutDate} • Deposit ${formatRupiah(item.deposit)}`;
+                modal.append(row);
+            }
+            modal.showModal();
         }
 
         function exportTenantsCSV() {

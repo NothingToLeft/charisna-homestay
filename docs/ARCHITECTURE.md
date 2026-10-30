@@ -1,54 +1,18 @@
-# Arsitektur
+# Arsitektur aktif
 
-## Tujuan
+- `index.html`: UI dan logika bisnis aktif, data lokal `CHARISNA_HOMESTAY_ENTERPRISE_V6`.
+- `public/cloud-sync.js`: login Firebase dan transfer snapshot manual. Path Firestore: `users/{uid}/charisna/current`.
+- `firestore.rules`: akses dibatasi ke UID pemilik dokumen.
+- `scripts/build-static.mjs`: menyalin aset aktif ke `dist/`.
+- `.github/workflows/pages.yml`: menerbitkan `index.html` dan modul Cloud ke GitHub Pages.
+- `capacitor.config.ts` dan `desktop/`: wadah Android dan Windows untuk hasil `dist/`.
 
-Satu codebase menghasilkan tiga target: Web/PWA, Android, dan Windows. Android-first tetap dipertahankan, tetapi UI dan data layer tidak bergantung pada platform tertentu.
+Folder `src/` berisi implementasi React lama. Fitur di dalamnya tidak aktif pada halaman baru. Jangan menganggap Firebase sync lama berfungsi dalam desain baru.
 
-## Lapisan
+## Data
 
-1. **Presentation** — React pages dan reusable components.
-2. **Domain** — entity types, validation, formatting, dan aturan relasi.
-3. **Local data** — Dexie/IndexedDB sebagai source of truth perangkat.
-4. **Synchronization** — outbox queue dan Firestore adapter.
-5. **Platform shell** — Capacitor untuk Android dan Electron untuk Windows.
+Browser menyimpan data utama lokal. Upload/download Cloud mengganti satu snapshot penuh, tanpa antrean offline, merge, atau deteksi konflik. Perlu backup sebelum transfer. Batas dokumen Firestore dapat menjadi masalah bila foto disimpan sebagai data URL.
 
-## Alur tulis data
+## Arah berikutnya
 
-1. Form divalidasi dengan Zod.
-2. Record disimpan ke IndexedDB.
-3. Record diberi `updatedAt`, `version`, dan `deviceId`.
-4. Outbox `syncQueue` dibuat atau diganti dengan ID deterministik `collection:entityId`.
-5. UI langsung membaca perubahan lokal melalui Dexie live query.
-6. Ketika online dan login, outbox dikirim ke Firestore.
-
-Aplikasi tidak menunggu server sebelum menampilkan hasil. Ini menjaga respons cepat dan menjamin fungsi utama tetap tersedia saat offline.
-
-## Konflik
-
-Strategi awal adalah last-write-wins berdasarkan `updatedAt`:
-
-- Remote lebih baru: remote mengganti local dan queue lama dihapus.
-- Local lebih baru: local tetap dipertahankan dan dimasukkan ke queue.
-- Timestamp sama: tidak ada perubahan.
-
-Untuk skala bisnis lebih besar, strategi dapat ditingkatkan ke field-level merge atau audit-log tanpa mengganti UI.
-
-## Penghapusan
-
-Data tidak langsung dihapus secara fisik. `deletedAt` diisi dan record tetap disinkron. Semua query UI memfilter tombstone. Ini mencegah record yang sudah dihapus muncul kembali dari perangkat lain.
-
-## Firestore
-
-Path setiap collection:
-
-```text
-users/{uid}/properties/{id}
-users/{uid}/rooms/{id}
-users/{uid}/tenants/{id}
-users/{uid}/transactions/{id}
-users/{uid}/tasks/{id}
-```
-
-## Skalabilitas
-
-Pull memakai pagination 250 record dan filter `updatedAt > lastSync`. Queue memakai satu item per entity sehingga edit berulang ketika offline tidak menghasilkan ratusan operasi duplikat.
+Pindahkan logika dari satu HTML ke modul bertipe; gunakan penyimpanan lokal terstruktur, sinkronisasi per-entitas, penyimpanan foto terpisah, dan migrasi data versi lama. Semua memerlukan uji data nyata sebelum diaktifkan.

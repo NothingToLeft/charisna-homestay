@@ -1,30 +1,20 @@
-# Feature Matrix
+# Status fitur
 
-| Area | Web/PWA | Android | Windows | Offline | Cloud Sync |
-|---|---:|---:|---:|---:|---:|
-| Dashboard | Ya | Ya | Ya | Ya | Dari data tersinkron |
-| Properti | Ya | Ya | Ya | Ya | Ya |
-| Kamar | Ya | Ya | Ya | Ya | Ya |
-| Penghuni | Ya | Ya | Ya | Ya | Ya |
-| Keuangan | Ya | Ya | Ya | Ya | Ya |
-| Tugas | Ya | Ya | Ya | Ya | Ya |
-| Ganti password | Ya | Ya | Ya | Tidak | Firebase Auth |
-| Reset password email | Ya | Ya | Ya | Tidak | Firebase Auth |
-| Backup JSON | Ya | Ya | Ya | Ya | Tidak diperlukan |
-| Import backup | Ya | Ya | Ya | Ya | Masuk queue |
-| Export CSV | Ya | Ya | Ya | Ya | Tidak diperlukan |
-| Installer/portable | Tidak | Tidak | Ya | Ya | Ya saat online |
-| Install PWA | Ya | WebView native | Tidak diperlukan | Ya | Ya |
-| APK debug via Release | Tidak | Ya | Tidak | Ya | Ya |
+## Aktif pada desain baru
 
-## Belum direkonstruksi dari aplikasi asal
+- Multi-properti dan lantai: tambah, edit/ubah nama, hapus dengan perlindungan kamar terkait.
+- Kamar dan kapasitas penghuni.
+- Penghuni: KTP, kontak darurat, deposit, awal dan akhir kontrak, riwayat check-out.
+- Tagihan, bukti bayar, kuitansi, pengeluaran, maintenance, WhatsApp manual.
+- Dashboard, backup JSON, ekspor CSV penghuni, transfer snapshot Firebase manual.
 
-- Kamera/barcode dan OCR.
-- Bluetooth/ESC-POS receipt.
-- QRIS payment integration.
-- WhatsApp template automation.
-- Push notification dari server.
-- Statistik lanjutan dan PDF receipt/invoice.
-- Fasilitas dan maintenance dengan foto.
+## Prioritas berikutnya dari benchmark
 
-Fondasi data dan shell platform sudah dibuat agar modul tersebut dapat ditambahkan tanpa mengganti arsitektur utama.
+1. Pembayaran cicilan, rekonsiliasi transfer, dan pengembalian deposit dengan audit transaksi.
+2. Pengingat jatuh tempo yang terjadwal dan dapat ditinjau sebelum kirim.
+3. Laporan laba-rugi dan okupansi per properti dengan ekspor PDF/CSV lengkap.
+4. Sinkronisasi offline per data dengan konflik yang dapat ditangani, serta penyimpanan foto aman.
+5. Hak akses owner/manajer/staf yang ditegakkan oleh autentikasi dan Firestore Rules.
+6. Portal penghuni dan kontrak digital setelah alur operasional inti stabil.
+
+QRIS, integrasi bank, IoT, CCTV, dan marketplace belum diimplementasikan. Daftar inspirasi pengguna bukan bukti fitur tersebut sudah tersedia.
