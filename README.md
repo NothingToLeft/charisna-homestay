@@ -43,3 +43,8 @@ Halaman memakai Tailwind, Font Awesome, Google Fonts, dan Firebase SDK dari CDN 
 © CHARISNA KOST.
 
 Lihat [audit keamanan](docs/SECURITY_AUDIT_2026-10-31.md) dan [kebijakan keamanan](SECURITY.md) sebelum mengelola data penghuni pada perangkat baru.
+
+## Rilis lewat GitHub
+
+Buka Actions → Build Release → Run workflow pada branch main. Isi versi unik seperti v1.0.4. Workflow membuat GitHub Release lalu mengunggah installer Windows, portable EXE, dan APK debug. APK debug untuk uji coba; belum merupakan APK produksi dengan kunci tanda tangan tetap. Paket Windows belum memiliki sertifikat penandatanganan kode. Jangan memakai ulang tag versi yang sudah diterbitkan.
+

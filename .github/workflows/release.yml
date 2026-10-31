@@ -1,9 +1,18 @@
 name: Build Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Versi rilis, contoh v1.0.4'
+        required: true
+        type: string
   push:
     tags:
       - 'v*'
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 permissions:
   contents: write
@@ -12,16 +21,21 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate release tag
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]] || exit 1
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" > /dev/null 2>&1 || gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --title "CHARISNA KOST ${GITHUB_REF_NAME}" --generate-notes
+        run: gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" > /dev/null 2>&1 || gh release create "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" --title "CHARISNA KOST ${RELEASE_TAG}" --target "$GITHUB_SHA" --generate-notes
 
   windows:
     needs: create-release
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -53,7 +67,7 @@ jobs:
           Get-ChildItem release -File -Filter *.exe |
             Where-Object { $_.Name -notlike '*.__uninstaller.exe' } |
             ForEach-Object {
-              gh release upload $env:GITHUB_REF_NAME $_.FullName --repo $env:GITHUB_REPOSITORY --clobber
+              gh release upload $env:RELEASE_TAG $_.FullName --repo $env:GITHUB_REPOSITORY --clobber
               if ($LASTEXITCODE -ne 0) {
                 throw "Gagal mengunggah $($_.Name) ke GitHub Release."
               }
@@ -64,6 +78,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -86,10 +102,10 @@ jobs:
           cd android
           ./gradlew assembleDebug
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk "Management-Offline-${GITHUB_REF_NAME}-debug.apk"
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "CHARISNA-KOST-${RELEASE_TAG}-debug.apk"
       - name: Verify APK
-        run: test -s "Management-Offline-${GITHUB_REF_NAME}-debug.apk"
+        run: test -s "CHARISNA-KOST-${RELEASE_TAG}-debug.apk"
       - name: Upload Android APK directly to Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" "Management-Offline-${GITHUB_REF_NAME}-debug.apk" --repo "$GITHUB_REPOSITORY" --clobber
+        run: gh release upload "$RELEASE_TAG" "CHARISNA-KOST-${RELEASE_TAG}-debug.apk" --repo "$GITHUB_REPOSITORY" --clobber
