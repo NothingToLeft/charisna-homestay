@@ -2,6 +2,8 @@
 
 ## 2026-10-31
 
+- Login petugas kebersihan, permintaan persetujuan owner, portal tugas, dan aturan Firestore terpisah.
+
 - Halaman login Firebase sebelum dashboard, reset password, pemisahan data lokal per UID, dan rebranding tampilan menjadi CHARISNA KOST.
 
 - Konfigurasi Web App Firebase Charisna tertanam; panel Cloud kini langsung meminta login.
