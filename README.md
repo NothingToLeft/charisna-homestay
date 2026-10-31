@@ -9,7 +9,8 @@ Aplikasi manajemen kos multi-properti. [Buka pratinjau web](https://nothingtolef
 - Tagihan, kuitansi, bukti bayar, pengeluaran, ringkasan okupansi dan keuangan.
 - Pesan WhatsApp disiapkan untuk dibuka di WhatsApp; pengiriman otomatis belum tersedia.
 - Backup dan pulihkan JSON; ekspor data penghuni ke CSV.
-- Panel Cloud untuk login Firebase dan transfer data manual dengan konfirmasi.
+- Login Firebase untuk owner dan petugas kebersihan. Owner menyetujui akun petugas dan memberi tugas; petugas hanya melihat tugasnya.
+- Panel Cloud owner untuk transfer data manual dengan konfirmasi.
 - Pratinjau web otomatis lewat GitHub Pages.
 
 ## Login dan data
@@ -21,6 +22,10 @@ Aplikasi menampilkan halaman login Firebase sebelum dashboard. Alamat repo masih
 Buka pratinjau web. Di sidebar, tekan **Kelola** pada **Scope Properti** untuk menambah, mengubah, atau menghapus properti dan lantai. Kamar harus dipindahkan lebih dulu sebelum properti atau lantainya dapat dihapus.
 
 Data disimpan di `localStorage` browser. Buat backup JSON sebelum membersihkan data browser atau pindah perangkat. Penghapusan data browser menghapus data lokal yang belum diunggah.
+
+## Peran dan Firebase
+
+Lihat [panduan owner dan petugas](docs/ROLE_ACCESS.md). Aturan Firestore role harus diterbitkan sebelum fitur petugas dipakai.
 
 ## Firebase
 
