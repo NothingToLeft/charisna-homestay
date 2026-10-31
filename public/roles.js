@@ -1,6 +1,13 @@
-import { collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
+import { getAuth, inMemoryPersistence, setPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, signOut } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 
 export const OWNER_EMAIL = 'charisna.homestay@gmail.com';
+export function staffEmail(username) {
+  const name = username.trim().toLowerCase();
+  return /^[a-z0-9_]{3,24}$/.test(name) ? `staff-${name}@charisna-kost-manager.firebaseapp.com` : null;
+}
+export function staffPassword(username, pin) { return `charisna-staff:${username.trim().toLowerCase()}:${pin}`; }
 export async function resolveRole(db, account) {
   if (account.email?.toLowerCase() === OWNER_EMAIL) return { role: 'OWNER', ownerUid: account.uid };
   const profile = await getDoc(doc(db, 'staff', account.uid));
@@ -22,13 +29,13 @@ function action(text, callback, className = 'bg-emerald-600 text-white') {
 }
 function formatDate(value) { return value || 'Tanpa tenggat'; }
 
-export function setupOwnerManager({ db, account, onMessage }) {
+export function setupOwnerManager({ db, account, firebaseConfig, onMessage }) {
   let dialog = document.getElementById('cleaning-manager');
   if (dialog) return;
   dialog = document.createElement('dialog');
   dialog.id = 'cleaning-manager';
   dialog.className = 'w-[min(96vw,900px)] max-h-[90vh] overflow-auto rounded-2xl border-0 p-5 shadow-2xl';
-  dialog.innerHTML = `<div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold">Petugas Kebersihan</h2><button id="clean-close" class="rounded-lg bg-slate-100 px-3 py-2">Tutup</button></div><p class="text-sm text-slate-600 mb-4">Petugas mendaftar sendiri, lalu owner menyetujui. Tugas hanya terlihat oleh petugas yang ditunjuk.</p><p id="clean-manager-status" role="status" class="text-sm mb-3"></p><h3 class="font-bold mb-2">Permintaan akun</h3><div id="clean-requests" class="space-y-2 mb-5"></div><h3 class="font-bold mb-2">Petugas aktif</h3><div id="clean-staff" class="space-y-2 mb-5"></div><h3 class="font-bold mb-2">Buat tugas</h3><form id="clean-task-form" class="grid gap-2 sm:grid-cols-2 mb-5"><select id="clean-assignee" required class="border rounded-lg p-2"></select><input id="clean-title" required maxlength="120" placeholder="Tugas, contoh: Bersihkan kamar" class="border rounded-lg p-2"><input id="clean-property" required maxlength="80" placeholder="Properti / cabang" class="border rounded-lg p-2"><input id="clean-room" maxlength="40" placeholder="Unit / area" class="border rounded-lg p-2"><input id="clean-due" type="date" required class="border rounded-lg p-2"><select id="clean-priority" class="border rounded-lg p-2"><option>Normal</option><option>Mendesak</option></select><textarea id="clean-instructions" maxlength="1000" placeholder="Instruksi dan checklist" class="border rounded-lg p-2 sm:col-span-2"></textarea><button class="rounded-lg bg-emerald-600 text-white px-3 py-2 sm:col-span-2">Simpan tugas</button></form><h3 class="font-bold mb-2">Daftar tugas</h3><div id="clean-owner-tasks" class="space-y-2"></div>`;
+  dialog.innerHTML = `<div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold">Petugas Kebersihan</h2><button id="clean-close" class="rounded-lg bg-slate-100 px-3 py-2">Tutup</button></div><p class="text-sm text-slate-600 mb-4">Pemilik membuat username dan PIN petugas. Bagikan secara pribadi. Tugas hanya terlihat oleh petugas yang ditunjuk.</p><p id="clean-manager-status" role="status" class="text-sm mb-3"></p><h3 class="font-bold mb-2">Tambah petugas</h3><form id="clean-staff-form" class="grid gap-2 sm:grid-cols-3 mb-5"><input id="clean-name" required maxlength="80" placeholder="Nama petugas" class="border rounded-lg p-2"><input id="clean-username" required minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]+" placeholder="Username" class="border rounded-lg p-2"><input id="clean-pin" required type="password" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="new-password" placeholder="PIN 4 digit" class="border rounded-lg p-2"><button class="rounded-lg bg-emerald-600 text-white px-3 py-2 sm:col-span-3">Buat akun petugas</button></form><h3 class="font-bold mb-2">Petugas</h3><div id="clean-staff" class="space-y-2 mb-5"></div><h3 class="font-bold mb-2">Buat tugas</h3><form id="clean-task-form" class="grid gap-2 sm:grid-cols-2 mb-5"><select id="clean-assignee" required class="border rounded-lg p-2"></select><input id="clean-title" required maxlength="120" placeholder="Tugas, contoh: Bersihkan kamar" class="border rounded-lg p-2"><input id="clean-property" required maxlength="80" placeholder="Properti / cabang" class="border rounded-lg p-2"><input id="clean-room" maxlength="40" placeholder="Unit / area" class="border rounded-lg p-2"><input id="clean-due" type="date" required class="border rounded-lg p-2"><select id="clean-priority" class="border rounded-lg p-2"><option>Normal</option><option>Mendesak</option></select><textarea id="clean-instructions" maxlength="1000" placeholder="Instruksi dan checklist" class="border rounded-lg p-2 sm:col-span-2"></textarea><button class="rounded-lg bg-emerald-600 text-white px-3 py-2 sm:col-span-2">Simpan tugas</button></form><h3 class="font-bold mb-2">Daftar tugas</h3><div id="clean-owner-tasks" class="space-y-2"></div>`;
   document.body.append(dialog);
   const launch = action('Petugas Kebersihan', () => { dialog.showModal(); void refresh(); });
   launch.style.cssText = 'position:fixed;right:12px;bottom:104px;z-index:9999';
@@ -36,44 +43,85 @@ export function setupOwnerManager({ db, account, onMessage }) {
   document.body.append(launch);
   dialog.querySelector('#clean-close').onclick = () => dialog.close();
   const status = (text) => { dialog.querySelector('#clean-manager-status').textContent = text; onMessage(text); };
-  const requestList = dialog.querySelector('#clean-requests');
   const staffList = dialog.querySelector('#clean-staff');
   const taskList = dialog.querySelector('#clean-owner-tasks');
   const assignee = dialog.querySelector('#clean-assignee');
+  const secondaryAuth = getAuth(initializeApp(firebaseConfig, 'charisna-staff-provisioning'));
+  dialog.querySelector('#clean-staff-form').onsubmit = async (event) => {
+    event.preventDefault();
+    const name = dialog.querySelector('#clean-name').value.trim();
+    const username = dialog.querySelector('#clean-username').value.trim().toLowerCase();
+    const pin = dialog.querySelector('#clean-pin').value;
+    const email = staffEmail(username);
+    if (!email || !/^\d{4}$/.test(pin) || !name) return status('Isi nama, username 3–24 karakter, dan PIN 4 digit.');
+    const button = event.target.querySelector('button'); button.disabled = true;
+    try {
+      await setPersistence(secondaryAuth, inMemoryPersistence);
+      const credential = await createUserWithEmailAndPassword(secondaryAuth, email, staffPassword(username, pin));
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'staff', credential.user.uid), { ownerUid: account.uid, role: 'CLEANER', username, name, active: true, createdAt: new Date().toISOString() });
+      batch.set(doc(db, 'users', account.uid, 'staffPins', credential.user.uid), { pin, username, updatedAt: new Date().toISOString() });
+      await batch.commit();
+      event.target.reset(); status(`Akun ${username} dibuat. Berikan PIN ke petugas secara pribadi.`); await refresh();
+    } catch (error) { status(`Gagal membuat petugas: ${error.message}. Jika username sudah dipakai, pilih username lain.`); }
+    finally { dialog.querySelector('#clean-pin').value = ''; await signOut(secondaryAuth).catch(() => {}); button.disabled = false; }
+  };
   async function refresh() {
     try {
       status('Memuat petugas dan tugas...');
-      const [requests, staff, tasks] = await Promise.all([
-        getDocs(collection(db, 'staffRequests')),
+      const [staff, tasks] = await Promise.all([
         getDocs(collection(db, 'staff')),
         getDocs(collection(db, 'users', account.uid, 'cleaningTasks'))
       ]);
-      requestList.replaceChildren(); staffList.replaceChildren(); taskList.replaceChildren(); assignee.replaceChildren();
-      for (const request of requests.docs) {
-        const item = request.data();
-        const row = element('div', `${item.email || request.id} meminta akses petugas`, 'border rounded-lg p-3 text-sm flex flex-wrap items-center justify-between gap-2');
-        row.append(action('Setujui', async () => {
-          try {
-            await setDoc(doc(db, 'staff', request.id), { ownerUid: account.uid, role: 'CLEANER', email: item.email, active: true, approvedAt: new Date().toISOString() });
-            await deleteDoc(request.ref); status('Akun petugas disetujui.'); await refresh();
-          } catch (error) { status(`Gagal menyetujui: ${error.message}`); }
-        })); requestList.append(row);
-      }
-      if (!requests.size) requestList.append(element('p', 'Belum ada permintaan.', 'text-sm text-slate-500'));
       const staffMap = new Map();
       for (const profile of staff.docs) {
         const item = profile.data();
         if (item.ownerUid !== account.uid) continue;
-        staffMap.set(profile.id, item.email || profile.id);
-        const row = element('div', `${item.email || profile.id} — ${item.active ? 'Aktif' : 'Nonaktif'}`, 'border rounded-lg p-3 text-sm flex flex-wrap items-center justify-between gap-2');
+        staffMap.set(profile.id, item.name || item.username || item.email || profile.id);
+        const row = element('div', `${item.name || item.email || profile.id} (${item.username || 'akun lama'}) — ${item.active ? 'Aktif' : 'Nonaktif'}`, 'border rounded-lg p-3 text-sm flex flex-wrap items-center justify-between gap-2');
         row.append(action(item.active ? 'Nonaktifkan' : 'Aktifkan', async () => {
           try { await updateDoc(profile.ref, { active: !item.active }); await refresh(); }
           catch (error) { status(`Gagal mengubah akun: ${error.message}`); }
         }, 'bg-slate-100 text-slate-800'));
+        if (item.username) {
+          row.append(action('Lihat PIN', async () => {
+            try {
+              const saved = await getDoc(doc(db, 'users', account.uid, 'staffPins', profile.id));
+              if (!saved.exists()) return status('PIN belum tersimpan untuk akun ini.');
+              alert(`PIN ${item.username}: ${saved.data().pin}\nJangan bagikan kepada orang lain.`);
+            } catch (error) { status(`Gagal membaca PIN: ${error.message}`); }
+          }, 'bg-slate-100 text-slate-800'));
+          row.append(action('Ubah nama', async () => {
+            const name = prompt('Nama petugas', item.name || '');
+            if (!name?.trim()) return;
+            try { await updateDoc(profile.ref, { name: name.trim().slice(0, 80) }); await refresh(); }
+            catch (error) { status(`Gagal mengubah nama: ${error.message}`); }
+          }, 'bg-slate-100 text-slate-800'));
+          const pinForm = element('form', '', 'flex flex-wrap gap-2 w-full');
+          const oldPin = element('input', '', 'border rounded-lg p-2 w-28');
+          oldPin.type = 'password'; oldPin.inputMode = 'numeric'; oldPin.pattern = '[0-9]{4}'; oldPin.maxLength = 4; oldPin.required = true; oldPin.placeholder = 'PIN lama';
+          const newPin = oldPin.cloneNode(); newPin.placeholder = 'PIN baru';
+          const save = element('button', 'Ganti PIN', 'rounded-lg px-3 py-2 text-sm font-semibold bg-slate-100');
+          pinForm.append(oldPin, newPin, save);
+          pinForm.onsubmit = async (event) => {
+            event.preventDefault();
+            if (!/^\d{4}$/.test(oldPin.value) || !/^\d{4}$/.test(newPin.value)) return status('PIN harus 4 digit.');
+            save.disabled = true;
+            try {
+              await setPersistence(secondaryAuth, inMemoryPersistence);
+              const credential = await signInWithEmailAndPassword(secondaryAuth, staffEmail(item.username), staffPassword(item.username, oldPin.value));
+              await updatePassword(credential.user, staffPassword(item.username, newPin.value));
+              await setDoc(doc(db, 'users', account.uid, 'staffPins', profile.id), { pin: newPin.value, username: item.username, updatedAt: new Date().toISOString() });
+              status(`PIN ${item.username} berhasil diganti.`);
+            } catch (error) { status(`Gagal mengganti PIN: ${error.message}`); }
+            finally { oldPin.value = ''; newPin.value = ''; await signOut(secondaryAuth).catch(() => {}); save.disabled = false; }
+          };
+          row.append(pinForm);
+        }
         staffList.append(row);
-        if (item.active) { const option = element('option', item.email || profile.id); option.value = profile.id; assignee.append(option); }
+        if (item.active) { const option = element('option', item.name || item.username || item.email || profile.id); option.value = profile.id; assignee.append(option); }
       }
-      if (!staffMap.size) staffList.append(element('p', 'Belum ada petugas disetujui.', 'text-sm text-slate-500'));
+      if (!staffMap.size) staffList.append(element('p', 'Belum ada petugas.', 'text-sm text-slate-500'));
       for (const task of tasks.docs) {
         const item = task.data();
         const row = element('div', `${item.title} • ${item.property} / ${item.room || 'Area umum'} • ${formatDate(item.dueDate)} • ${item.status} • ${staffMap.get(item.assigneeUid) || 'Petugas tidak aktif'}`, 'border rounded-lg p-3 text-sm flex flex-wrap items-center justify-between gap-2');
@@ -88,7 +136,7 @@ export function setupOwnerManager({ db, account, onMessage }) {
   }
   dialog.querySelector('#clean-task-form').onsubmit = async (event) => {
     event.preventDefault();
-    if (!assignee.value) return status('Setujui petugas dulu.');
+    if (!assignee.value) return status('Buat petugas dulu.');
     const value = (id) => dialog.querySelector(id).value.trim();
     try {
       await addDoc(collection(db, 'users', account.uid, 'cleaningTasks'), {
