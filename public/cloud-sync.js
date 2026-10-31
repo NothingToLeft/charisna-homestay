@@ -155,3 +155,4 @@ panel.querySelector('#cloud-download').onclick = async () => {
   } catch (cloudError) { message(cloudError.message); }
 };
 panel.querySelector('#cloud-logout').onclick = () => signOut(auth);
+document.getElementById('owner-logout').onclick = () => signOut(auth);
