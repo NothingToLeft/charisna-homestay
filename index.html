@@ -250,6 +250,9 @@
 
                 <!-- Right Actions -->
                 <div class="flex items-center gap-2.5 sm:gap-3">
+                    <button id="owner-logout" type="button" aria-label="Keluar akun" title="Keluar akun" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 transition">
+                        <i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline">Keluar akun</span>
+                    </button>
                     <button onclick="openRoomModal()" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
                         <i class="fa-solid fa-plus text-emerald-600"></i> Tambah Unit
                     </button>
@@ -4311,5 +4314,5 @@
     </script>
 
 <script>setTimeout(() => { if (!window.CHARISNA_AUTH_READY) document.getElementById("auth-error").textContent = "Login memerlukan internet untuk memuat Firebase."; }, 12000);</script>
-<script type="module" src="./cloud-sync.js?v=roles3"></script>
+<script type="module" src="./cloud-sync.js?v=roles4"></script>
 </body></html>
