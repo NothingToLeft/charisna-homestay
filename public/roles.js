@@ -107,13 +107,19 @@ export function setupOwnerManager({ db, account, firebaseConfig, onMessage }) {
             event.preventDefault();
             if (!/^\d{4}$/.test(oldPin.value) || !/^\d{4}$/.test(newPin.value)) return status('PIN harus 4 digit.');
             save.disabled = true;
+            let authChanged = false;
             try {
               await setPersistence(secondaryAuth, inMemoryPersistence);
               const credential = await signInWithEmailAndPassword(secondaryAuth, staffEmail(item.username), staffPassword(item.username, oldPin.value));
               await updatePassword(credential.user, staffPassword(item.username, newPin.value));
+              authChanged = true;
               await setDoc(doc(db, 'users', account.uid, 'staffPins', profile.id), { pin: newPin.value, username: item.username, updatedAt: new Date().toISOString() });
               status(`PIN ${item.username} berhasil diganti.`);
-            } catch (error) { status(`Gagal mengganti PIN: ${error.message}`); }
+            } catch (error) {
+              status(authChanged
+                ? `PIN login sudah berubah, tetapi PIN cadangan gagal tersimpan: ${error.message}. Ulangi dengan PIN baru sebagai PIN lama.`
+                : `Gagal mengganti PIN: ${error.message}`);
+            }
             finally { oldPin.value = ''; newPin.value = ''; await signOut(secondaryAuth).catch(() => {}); save.disabled = false; }
           };
           row.append(pinForm);
