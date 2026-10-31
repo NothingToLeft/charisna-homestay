@@ -48,7 +48,7 @@ service cloud.firestore {
     }
     match /cleaningPhotos/{photoId} {
       allow read: if (owner() && resource.data.ownerUid == request.auth.uid)
-        || (signedIn() && resource.data.uploadedBy == request.auth.uid);
+        || (cleanerFor(resource.data.ownerUid) && resource.data.uploadedBy == request.auth.uid);
       allow create: if signedIn() && cleanerFor(request.resource.data.ownerUid)
         && request.resource.data.uploadedBy == request.auth.uid
         && request.resource.data.status == 'PENDING'

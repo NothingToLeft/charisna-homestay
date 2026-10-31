@@ -27,7 +27,7 @@ jobs:
           node-version: 22
           package-manager-cache: false
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Build Windows installer and portable package
         run: npm run build:desktop:win
       - name: Verify Windows packages
@@ -73,7 +73,7 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Build web assets
         run: npm run build
       - name: Create Android project
