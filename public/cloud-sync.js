@@ -28,10 +28,10 @@ const dataKey = () => `${DATA_PREFIX}:${user.uid}`;
 const showError = (message) => { error.textContent = message; };
 window.CHARISNA_AUTH_READY = true;
 
-const status = document.createElement('div');
-status.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:9999;background:#064e3b;color:white;padding:10px;border-radius:10px;max-width:330px;font:13px sans-serif';
+const status = document.getElementById('account-sync-status');
+
 status.textContent = 'Cloud: menunggu login';
-document.body.append(status);
+
 const panel = document.createElement('dialog');
 panel.style.cssText = 'border:0;border-radius:12px;padding:20px;max-width:420px;width:90%;box-shadow:0 10px 40px #0005;font:14px sans-serif';
 panel.innerHTML = `<h2 style="font-weight:bold;font-size:18px">Cloud CHARISNA KOST</h2><p>Data owner disimpan di perangkat ini. Pilih unggah atau unduh untuk memindahkan snapshot.</p><p id="cloud-message" role="status" style="min-height:20px"></p><div style="display:flex;flex-wrap:wrap;gap:6px"><button id="cloud-upload">Unggah lokal</button><button id="cloud-download">Unduh cloud</button><button id="cloud-logout">Keluar akun</button><button id="cloud-close">Tutup</button></div>`;
@@ -39,9 +39,9 @@ document.body.append(panel);
 for (const button of panel.querySelectorAll('button')) button.style.cssText = 'padding:8px;background:#059669;color:white;border-radius:6px';
 const openButton = document.createElement('button');
 openButton.textContent = 'Cloud & Akun';
-openButton.style.cssText = 'position:fixed;bottom:54px;right:12px;z-index:9999;background:#047857;color:white;padding:10px 16px;border-radius:10px';
+openButton.style.cssText = 'background:#047857;color:white;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600';
 openButton.onclick = () => panel.showModal();
-document.body.append(openButton);
+document.getElementById('settings-account-actions').append(openButton);
 panel.querySelector('#cloud-close').onclick = () => panel.close();
 const message = (text) => { panel.querySelector('#cloud-message').textContent = text; status.textContent = `Cloud: ${text}`; };
 const showLogin = () => {
@@ -155,4 +155,7 @@ panel.querySelector('#cloud-download').onclick = async () => {
   } catch (cloudError) { message(cloudError.message); }
 };
 panel.querySelector('#cloud-logout').onclick = () => signOut(auth);
-document.getElementById('owner-logout').onclick = () => signOut(auth);
+const logoutButton = document.getElementById('owner-logout');
+logoutButton.onclick = () => signOut(auth);
+document.getElementById('settings-account-actions').append(logoutButton);
+
