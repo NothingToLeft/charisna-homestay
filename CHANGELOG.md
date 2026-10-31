@@ -2,6 +2,8 @@
 
 ## 2026-10-31
 
+- Tugas kebersihan harian memiliki checklist, pengulangan tujuh hari, dan foto bukti. Apps Script akun Charisna mengarsipkan foto di Drive dan mengirim ringkasan Gmail setiap 15 menit.
+
 - Owner membuat username dan PIN petugas; petugas masuk tanpa pendaftaran. Owner dapat melihat PIN tersimpan, mengganti PIN, dan menonaktifkan akun.
 
 - Login petugas kebersihan, permintaan persetujuan owner, portal tugas, dan aturan Firestore terpisah.
