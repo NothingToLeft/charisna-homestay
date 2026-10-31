@@ -9,7 +9,8 @@ Aplikasi manajemen kos multi-properti. [Buka pratinjau web](https://nothingtolef
 - Tagihan, kuitansi, bukti bayar, pengeluaran, ringkasan okupansi dan keuangan.
 - Pesan WhatsApp disiapkan untuk dibuka di WhatsApp; pengiriman otomatis belum tersedia.
 - Backup dan pulihkan JSON; ekspor data penghuni ke CSV.
-- Login Firebase untuk owner; owner membuat username dan PIN 4 digit petugas, lalu memberi tugas. Petugas hanya melihat tugasnya.
+- Login Firebase untuk owner; owner membuat username dan PIN 4 digit petugas, lalu memberi tugas harian dengan checklist.
+- Petugas mengunggah foto sebelum/sesudah pekerjaan; arsip otomatis masuk Google Drive Charisna dan ringkasan masuk Gmail.
 - Panel Cloud owner untuk transfer data manual dengan konfirmasi.
 - Pratinjau web otomatis lewat GitHub Pages.
 
@@ -26,6 +27,8 @@ Data disimpan di `localStorage` browser. Buat backup JSON sebelum membersihkan d
 ## Peran dan Firebase
 
 Lihat [panduan owner dan petugas](docs/ROLE_ACCESS.md). Aturan Firestore role harus diterbitkan sebelum fitur petugas dipakai.
+
+Alur foto dan pengaturan Apps Script dijelaskan di [operasional kebersihan](docs/CLEANING_OPERATIONS.md). Arsip diproses tiap 15 menit, bukan seketika.
 
 ## Firebase
 

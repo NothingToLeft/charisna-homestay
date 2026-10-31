@@ -76,7 +76,7 @@ async function handleAccount(account, revision = ++authRevision) {
     gate.hidden = true;
     document.body.classList.remove('auth-locked');
     document.body.classList.add('cleaner-mode');
-    renderCleanerPortal({ db, account, ownerUid: resolved.ownerUid, onLogout: () => signOut(auth) });
+    renderCleanerPortal({ db, account, ownerUid: resolved.ownerUid, name: resolved.name, onLogout: () => signOut(auth) });
     return;
   }
   if (activeUid !== account.uid) {

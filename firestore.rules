@@ -27,7 +27,12 @@ service cloud.firestore {
           && request.resource.data.status in ['IN_PROGRESS', 'DONE']
           && request.resource.data.note is string
           && request.resource.data.note.size() <= 1000
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt', 'note', 'updatedAt']));
+          && request.resource.data.get('checkedItems', []) is list
+          && request.resource.data.get('checkedItems', []).size() <= 20
+          && request.resource.data.get('checkedItems', []).hasOnly(resource.data.get('checklist', []))
+          && (request.resource.data.status != 'DONE'
+            || request.resource.data.get('checkedItems', []).size() == resource.data.get('checklist', []).size())
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt', 'note', 'updatedAt', 'checkedItems']));
     }
     match /staffRequests/{staffUid} {
       allow read, write: if false;
@@ -40,6 +45,23 @@ service cloud.firestore {
         && request.resource.data.ownerUid == resource.data.ownerUid
         && request.resource.data.role == 'CLEANER';
       allow delete: if owner() && resource.data.ownerUid == request.auth.uid;
+    }
+    match /cleaningPhotos/{photoId} {
+      allow read: if (owner() && resource.data.ownerUid == request.auth.uid)
+        || (signedIn() && resource.data.uploadedBy == request.auth.uid);
+      allow create: if signedIn() && cleanerFor(request.resource.data.ownerUid)
+        && request.resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.status == 'PENDING'
+        && request.resource.data.mimeType == 'image/jpeg'
+        && request.resource.data.kind in ['BEFORE', 'AFTER', 'OTHER']
+        && request.resource.data.taskId is string
+        && request.resource.data.createdAt is string
+        && request.resource.data.data is string
+        && request.resource.data.data.size() <= 350000
+        && request.resource.data.keys().hasOnly(['ownerUid', 'taskId', 'uploadedBy', 'status', 'mimeType', 'kind', 'data', 'createdAt'])
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.ownerUid)/cleaningTasks/$(request.resource.data.taskId))
+        && get(/databases/$(database)/documents/users/$(request.resource.data.ownerUid)/cleaningTasks/$(request.resource.data.taskId)).data.assigneeUid == request.auth.uid;
+      allow update, delete: if owner() && resource.data.ownerUid == request.auth.uid;
     }
   }
 }
