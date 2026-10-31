@@ -1,0 +1,28 @@
+/* Shared layout fixes for browser, Capacitor and Electron. */
+body > .flex.h-screen { height: 100dvh; }
+body > .flex.h-screen > .flex-1 { min-width: 0; }
+main, section, form, header > div { min-width: 0; }
+main { overscroll-behavior: contain; }
+input, select, textarea { max-width: 100%; min-width: 0; }
+dialog { max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); overflow: auto; overscroll-behavior: contain; }
+dialog::backdrop { background: rgb(15 23 42 / 55%); }
+body > div[id$="Modal"] > div { max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; }
+#account-sync-status { overflow-wrap: anywhere; }
+#settings-account-actions #owner-logout span { display: inline; }
+@media (max-width: 767px) {
+  header { gap: 12px; }
+  #pageTitle { font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+  main { padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important; }
+  nav.fixed.bottom-0 { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  nav.fixed.bottom-0 button { min-height: 44px; }
+  input, select, textarea { font-size: 16px !important; }
+  #tab-pengaturan > div { padding: 18px; }
+  #settings-account-actions > button { min-height: 44px; }
+  body > div[id$="Modal"] { padding: 12px; }
+  body > div[id$="Modal"] > div { padding: 18px; }
+  .overflow-x-auto { overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  table { min-width: 620px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
