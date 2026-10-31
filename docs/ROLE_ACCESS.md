@@ -12,6 +12,6 @@ Owner dapat membuat tugas berisi properti, unit/area, tenggat, prioritas, dan in
 
 ## Aktivasi Firebase
 
-Aturan di `firestore.rules` harus diterbitkan ke project `charisna-kost-manager` sebelum pendaftaran/penugasan dipakai. Jalankan `scripts/windows/DEPLOY_FIREBASE_RULES.bat` pada komputer yang bisa login ke Firebase. Jangan kirim password atau token login ke chat. Aktifkan Email/Password di Firebase Authentication.
+Aturan di `firestore.rules` harus diterbitkan ke project `charisna-kost-manager` sebelum pendaftaran/penugasan dipakai. Buka Firebase Console dengan akun yang punya akses project, lalu buka Firestore Database > Rules. Bandingkan aturan aktif dengan `firestore.rules`; terbitkan aturan yang sudah ditinjau. Alternatifnya, jalankan `scripts/windows/DEPLOY_FIREBASE_RULES.bat` setelah Firebase CLI login. Jangan kirim password atau token login ke chat. Aktifkan Email/Password di Firebase Authentication.
 
 Aplikasi petugas memerlukan internet untuk tugas dan perubahan status. Belum ada antrean offline. Data owner yang sudah tersimpan lokal di perangkat bersama belum dienkripsi; gunakan perangkat atau profil browser terpisah untuk akun owner dan petugas.
