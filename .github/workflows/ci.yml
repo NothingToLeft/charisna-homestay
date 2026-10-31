@@ -17,7 +17,8 @@ jobs:
         with:
           node-version: 22
           package-manager-cache: false
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run check
       - run: npm test
       - run: npm run build
+      - run: npm audit --audit-level=high

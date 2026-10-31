@@ -2,6 +2,8 @@
 
 ## 2026-10-31
 
+- Audit keamanan: escape data pada tampilan aktif, perlindungan ekspor CSV, pembatasan foto, pembaruan dependensi dan lockfile, serta pemeriksaan CI yang lebih ketat.
+
 - Tugas kebersihan harian memiliki checklist, pengulangan tujuh hari, dan foto bukti. Apps Script akun Charisna mengarsipkan foto di Drive dan mengirim ringkasan Gmail setiap 15 menit.
 
 - Owner membuat username dan PIN petugas; petugas masuk tanpa pendaftaran. Owner dapat melihat PIN tersimpan, mengganti PIN, dan menonaktifkan akun.

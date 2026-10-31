@@ -41,3 +41,5 @@ Konfigurasi Web App project `charisna-kost-manager` sudah tertanam. Buka panel *
 Halaman memakai Tailwind, Font Awesome, Google Fonts, dan Firebase SDK dari CDN saat fitur cloud dipakai. Koneksi internet diperlukan untuk aset dan cloud tersebut.
 
 © CHARISNA KOST.
+
+Lihat [audit keamanan](docs/SECURITY_AUDIT_2026-10-31.md) dan [kebijakan keamanan](SECURITY.md) sebelum mengelola data penghuni pada perangkat baru.

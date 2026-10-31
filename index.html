@@ -2605,6 +2605,14 @@
             return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         }
 
+        function safeCallArg(value) {
+            return escapePropertyText(JSON.stringify(String(value ?? '')));
+        }
+
+        function safePhotoSrc(value) {
+            return typeof value === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(value) && value.length <= 3000000 ? value : '';
+        }
+
         function getPropertyFloors(propertyId) {
             appData.floors ||= {};
             if (!appData.floors[propertyId]) {
@@ -2747,6 +2755,10 @@
         }
 
         function compressImageFile(file, callback) {
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 15 * 1024 * 1024) {
+                showToast('Pilih foto JPEG, PNG, atau WebP maksimal 15 MB.', 'warning');
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(event) {
                 const img = new Image();
@@ -2760,8 +2772,10 @@
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     callback(canvas.toDataURL('image/jpeg', 0.72));
                 };
+                img.onerror = () => showToast('Foto gagal dibaca.', 'danger');
                 img.src = event.target.result;
             };
+            reader.onerror = () => showToast('Foto gagal dibaca.', 'danger');
             reader.readAsDataURL(file);
         }
 
@@ -2808,7 +2822,11 @@
                 danger: 'fa-circle-xmark text-white'
             };
             toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border-l-4 text-xs font-semibold fade-in ${colors[type] || colors.success}`;
-            toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.success} text-base"></i><span>${message}</span>`;
+            const icon = document.createElement('i');
+            icon.className = `fa-solid ${icons[type] || icons.success} text-base`;
+            const text = document.createElement('span');
+            text.textContent = message;
+            toast.append(icon, text);
             container.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';
@@ -2863,11 +2881,11 @@
             if (switcher) {
                 const totalProps = (appData.properties || []).length;
                 switcher.innerHTML = `<option value="ALL" ${currentPropertyFilter === 'ALL' ? 'selected' : ''}>🏢 Semua Properti (${totalProps} Lokasi)</option>` +
-                    (appData.properties || []).map(p => `<option value="${p.id}" ${currentPropertyFilter === p.id ? 'selected' : ''}>🏠 ${escapePropertyText(p.name)}</option>`).join('');
+                    (appData.properties || []).map(p => `<option value="${escapePropertyText(p.id)}" ${currentPropertyFilter === p.id ? 'selected' : ''}>🏠 ${escapePropertyText(p.name)}</option>`).join('');
             }
             const roomPropSelect = document.getElementById('roomFormProperty');
             if (roomPropSelect) {
-                roomPropSelect.innerHTML = (appData.properties || []).map(p => `<option value="${p.id}">${escapePropertyText(p.name)}</option>`).join('');
+                roomPropSelect.innerHTML = (appData.properties || []).map(p => `<option value="${escapePropertyText(p.id)}">${escapePropertyText(p.name)}</option>`).join('');
             }
         }
 
@@ -2995,14 +3013,14 @@
                     }
 
                     return `
-                        <button onclick="openRoomInspector('${room.id}')" class="p-3 rounded-xl border ${style} transition text-left flex flex-col justify-between group shadow-2xs">
+                        <button onclick="openRoomInspector(${safeCallArg(room.id)})" class="p-3 rounded-xl border ${style} transition text-left flex flex-col justify-between group shadow-2xs">
                             <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit ${room.number}</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">${roomTenants.length}/${cap} <i class="fa-solid fa-user text-[8px]"></i></span>
+                                <span class="font-extrabold text-sm">Unit ${escapePropertyText(room.number)}</span>
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">${roomTenants.length}/${escapePropertyText(cap)} <i class="fa-solid fa-user text-[8px]"></i></span>
                             </div>
                             <div class="mt-2.5">
                                 <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">${badge}</p>
+                                    <p class="text-xs font-bold truncate">${escapePropertyText(badge)}</p>
                                     ${ktpIcon}
                                 </div>
                                 <p class="text-[10px] opacity-75 mt-0.5">${formatRupiah(room.price)}</p>
@@ -3027,16 +3045,16 @@
                         <div class="py-3 flex items-center justify-between gap-2">
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-slate-800">${b.tenantName}</span>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">Unit ${b.roomNumber}</span>
+                                    <span class="text-xs font-bold text-slate-800">${escapePropertyText(b.tenantName)}</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">Unit ${escapePropertyText(b.roomNumber)}</span>
                                 </div>
-                                <p class="text-xs font-extrabold text-rose-600 mt-0.5">${formatRupiah(b.amount)} <span class="text-[10px] font-normal text-slate-400">• ${b.period}</span></p>
+                                <p class="text-xs font-extrabold text-rose-600 mt-0.5">${formatRupiah(b.amount)} <span class="text-[10px] font-normal text-slate-400">• ${escapePropertyText(b.period)}</span></p>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                <button onclick="sendWhatsAppReminder('${b.id}')" title="Tagih via WhatsApp" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center gap-1 transition">
+                                <button onclick="sendWhatsAppReminder(${safeCallArg(b.id)})" title="Tagih via WhatsApp" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center gap-1 transition">
                                     <i class="fa-brands fa-whatsapp"></i> Tagih
                                 </button>
-                                <button onclick="markBillPaid('${b.id}')" title="Tandai Lunas" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition">
+                                <button onclick="markBillPaid(${safeCallArg(b.id)})" title="Tandai Lunas" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition">
                                     Lunas
                                 </button>
                             </div>
@@ -3094,19 +3112,19 @@
                             <div class="pb-2 last:pb-0 border-b last:border-b-0 border-slate-200/60 space-y-1">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-user-check text-blue-600"></i> ${t.name}
+                                        <i class="fa-solid fa-user-check text-blue-600"></i> ${escapePropertyText(t.name)}
                                     </span>
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold ${ktpBadgeClass}">
                                         <i class="fa-solid fa-id-card mr-0.5"></i> ${ktpBadgeText}
                                     </span>
                                 </div>
                                 <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span class="font-mono text-[10px] text-slate-500">NIK: ${t.nik || '-'}</span>
-                                    <span class="px-1.5 py-0.2 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">${t.leaseInterval || 'Bulanan'}</span>
+                                    <span class="font-mono text-[10px] text-slate-500">NIK: ${escapePropertyText(t.nik || '-')}</span>
+                                    <span class="px-1.5 py-0.2 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">${escapePropertyText(t.leaseInterval || 'Bulanan')}</span>
                                 </div>
                                 <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span><i class="fa-brands fa-whatsapp text-emerald-600"></i> ${t.phone}</span>
-                                    <span class="font-semibold text-slate-700">${t.vehicle || 'Tanpa Kendaraan'}</span>
+                                    <span><i class="fa-brands fa-whatsapp text-emerald-600"></i> ${escapePropertyText(t.phone)}</span>
+                                    <span class="font-semibold text-slate-700">${escapePropertyText(t.vehicle || 'Tanpa Kendaraan')}</span>
                                 </div>
                             </div>
                         `;
@@ -3120,7 +3138,7 @@
                 } else {
                     tenantSectionHtml = `
                         <div class="mt-3.5 p-4 rounded-xl bg-emerald-50/50 border border-dashed border-emerald-200 text-center">
-                            <p class="text-xs font-bold text-emerald-800">Unit Kosong (Kapasitas ${cap} Penghuni)</p>
+                            <p class="text-xs font-bold text-emerald-800">Unit Kosong (Kapasitas ${escapePropertyText(cap)} Penghuni)</p>
                             <p class="text-[11px] text-emerald-600 mt-0.5">Klik Check-In untuk membuat kontrak sewa & unggah KTP</p>
                         </div>
                     `;
@@ -3129,13 +3147,13 @@
                 let secondaryActionBtnHtml = '';
                 if (roomTenants.length < cap) {
                     secondaryActionBtnHtml = `
-                        <button onclick="openTenantModal('${room.number}')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
+                        <button onclick="openTenantModal(${safeCallArg(room.number)})" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
                             <i class="fa-solid fa-user-plus"></i> Check-In
                         </button>
                     `;
                 } else if (tenant) {
                     secondaryActionBtnHtml = `
-                        <button onclick="openEditTenantModal('${tenant.id}')" class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition" title="Upload KTP">
+                        <button onclick="openEditTenantModal(${safeCallArg(tenant.id)})" class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition" title="Upload KTP">
                             <i class="fa-solid fa-camera"></i> KTP
                         </button>
                     `;
@@ -3146,24 +3164,24 @@
                         <div>
                             <div class="flex items-start justify-between gap-2">
                                 <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">${propName}</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit ${room.number} <span class="text-xs font-semibold text-slate-400">• ${room.type}</span></h4>
+                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">${escapePropertyText(propName)}</span>
+                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit ${escapePropertyText(room.number)} <span class="text-xs font-semibold text-slate-400">• ${escapePropertyText(room.type)}</span></h4>
                                 </div>
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${badgeClass}">${badgeLabel}</span>
                             </div>
 
                             <div class="flex items-baseline justify-between mt-2">
                                 <p class="text-base font-extrabold text-emerald-600">${formatRupiah(room.price)} <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> ${room.kwh || 0} kWh</span>
+                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> ${escapePropertyText(room.kwh || 0)} kWh</span>
                             </div>
 
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="${room.facilities}"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> ${room.facilities}</p>
+                            <p class="text-xs text-slate-500 mt-2 truncate" title="${escapePropertyText(room.facilities)}"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> ${escapePropertyText(room.facilities)}</p>
 
                             ${tenantSectionHtml}
                         </div>
 
                         <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('${room.id}')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                            <button onclick="openRoomInspector(${safeCallArg(room.id)})" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
                                 <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail & KTP
                             </button>
                             ${secondaryActionBtnHtml}
@@ -3200,26 +3218,26 @@
 
             const body = document.getElementById('inspContentBody');
             if (tenant) {
-                const ktpSrc = tenant.ktpImage || generateSyntheticKtpSvg(tenant);
+                const ktpSrc = safePhotoSrc(tenant.ktpImage) || generateSyntheticKtpSvg(tenant);
                 const cleanPhone = cleanWaNumber(tenant.phone);
                 body.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs">
                             <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-                                <span class="font-extrabold text-slate-800 text-sm">${tenant.name}</span>
-                                <button onclick="closeModal('roomInspectorModal'); openEditTenantModal('${tenant.id}')" class="text-emerald-600 font-bold hover:underline">
+                                <span class="font-extrabold text-slate-800 text-sm">${escapePropertyText(tenant.name)}</span>
+                                <button onclick="closeModal('roomInspectorModal'); openEditTenantModal(${safeCallArg(tenant.id)})" class="text-emerald-600 font-bold hover:underline">
                                     <i class="fa-solid fa-pen"></i> Edit Biodata
                                 </button>
                             </div>
-                            <p><span class="text-slate-400">NIK KTP:</span> <b class="font-mono text-slate-800">${tenant.nik || '-'}</b></p>
-                            <p><span class="text-slate-400">Interval Kontrak:</span> <b class="text-blue-700">${tenant.leaseInterval || 'Bulanan'}</b></p>
-                            <p><span class="text-slate-400">No. WhatsApp:</span> <a href="https://wa.me/${cleanPhone}" target="_blank" class="text-emerald-600 font-bold hover:underline"><i class="fa-brands fa-whatsapp"></i> ${tenant.phone}</a></p>
-                            <p><span class="text-slate-400">Kontak Darurat:</span> <b class="text-slate-700">${tenant.emergency || '-'}</b></p>
-                            <p><span class="text-slate-400">Pekerjaan/Kampus:</span> <b class="text-slate-700">${tenant.job || '-'}</b></p>
-                            <p><span class="text-slate-400">Kendaraan:</span> <b class="text-slate-700">${tenant.vehicle || '-'}</b></p>
+                            <p><span class="text-slate-400">NIK KTP:</span> <b class="font-mono text-slate-800">${escapePropertyText(tenant.nik || '-')}</b></p>
+                            <p><span class="text-slate-400">Interval Kontrak:</span> <b class="text-blue-700">${escapePropertyText(tenant.leaseInterval || 'Bulanan')}</b></p>
+                            <p><span class="text-slate-400">No. WhatsApp:</span> <a href="https://wa.me/${cleanPhone}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 font-bold hover:underline"><i class="fa-brands fa-whatsapp"></i> ${escapePropertyText(tenant.phone)}</a></p>
+                            <p><span class="text-slate-400">Kontak Darurat:</span> <b class="text-slate-700">${escapePropertyText(tenant.emergency || '-')}</b></p>
+                            <p><span class="text-slate-400">Pekerjaan/Kampus:</span> <b class="text-slate-700">${escapePropertyText(tenant.job || '-')}</b></p>
+                            <p><span class="text-slate-400">Kendaraan:</span> <b class="text-slate-700">${escapePropertyText(tenant.vehicle || '-')}</b></p>
                             <p><span class="text-slate-400">Uang Deposit:</span> <b class="text-emerald-700">${formatRupiah(tenant.deposit || 0)}</b></p>
                             <div class="pt-2 flex items-center gap-2">
-                                <button onclick="closeModal('roomInspectorModal'); checkoutTenant('${tenant.id}')" class="w-full py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold transition">
+                                <button onclick="closeModal('roomInspectorModal'); checkoutTenant(${safeCallArg(tenant.id)})" class="w-full py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold transition">
                                     <i class="fa-solid fa-right-from-bracket mr-1"></i> Check-Out Penghuni
                                 </button>
                             </div>
@@ -3233,11 +3251,11 @@
                                         ${tenant.ktpImage ? 'Foto Asli' : 'KTP Digital'}
                                     </span>
                                 </div>
-                                <img id="inspectorKtpImg" src="${ktpSrc}" alt="Identitas KTP" class="w-full h-44 object-cover rounded-xl border border-slate-300 shadow-xs bg-white">
+                                <img id="inspectorKtpImg" src="${escapePropertyText(ktpSrc)}" alt="Identitas KTP" class="w-full h-44 object-cover rounded-xl border border-slate-300 shadow-xs bg-white">
                             </div>
                             <label class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold text-center cursor-pointer transition block">
                                 <i class="fa-solid fa-camera mr-1"></i> Unggah / Ganti Foto KTP
-                                <input type="file" accept="image/*" onchange="quickUploadKtpFromInspector(event, '${tenant.id}')" class="hidden">
+                                        <input type="file" accept="image/*" onchange="quickUploadKtpFromInspector(event, ${safeCallArg(tenant.id)})" class="hidden">
                             </label>
                         </div>
                     </div>
@@ -3247,10 +3265,10 @@
                     <div class="p-8 rounded-2xl bg-emerald-50/60 border border-dashed border-emerald-300 text-center space-y-3">
                         <i class="fa-solid fa-door-open text-3xl text-emerald-500"></i>
                         <div>
-                            <h4 class="font-bold text-slate-800 text-sm">Unit Kamar ${room.number} Kosong</h4>
-                            <p class="text-xs text-slate-500 mt-1">Fasilitas: ${room.facilities}</p>
+                            <h4 class="font-bold text-slate-800 text-sm">Unit Kamar ${escapePropertyText(room.number)} Kosong</h4>
+                            <p class="text-xs text-slate-500 mt-1">Fasilitas: ${escapePropertyText(room.facilities)}</p>
                         </div>
-                        <button onclick="closeModal('roomInspectorModal'); openTenantModal('${room.number}')" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+                        <button onclick="closeModal('roomInspectorModal'); openTenantModal(${safeCallArg(room.number)})" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
                             <i class="fa-solid fa-user-plus mr-1"></i> Check-In Penghuni & Unggah KTP
                         </button>
                     </div>
@@ -3378,7 +3396,7 @@
                 const cleanPhone = cleanWaNumber(t.phone);
                 const hasKtp = t.ktpVerified || t.ktpImage;
                 const room = appData.rooms.find(r => r.number === t.roomNumber);
-                const ktpClickHandler = room ? `openRoomInspector('${room.id}')` : `openEditTenantModal('${t.id}')`;
+                const ktpClickHandler = room ? `openRoomInspector(${safeCallArg(room.id)})` : `openEditTenantModal(${safeCallArg(t.id)})`;
                 const ktpBtnClass = hasKtp ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200';
                 const ktpBtnLabel = hasKtp ? 'Lihat KTP' : 'Upload KTP';
                 const daysLeft = t.endDate ? Math.ceil((new Date(t.endDate + 'T00:00:00') - new Date()) / 86400000) : null;
@@ -3390,11 +3408,11 @@
                     <tr class="hover:bg-slate-50/80 transition">
                         <td class="py-3.5 px-4">
                             <p class="font-bold text-slate-800">${escapePropertyText(t.name)}</p>${contractBadge}
-                            <p class="text-[11px] font-mono text-slate-400">NIK: ${t.nik || '-'}</p>
+                            <p class="text-[11px] font-mono text-slate-400">NIK: ${escapePropertyText(t.nik || '-')}</p>
                         </td>
                         <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">Unit ${t.roomNumber}</span>
-                            <span class="ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">${t.leaseInterval || 'Bulanan'}</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">Unit ${escapePropertyText(t.roomNumber)}</span>
+                            <span class="ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">${escapePropertyText(t.leaseInterval || 'Bulanan')}</span>
                         </td>
                         <td class="py-3.5 px-4">
                             <button onclick="${ktpClickHandler}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${ktpBtnClass}">
@@ -3402,20 +3420,20 @@
                             </button>
                         </td>
                         <td class="py-3.5 px-4 text-xs">
-                            <a href="https://wa.me/${cleanPhone}" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> ${t.phone}
+                            <a href="https://wa.me/${cleanPhone}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> ${escapePropertyText(t.phone)}
                             </a>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Darurat: ${t.emergency || '-'}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Darurat: ${escapePropertyText(t.emergency || '-')}</p>
                         </td>
                         <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-slate-700">${t.vehicle || '-'}</p>
+                            <p class="font-semibold text-slate-700">${escapePropertyText(t.vehicle || '-')}</p>
                             <p class="text-[11px] text-emerald-600 font-bold">Deposit: ${formatRupiah(t.deposit || 0)}</p>
                         </td>
                         <td class="py-3.5 px-4 text-right space-x-1">
-                            <button onclick="openEditTenantModal('${t.id}')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                            <button onclick="openEditTenantModal(${safeCallArg(t.id)})" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
                                 <i class="fa-solid fa-pen"></i> Edit
                             </button>
-                            <button onclick="checkoutTenant('${t.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
+                            <button onclick="checkoutTenant(${safeCallArg(t.id)})" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
                                 Check-Out
                             </button>
                         </td>
@@ -3446,7 +3464,7 @@
             const select = document.getElementById('tenantFormRoom');
             select.innerHTML = availableRooms.map(r => {
                 const count = appData.tenants.filter(t => t.roomNumber === r.number).length;
-                return `<option value="${r.number}" ${r.number === preselectedRoom ? 'selected' : ''}>Unit ${r.number} (${count}/${r.capacity || 1} Org) - ${formatRupiah(r.price)}</option>`;
+                return `<option value="${escapePropertyText(r.number)}" ${r.number === preselectedRoom ? 'selected' : ''}>Unit ${escapePropertyText(r.number)} (${count}/${escapePropertyText(r.capacity || 1)} Org) - ${formatRupiah(r.price)}</option>`;
             }).join('');
 
             document.getElementById('tenantFormName').value = '';
@@ -3478,7 +3496,7 @@
             document.getElementById('tenantFormKtpFile').value = '';
 
             const select = document.getElementById('tenantFormRoom');
-            select.innerHTML = appData.rooms.map(r => `<option value="${r.number}" ${r.number === tenant.roomNumber ? 'selected' : ''}>Unit ${r.number} - ${formatRupiah(r.price)}</option>`).join('');
+            select.innerHTML = appData.rooms.map(r => `<option value="${escapePropertyText(r.number)}" ${r.number === tenant.roomNumber ? 'selected' : ''}>Unit ${escapePropertyText(r.number)} - ${formatRupiah(r.price)}</option>`).join('');
 
             document.getElementById('tenantFormName').value = tenant.name;
             document.getElementById('tenantFormNik').value = tenant.nik || '';
@@ -3493,8 +3511,8 @@
 
             const prevContainer = document.getElementById('ktpPreviewContainer');
             const prevImg = document.getElementById('ktpPreviewImg');
-            if (tenant.ktpImage) {
-                if (prevImg) prevImg.src = tenant.ktpImage;
+            if (safePhotoSrc(tenant.ktpImage)) {
+                if (prevImg) prevImg.src = safePhotoSrc(tenant.ktpImage);
                 if (prevContainer) prevContainer.classList.remove('hidden');
             } else {
                 if (prevContainer) prevContainer.classList.add('hidden');
@@ -3630,15 +3648,22 @@
         function exportTenantsCSV() {
             const headers = ['Nama Penghuni', 'NIK KTP', 'Unit Kamar', 'Kontrak', 'No WhatsApp', 'Darurat', 'Pekerjaan', 'Plat', 'Deposit', 'Tgl Masuk', 'Akhir Kontrak'];
             const rows = appData.tenants.map(t => [
-                `"${t.name}"`, `"${t.nik || ''}"`, `"${t.roomNumber}"`, `"${t.leaseInterval || 'Bulanan'}"`, `"${t.phone}"`, `"${t.emergency || ''}"`, `"${t.job || ''}"`, `"${t.vehicle || ''}"`, t.deposit || 0, t.entryDate, t.endDate || ''
+                t.name, t.nik || '', t.roomNumber, t.leaseInterval || 'Bulanan', t.phone, t.emergency || '', t.job || '', t.vehicle || '', t.deposit || 0, t.entryDate, t.endDate || ''
             ]);
-            const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const csvCell = value => {
+                const raw = String(value ?? '');
+                const safe = /^[\s]*[=+\-@]/.test(raw) ? `'${raw}` : raw;
+                return `"${safe.replace(/"/g, '""')}"`;
+            };
+            const csvContent = '\uFEFF' + [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+            const url = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }));
             const link = document.createElement('a');
-            link.setAttribute('href', encodeURI(csvContent));
+            link.href = url;
             link.setAttribute('download', `data-penghuni-charisna-${new Date().toISOString().slice(0,10)}.csv`);
             document.body.appendChild(link);
             link.click();
             link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
             showToast('File CSV Penghuni berhasil diunduh!');
         }
 
@@ -3680,7 +3705,7 @@
 
                 let statusBadgeHtml = '';
                 if (isPaid) {
-                    statusBadgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">PAID (${b.paidDate})</span>`;
+                    statusBadgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">PAID (${escapePropertyText(b.paidDate)})</span>`;
                 } else if (isOverdue) {
                     statusBadgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700">OVERDUE</span>`;
                 } else {
@@ -3694,19 +3719,19 @@
                 let rowActionsHtml = '';
                 if (!isPaid) {
                     rowActionsHtml = `
-                        <button onclick="sendWhatsAppReminder('${b.id}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition" title="Kirim Tagihan via WA">
+                        <button onclick="sendWhatsAppReminder(${safeCallArg(b.id)})" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition" title="Kirim Tagihan via WA">
                             <i class="fa-brands fa-whatsapp"></i> Tagih
                         </button>
-                        <button onclick="markBillPaid('${b.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">
+                        <button onclick="markBillPaid(${safeCallArg(b.id)})" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">
                             Lunas
                         </button>
                     `;
                 } else {
                     rowActionsHtml = `
-                        <button onclick="sendReceiptToWhatsApp('${b.id}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition" title="Kirim Kwitansi Lunas ke WA">
+                        <button onclick="sendReceiptToWhatsApp(${safeCallArg(b.id)})" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition" title="Kirim Kwitansi Lunas ke WA">
                             <i class="fa-brands fa-whatsapp"></i> Kwitansi WA
                         </button>
-                        <button onclick="openReceipt('${b.id}')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <button onclick="openReceipt(${safeCallArg(b.id)})" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
                             <i class="fa-solid fa-receipt"></i> Kwitansi
                         </button>
                     `;
@@ -3715,12 +3740,12 @@
                 return `
                     <tr class="hover:bg-slate-50/80 transition">
                         <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">${b.period}</p>
-                            <p class="text-[11px] font-mono text-slate-400">${b.id} • JT: ${b.dueDate}</p>
+                            <p class="font-bold text-slate-800 text-xs">${escapePropertyText(b.period)}</p>
+                            <p class="text-[11px] font-mono text-slate-400">${escapePropertyText(b.id)} • JT: ${escapePropertyText(b.dueDate)}</p>
                         </td>
                         <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">${b.tenantName}</p>
-                            <span class="text-[11px] font-semibold text-blue-600">Unit ${b.roomNumber}</span>
+                            <p class="font-bold text-slate-800 text-xs">${escapePropertyText(b.tenantName)}</p>
+                            <span class="text-[11px] font-semibold text-blue-600">Unit ${escapePropertyText(b.roomNumber)}</span>
                         </td>
                         <td class="py-3.5 px-4 text-xs text-slate-600">
                             <p>Pokok: <b>${formatRupiah(base)}</b></p>
@@ -3730,7 +3755,7 @@
                         <td class="py-3.5 px-4">
                             <div class="flex flex-col items-start gap-1">
                                 ${statusBadgeHtml}
-                                <button onclick="openProofModal('${b.id}')" class="text-[10px] font-bold ${proofBtnColor} hover:underline flex items-center gap-1">
+                                <button onclick="openProofModal(${safeCallArg(b.id)})" class="text-[10px] font-bold ${proofBtnColor} hover:underline flex items-center gap-1">
                                     <i class="fa-solid ${proofIcon}"></i> ${proofLabel}
                                 </button>
                             </div>
@@ -3751,8 +3776,12 @@
             document.getElementById('proofModalSub').textContent = `Unit ${bill.roomNumber} • Total ${formatRupiah(bill.amount)}`;
 
             const container = document.getElementById('proofImageContainer');
-            if (bill.proofImage) {
-                container.innerHTML = `<img src="${bill.proofImage}" alt="Bukti Transfer" class="max-h-56 mx-auto rounded-xl border border-slate-200 object-contain">`;
+            if (safePhotoSrc(bill.proofImage)) {
+                const image = document.createElement('img');
+                image.src = safePhotoSrc(bill.proofImage);
+                image.alt = 'Bukti Transfer';
+                image.className = 'max-h-56 mx-auto rounded-xl border border-slate-200 object-contain';
+                container.replaceChildren(image);
             } else if (bill.proofUploaded) {
                 container.innerHTML = `
                     <div class="py-6 text-emerald-700 space-y-1">
@@ -3811,7 +3840,7 @@
             logWhatsAppMessage('PENGINGAT SEWA', `${bill.tenantName} (${bill.phone})`, `Invoice #${bill.id} periode ${bill.period} sebesar ${formatRupiah(bill.amount)}`);
 
             const message = `Halo Kak *${bill.tenantName}* (Unit ${bill.roomNumber}),\n\nKami dari manajemen *${appData.settings.kostName}* mengirimkan rincian tagihan sewa untuk periode *${bill.period}*:\n\n📄 *No. Invoice:* #${bill.id}\n🏠 *Sewa Pokok:* ${formatRupiah(base)}\n⚡ *Listrik & Air:* ${formatRupiah(elec)}\n➕ *Biaya Lainnya:* ${formatRupiah(other)}\n━━━━━━━━━━━━━━━\n💰 *TOTAL TAGIHAN: ${formatRupiah(bill.amount)}*\n📅 *Jatuh Tempo:* ${bill.dueDate}\n\nPembayaran ditransfer via:\n💳 *${appData.settings.bankInfo}*\n\nTerima kasih! 🙏`;
-            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
         }
 
         function sendBulkUnpaidReminders() {
@@ -3838,7 +3867,7 @@
             logWhatsAppMessage('KWITANSI LUNAS', `${bill.tenantName} (${bill.phone})`, `Kwitansi Resmi #${bill.id} LUNAS (${formatRupiah(bill.amount)})`);
 
             const message = `✅ *KWITANSI DIGITAL PEMBAYARAN RESMI*\n*${appData.settings.kostName.toUpperCase()}*\n_${appData.settings.kostAddress}_\n━━━━━━━━━━━━━━━━━━━━\n🧾 *No. Kwitansi:* #${bill.id}\n👤 *Diterima Dari:* ${bill.tenantName}\n🚪 *Unit Kamar:* Unit ${bill.roomNumber}\n🗓️ *Periode:* ${bill.period}\n📅 *Tanggal Lunas:* ${bill.paidDate || '-'}\n━━━━━━━━━━━━━━━━━━━━\n*RINCIAN:*\n• Sewa Pokok: ${formatRupiah(base)}\n• Listrik/Air: ${formatRupiah(elec)}\n• Biaya Lain: ${formatRupiah(other)}\n\n💚 *TOTAL: ${formatRupiah(bill.amount)}*\n*STATUS: LUNAS TERVERIFIKASI*\n━━━━━━━━━━━━━━━━━━━━\nTerima kasih Kak *${bill.tenantName}* atas pembayarannya.\n\nSalam hangat,\n*${appData.settings.ownerName}* (Pengelola)`;
-            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
         }
 
         function openReceipt(billId) {
@@ -3876,7 +3905,7 @@
                 return;
             }
             const select = document.getElementById('billFormTenant');
-            select.innerHTML = appData.tenants.map(t => `<option value="${t.id}">${t.name} (Unit ${t.roomNumber})</option>`).join('');
+            select.innerHTML = appData.tenants.map(t => `<option value="${escapePropertyText(t.id)}">${escapePropertyText(t.name)} (Unit ${escapePropertyText(t.roomNumber)})</option>`).join('');
             document.getElementById('billFormElectric').value = 0;
             document.getElementById('billFormOther').value = 0;
             autoFillBillAmount();
@@ -3995,12 +4024,12 @@
             }
             tbody.innerHTML = list.map(x => `
                 <tr class="hover:bg-slate-50/80 transition">
-                    <td class="py-3.5 px-4 text-xs text-slate-500">${x.date}</td>
-                    <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">${x.category}</span></td>
-                    <td class="py-3.5 px-4 font-semibold text-slate-800 text-xs">${x.title}</td>
+                    <td class="py-3.5 px-4 text-xs text-slate-500">${escapePropertyText(x.date)}</td>
+                    <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">${escapePropertyText(x.category)}</span></td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-800 text-xs">${escapePropertyText(x.title)}</td>
                     <td class="py-3.5 px-4 font-extrabold text-rose-600 text-xs">${formatRupiah(x.amount)}</td>
                     <td class="py-3.5 px-4 text-right">
-                        <button onclick="deleteExpense('${x.id}')" class="text-slate-400 hover:text-rose-600 text-xs px-2 py-1">
+                        <button onclick="deleteExpense(${safeCallArg(x.id)})" class="text-slate-400 hover:text-rose-600 text-xs px-2 py-1">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
@@ -4066,32 +4095,32 @@
                 };
 
                 const stepProgressBtn = state === 'REPORTED'
-                    ? `<button onclick="advanceComplaintState('${c.id}', 'IN_PROGRESS')" class="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition">Kerjakan →</button>`
+                    ? `<button onclick="advanceComplaintState(${safeCallArg(c.id)}, 'IN_PROGRESS')" class="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition">Kerjakan →</button>`
                     : '';
 
                 const stepResolveBtn = state !== 'RESOLVED'
-                    ? `<button onclick="advanceComplaintState('${c.id}', 'RESOLVED')" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition"><i class="fa-solid fa-check mr-1"></i> Resolve</button>`
+                    ? `<button onclick="advanceComplaintState(${safeCallArg(c.id)}, 'RESOLVED')" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition"><i class="fa-solid fa-check mr-1"></i> Resolve</button>`
                     : `<span class="text-xs font-bold text-emerald-600"><i class="fa-solid fa-circle-check"></i> Resolved</span>`;
 
                 return `
                     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between gap-2">
-                                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs">Unit ${c.roomNumber}</span>
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs">Unit ${escapePropertyText(c.roomNumber)}</span>
                                 <div class="flex items-center gap-1.5">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${stateBadges[state] || stateBadges.REPORTED}">${state}</span>
-                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${prioColors[c.priority] || prioColors.Normal}">${c.priority}</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${stateBadges[state] || stateBadges.REPORTED}">${escapePropertyText(state)}</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${prioColors[c.priority] || prioColors.Normal}">${escapePropertyText(c.priority)}</span>
                                 </div>
                             </div>
-                            <h4 class="font-bold text-slate-800 text-sm mt-3 ${isDone ? 'line-through text-slate-400' : ''}">${c.title}</h4>
-                            <p class="text-xs text-slate-500 mt-1">${c.desc || 'Tidak ada catatan.'}</p>
+                            <h4 class="font-bold text-slate-800 text-sm mt-3 ${isDone ? 'line-through text-slate-400' : ''}">${escapePropertyText(c.title)}</h4>
+                            <p class="text-xs text-slate-500 mt-1">${escapePropertyText(c.desc || 'Tidak ada catatan.')}</p>
                         </div>
                         <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                            <span class="text-[11px] text-slate-400">${c.date}</span>
+                            <span class="text-[11px] text-slate-400">${escapePropertyText(c.date)}</span>
                             <div class="flex items-center gap-1.5">
                                 ${stepProgressBtn}
                                 ${stepResolveBtn}
-                                <button onclick="deleteComplaint('${c.id}')" class="text-slate-400 hover:text-rose-600 text-xs px-1.5">
+                                <button onclick="deleteComplaint(${safeCallArg(c.id)})" class="text-slate-400 hover:text-rose-600 text-xs px-1.5">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -4103,7 +4132,7 @@
 
         function openComplaintModal() {
             const select = document.getElementById('complaintFormRoom');
-            if (select) select.innerHTML = appData.rooms.map(r => `<option value="${r.number}">Unit ${r.number}</option>`).join('');
+            if (select) select.innerHTML = appData.rooms.map(r => `<option value="${escapePropertyText(r.number)}">Unit ${escapePropertyText(r.number)}</option>`).join('');
             const modal = document.getElementById('complaintModal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -4147,14 +4176,14 @@
                     <div class="p-4 rounded-xl border ${p.enabled ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200 bg-slate-50'} flex flex-col justify-between gap-3">
                         <div>
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-extrabold text-slate-800">${p.name}</span>
-                                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-700">${p.version}</span>
+                                <span class="text-xs font-extrabold text-slate-800">${escapePropertyText(p.name)}</span>
+                                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-700">${escapePropertyText(p.version)}</span>
                             </div>
-                            <p class="text-[11px] text-slate-500 mt-1">${p.desc}</p>
+                            <p class="text-[11px] text-slate-500 mt-1">${escapePropertyText(p.desc)}</p>
                         </div>
                         <div class="flex items-center justify-between pt-2 border-t border-slate-200/60">
                             <span class="text-[10px] font-bold ${p.enabled ? 'text-emerald-600' : 'text-slate-400'}">${p.enabled ? '● ACTIVE' : '○ DISABLED'}</span>
-                            <button onclick="togglePlugin('${p.id}')" class="px-3 py-1 rounded-lg text-[11px] font-bold ${p.enabled ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white'}">
+                            <button onclick="togglePlugin(${safeCallArg(p.id)})" class="px-3 py-1 rounded-lg text-[11px] font-bold ${p.enabled ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white'}">
                                 ${p.enabled ? 'Nonaktifkan' : 'Aktifkan'}
                             </button>
                         </div>
@@ -4170,11 +4199,11 @@
                 } else {
                     logBody.innerHTML = logs.map(l => `
                         <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-4 font-mono text-slate-500">${l.timestamp}</td>
-                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-700">${l.type}</span></td>
-                            <td class="py-3 px-4 font-bold text-slate-800">${l.recipient}</td>
-                            <td class="py-3 px-4 text-slate-600">${l.summary}</td>
-                            <td class="py-3 px-4 text-right"><span class="text-[10px] font-bold text-emerald-600"><i class="fa-solid fa-check-double"></i> ${l.status}</span></td>
+                            <td class="py-3 px-4 font-mono text-slate-500">${escapePropertyText(l.timestamp)}</td>
+                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-700">${escapePropertyText(l.type)}</span></td>
+                            <td class="py-3 px-4 font-bold text-slate-800">${escapePropertyText(l.recipient)}</td>
+                            <td class="py-3 px-4 text-slate-600">${escapePropertyText(l.summary)}</td>
+                            <td class="py-3 px-4 text-right"><span class="text-[10px] font-bold text-emerald-600"><i class="fa-solid fa-check-double"></i> ${escapePropertyText(l.status)}</span></td>
                         </tr>
                     `).join('');
                 }
@@ -4201,7 +4230,7 @@
                 return;
             }
             const select = document.getElementById('broadcastTarget');
-            if (select) select.innerHTML = appData.tenants.map(t => `<option value="${t.phone}">${t.name} (Unit ${t.roomNumber} - ${t.phone})</option>`).join('');
+            if (select) select.innerHTML = appData.tenants.map(t => `<option value="${escapePropertyText(t.phone)}">${escapePropertyText(t.name)} (Unit ${escapePropertyText(t.roomNumber)} - ${escapePropertyText(t.phone)})</option>`).join('');
             const modal = document.getElementById('broadcastModal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -4214,7 +4243,7 @@
             const msgBody = document.getElementById('broadcastMessage').value;
             logWhatsAppMessage('BROADCAST INFO', phone, msgBody.slice(0, 60) + '...');
             const text = `📢 *PENGUMUMAN ${appData.settings.kostName.toUpperCase()}*\n\n${msgBody}\n\nTerima kasih,\n*${appData.settings.ownerName}*`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
             closeModal('broadcastModal');
         }
 
