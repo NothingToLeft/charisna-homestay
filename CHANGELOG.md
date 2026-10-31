@@ -2,6 +2,8 @@
 
 ## 2026-10-31
 
+- Owner membuat username dan PIN petugas; petugas masuk tanpa pendaftaran. Owner dapat melihat PIN tersimpan, mengganti PIN, dan menonaktifkan akun.
+
 - Login petugas kebersihan, permintaan persetujuan owner, portal tugas, dan aturan Firestore terpisah.
 
 - Halaman login Firebase sebelum dashboard, reset password, pemisahan data lokal per UID, dan rebranding tampilan menjadi CHARISNA KOST.

@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
-import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
+import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
-import { OWNER_EMAIL, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js';
+import { OWNER_EMAIL, staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCXu5b6BKVKYczMTIL8Nc-MuLvLQdiQXtI',
@@ -18,9 +18,7 @@ const error = document.getElementById('auth-error');
 const loginForm = document.getElementById('auth-form');
 const loginButton = document.getElementById('auth-submit');
 const roleSelect = document.getElementById('auth-role');
-const registerButton = document.getElementById('auth-register');
 const pendingSignout = document.getElementById('auth-signout-pending');
-const refreshRole = document.getElementById('auth-refresh-role');
 const auth = getAuth(initializeApp(firebaseConfig));
 const db = getFirestore(auth.app);
 let user = null;
@@ -47,17 +45,10 @@ document.body.append(openButton);
 panel.querySelector('#cloud-close').onclick = () => panel.close();
 const message = (text) => { panel.querySelector('#cloud-message').textContent = text; status.textContent = `Cloud: ${text}`; };
 const showLogin = () => {
-  gate.hidden = false; loginForm.hidden = false; pendingSignout.hidden = true; refreshRole.hidden = true;
+  gate.hidden = false; loginForm.hidden = false; pendingSignout.hidden = true;
   document.body.classList.remove('cleaner-mode');
   document.body.classList.add('auth-locked');
 };
-async function ensureStaffRequest(account) {
-  const ref = doc(db, 'staffRequests', account.uid);
-  if (!(await getDoc(ref)).exists()) {
-    try { await setDoc(ref, { email: account.email, ownerEmail: OWNER_EMAIL, createdAt: new Date().toISOString() }); }
-    catch (requestError) { if (!(await getDoc(ref)).exists()) throw requestError; }
-  }
-}
 async function handleAccount(account, revision = ++authRevision) {
   user = account; verifiedRole = null;
   const activeUid = sessionStorage.getItem(ACTIVE_UID_KEY);
@@ -76,9 +67,8 @@ async function handleAccount(account, revision = ++authRevision) {
     sessionStorage.removeItem(ACTIVE_UID_KEY);
     document.body.classList.remove('cleaner-mode');
     document.body.classList.add('auth-locked');
-    gate.hidden = false; loginForm.hidden = true; pendingSignout.hidden = false; refreshRole.hidden = false;
-    try { await ensureStaffRequest(account); showError('Akun petugas menunggu persetujuan owner. Muat ulang setelah disetujui.'); }
-    catch (requestError) { showError(`Permintaan akses gagal: ${requestError.message}`); }
+    gate.hidden = false; loginForm.hidden = true; pendingSignout.hidden = false;
+    showError('Akun tidak aktif atau belum disiapkan owner.');
     return;
   }
   if (resolved.role === 'CLEANER') {
@@ -99,40 +89,41 @@ async function handleAccount(account, revision = ++authRevision) {
   gate.hidden = true;
   document.body.classList.remove('auth-locked', 'cleaner-mode');
   message(`Masuk: ${account.email}`);
-  setupOwnerManager({ db, account, onMessage: message });
+  setupOwnerManager({ db, account, firebaseConfig, onMessage: message });
 }
 onAuthStateChanged(auth, (account) => { const revision = ++authRevision; void handleAccount(account, revision); }, (authError) => showError(`Login tidak tersedia: ${authError.message}`));
-roleSelect.onchange = () => { registerButton.hidden = roleSelect.value !== 'CLEANER'; };
+roleSelect.onchange = () => {
+  const staff = roleSelect.value === 'CLEANER';
+  document.getElementById('auth-email-row').hidden = staff;
+  document.getElementById('auth-username-row').hidden = !staff;
+  document.getElementById('auth-email').required = !staff;
+  document.getElementById('auth-username').required = staff;
+  document.getElementById('auth-secret-label').textContent = staff ? 'PIN 4 digit' : 'Password';
+  document.getElementById('auth-password').inputMode = staff ? 'numeric' : 'text';
+  document.getElementById('auth-password').maxLength = staff ? 4 : 256;
+  document.getElementById('auth-reset').hidden = staff;
+  document.getElementById('auth-help').textContent = staff ? 'Masukkan username dan PIN dari pemilik.' : 'Masuk dengan akun pemilik.';
+  document.getElementById('auth-password').value = '';
+  showError('');
+};
 loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const email = document.getElementById('auth-email').value.trim().toLowerCase();
-  if (roleSelect.value === 'OWNER' && email !== OWNER_EMAIL) return showError('Akun pemilik tidak cocok. Pilih Petugas kebersihan bila Anda petugas.');
-  if (roleSelect.value === 'CLEANER' && email === OWNER_EMAIL) return showError('Akun owner harus masuk sebagai Pemilik.');
+  const staff = roleSelect.value === 'CLEANER';
+  const username = document.getElementById('auth-username').value.trim().toLowerCase();
+  const pin = document.getElementById('auth-password').value;
+  const email = staff ? staffEmail(username) : document.getElementById('auth-email').value.trim().toLowerCase();
+  if (staff && (!email || !/^\d{4}$/.test(pin))) return showError('Isi username dan PIN 4 digit.');
+  if (!staff && email !== OWNER_EMAIL) return showError('Email pemilik tidak cocok.');
   loginButton.disabled = true; showError('Memeriksa akun...');
   try {
     await setPersistence(auth, browserLocalPersistence);
-    await signInWithEmailAndPassword(auth, email, document.getElementById('auth-password').value);
+    await signInWithEmailAndPassword(auth, email, staff ? staffPassword(username, pin) : pin);
     document.getElementById('auth-password').value = '';
   } catch (loginError) {
-    showError(loginError.code === 'auth/invalid-credential' ? 'Email atau password salah.' : `Gagal masuk: ${loginError.message}`);
+    showError(loginError.code === 'auth/invalid-credential' ? 'Username/PIN atau email/password salah.' : `Gagal masuk: ${loginError.message}`);
   } finally { loginButton.disabled = false; }
 });
-registerButton.onclick = async () => {
-  const email = document.getElementById('auth-email').value.trim().toLowerCase();
-  const password = document.getElementById('auth-password').value;
-  if (roleSelect.value !== 'CLEANER' || !email || email === OWNER_EMAIL || password.length < 8) return showError('Pilih Petugas kebersihan, isi email lain, dan password minimal 8 karakter.');
-  registerButton.disabled = true; showError('Mendaftarkan akun...');
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-    const credential = await createUserWithEmailAndPassword(auth, email, password);
-    await ensureStaffRequest(credential.user);
-    document.getElementById('auth-password').value = '';
-    showError('Permintaan petugas dikirim. Tunggu persetujuan owner.');
-  } catch (registerError) { showError(`Pendaftaran gagal: ${registerError.message}`); }
-  finally { registerButton.disabled = false; }
-};
 pendingSignout.onclick = () => signOut(auth);
-refreshRole.onclick = () => { if (auth.currentUser) void handleAccount(auth.currentUser); };
 document.getElementById('auth-reset').onclick = async () => {
   const email = document.getElementById('auth-email').value.trim();
   if (!email) return showError('Isi email dulu untuk reset password.');

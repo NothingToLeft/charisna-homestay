@@ -9,7 +9,7 @@ Aplikasi manajemen kos multi-properti. [Buka pratinjau web](https://nothingtolef
 - Tagihan, kuitansi, bukti bayar, pengeluaran, ringkasan okupansi dan keuangan.
 - Pesan WhatsApp disiapkan untuk dibuka di WhatsApp; pengiriman otomatis belum tersedia.
 - Backup dan pulihkan JSON; ekspor data penghuni ke CSV.
-- Login Firebase untuk owner dan petugas kebersihan. Owner menyetujui akun petugas dan memberi tugas; petugas hanya melihat tugasnya.
+- Login Firebase untuk owner; owner membuat username dan PIN 4 digit petugas, lalu memberi tugas. Petugas hanya melihat tugasnya.
 - Panel Cloud owner untuk transfer data manual dengan konfirmasi.
 - Pratinjau web otomatis lewat GitHub Pages.
 
