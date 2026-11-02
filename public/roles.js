@@ -2,19 +2,18 @@ import { collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, inMemoryPersistence, setPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, signOut } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 
-export const OWNER_EMAIL = 'charisna.homestay@gmail.com';
 export function staffEmail(username) {
   const name = username.trim().toLowerCase();
   return /^[a-z0-9_]{3,24}$/.test(name) ? `staff-${name}@charisna-kost-manager.firebaseapp.com` : null;
 }
 export function staffPassword(username, pin) { return `charisna-staff:${username.trim().toLowerCase()}:${pin}`; }
 export async function resolveRole(db, account) {
-  if (account.email?.toLowerCase() === OWNER_EMAIL) return { role: 'OWNER', ownerUid: account.uid };
   const profile = await getDoc(doc(db, 'staff', account.uid));
   if (profile.exists() && profile.data().role === 'CLEANER' && profile.data().active === true) {
     return { role: 'CLEANER', ownerUid: profile.data().ownerUid, name: profile.data().name || profile.data().username || 'Petugas' };
   }
-  return { role: 'PENDING' };
+  if (profile.exists()) return { role: 'PENDING' };
+  return { role: 'OWNER', ownerUid: account.uid };
 }
 
 function element(tag, text, className = '') {

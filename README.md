@@ -36,7 +36,7 @@ Konfigurasi Web App project `charisna-kost-manager` sudah tertanam. Buka panel *
 
 ## Build
 
-`npm run build` menyiapkan halaman aktif di `dist/`. Build Android memakai Capacitor; build Windows memakai Electron. Paket terbaru belum diuji pada perangkat. Kode React lama tetap disimpan sebagai referensi migrasi, tetapi bukan halaman yang diterbitkan. Lihat [arsitektur](docs/ARCHITECTURE.md), [status fitur](docs/FEATURE_MATRIX.md), dan [catatan perubahan](CHANGELOG.md).
+`npm run build` menyiapkan halaman aktif di `dist/`. Build Android memakai Capacitor; build Windows memakai Electron. Paket terbaru belum diuji pada perangkat. Lihat [arsitektur](docs/ARCHITECTURE.md), [status fitur](docs/FEATURE_MATRIX.md), dan [catatan perubahan](CHANGELOG.md).
 
 Halaman memakai Tailwind, Font Awesome, Google Fonts, dan Firebase SDK dari CDN saat fitur cloud dipakai. Koneksi internet diperlukan untuk aset dan cloud tersebut.
 

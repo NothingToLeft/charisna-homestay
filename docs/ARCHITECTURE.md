@@ -9,8 +9,6 @@
 - `.github/workflows/pages.yml`: menerbitkan `index.html` dan modul Cloud ke GitHub Pages.
 - `capacitor.config.ts` dan `desktop/`: wadah Android dan Windows untuk hasil `dist/`.
 
-Folder `src/` berisi implementasi React lama. Fitur di dalamnya tidak aktif pada halaman baru. Jangan menganggap Firebase sync lama berfungsi dalam desain baru.
-
 ## Data
 
 Browser menyimpan data utama lokal. Upload/download Cloud mengganti satu snapshot penuh, tanpa antrean offline, merge, atau deteksi konflik. Perlu backup sebelum transfer. Batas dokumen Firestore dapat menjadi masalah bila foto disimpan sebagai data URL.
