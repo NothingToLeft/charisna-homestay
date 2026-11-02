@@ -196,6 +196,14 @@
                     <span id="badge-keluhan" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold">2</span>
                 </button>
 
+                <button onclick="switchTab('operasional')" id="nav-operasional" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800/70 hover:text-white transition-all">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-boxes-stacked w-5 text-center text-sm"></i>
+                        <span>Operasional &amp; Inventaris</span>
+                    </div>
+                    <span id="badge-operasional" class="hidden text-[10px] bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-full font-bold"></span>
+                </button>
+
                 <div class="pt-3 mt-3 border-t border-slate-800">
                     <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Platform Modules</p>
                     <button onclick="switchTab('plugins')" id="nav-plugins" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800/70 hover:text-white transition-all">
@@ -1956,6 +1964,261 @@
                     </div>
                 </section>
 
+                <!-- ==================== TAB: OPERASIONAL & INVENTARIS ==================== -->
+                <section id="tab-operasional" class="tab-content hidden fade-in space-y-5">
+                    <div class="flex flex-wrap gap-2">
+                        <button id="op-nav-inventaris" onclick="switchOper('inventaris')" class="op-btn px-3.5 py-2 rounded-xl text-xs font-bold border transition border-emerald-600 bg-emerald-600 text-white shadow-md shadow-emerald-600/20">Inventaris</button>
+                        <button id="op-nav-stok" onclick="switchOper('stok')" class="op-btn px-3.5 py-2 rounded-xl text-xs font-semibold border transition border-slate-200 text-slate-500 hover:bg-slate-50">Stok &amp; Riwayat</button>
+                        <button id="op-nav-perawatan" onclick="switchOper('perawatan')" class="op-btn px-3.5 py-2 rounded-xl text-xs font-semibold border transition border-slate-200 text-slate-500 hover:bg-slate-50">Perawatan &amp; Perbaikan</button>
+                        <button id="op-nav-kontrak" onclick="switchOper('kontrak')" class="op-btn px-3.5 py-2 rounded-xl text-xs font-semibold border transition border-slate-200 text-slate-500 hover:bg-slate-50">Kontrak &amp; Tagihan Bertahap</button>
+                        <button id="op-nav-meter" onclick="switchOper('meter')" class="op-btn px-3.5 py-2 rounded-xl text-xs font-semibold border transition border-slate-200 text-slate-500 hover:bg-slate-50">Meter &amp; Laporan</button>
+                    </div>
+
+                    <div id="op-alert" class="hidden rounded-xl border px-4 py-3 text-xs space-y-1"></div>
+
+                    <!-- PANE: INVENTARIS -->
+                    <div id="opane-inventaris" class="op-pane space-y-4">
+                        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Tambah Aset Inventaris</h3>
+                            <div class="grid sm:grid-cols-3 gap-3">
+                                <select id="invFormProperty" class="border rounded-xl px-3 py-2 text-xs w-full"></select>
+                                <input id="invFormRoom" placeholder="Kamar / Area (mis. 101, Umum)" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="invFormItem" placeholder="Nama barang / aset" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="invFormQty" type="number" min="1" value="1" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <select id="invFormCategory" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                    <option>Elektronik</option><option>Furnitur</option><option>Sanitasi</option><option>Keamanan</option><option>Lainnya</option>
+                                </select>
+                                <select id="invFormCondition" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                    <option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option><option>Perlu Restock</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <input id="invFormNotes" placeholder="Catatan (opsional)" class="border rounded-xl px-3 py-2 text-xs flex-1">
+                                <button onclick="addInventaris()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Tambah</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                                <h3 class="font-extrabold text-slate-800 text-sm">Daftar Inventaris</h3>
+                                <span id="invCount" class="text-[10px] font-bold text-slate-500"></span>
+                            </div>
+                            <div class="overflow-x-auto"><table class="w-full text-xs">
+                                <thead><tr class="text-left text-slate-400 border-b border-slate-100">
+                                    <th class="px-4 py-2.5 font-semibold">Properti</th><th class="px-4 py-2.5 font-semibold">Lokasi</th>
+                                    <th class="px-4 py-2.5 font-semibold">Barang</th><th class="px-4 py-2.5 font-semibold">Kategori</th>
+                                    <th class="px-4 py-2.5 font-semibold">Qty</th><th class="px-4 py-2.5 font-semibold">Kondisi</th>
+                                    <th class="px-4 py-2.5 font-semibold">Catatan</th><th></th>
+                                </tr></thead>
+                                <tbody id="inventarisTableBody"></tbody>
+                            </table></div>
+                        </div>
+                    </div>
+
+                    <!-- PANE: STOK & RIWAYAT -->
+                    <div id="opane-stok" class="op-pane hidden space-y-4">
+                        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Tambah Barang Habis Pakai</h3>
+                            <div class="grid sm:grid-cols-5 gap-3">
+                                <input id="stkFormName" placeholder="Nama barang" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="stkFormUnit" placeholder="Satuan (botol/lt/pcs)" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="stkFormQty" type="number" min="0" value="0" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="stkFormMin" type="number" min="0" value="5" placeholder="Batas minimum" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="stkFormLoc" placeholder="Lokasi simpan" class="border rounded-xl px-3 py-2 text-xs w-full">
+                            </div>
+                            <div class="flex justify-end"><button onclick="addStok()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Tambah Stok</button></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                                <h3 class="font-extrabold text-slate-800 text-sm">Stok &amp; Batas Minimum</h3>
+                                <span id="stkLowCount" class="text-[10px] font-bold text-rose-600"></span>
+                            </div>
+                            <div class="overflow-x-auto"><table class="w-full text-xs">
+                                <thead><tr class="text-left text-slate-400 border-b border-slate-100">
+                                    <th class="px-4 py-2.5 font-semibold">Barang</th><th class="px-4 py-2.5 font-semibold">Satuan</th>
+                                    <th class="px-4 py-2.5 font-semibold">Stok</th><th class="px-4 py-2.5 font-semibold">Min</th>
+                                    <th class="px-4 py-2.5 font-semibold">Lokasi</th><th class="px-4 py-2.5 font-semibold">Status</th><th></th>
+                                </tr></thead>
+                                <tbody id="stokTableBody"></tbody>
+                            </table></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Catat Mutasi (Masuk / Keluar / Pindah)</h3>
+                            <div class="grid sm:grid-cols-5 gap-3">
+                                <select id="mutFormItem" class="border rounded-xl px-3 py-2 text-xs w-full"></select>
+                                <select id="mutFormType" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                    <option value="MASUK">Masuk</option><option value="KELUAR">Keluar</option><option value="PINDAH">Pindah</option>
+                                </select>
+                                <input id="mutFormQty" type="number" min="1" value="1" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="mutFormTo" placeholder="Tujuan / Dari" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="mutFormNote" placeholder="Catatan" class="border rounded-xl px-3 py-2 text-xs w-full">
+                            </div>
+                            <div class="flex justify-end"><button onclick="addMutasi()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Catat Mutasi</button></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-100"><h3 class="font-extrabold text-slate-800 text-sm">Riwayat Barang Masuk / Keluar / Pindah</h3></div>
+                            <div class="overflow-x-auto"><table class="w-full text-xs">
+                                <thead><tr class="text-left text-slate-400 border-b border-slate-100">
+                                    <th class="px-4 py-2.5 font-semibold">Waktu</th><th class="px-4 py-2.5 font-semibold">Jenis</th>
+                                    <th class="px-4 py-2.5 font-semibold">Barang</th><th class="px-4 py-2.5 font-semibold">Qty</th>
+                                    <th class="px-4 py-2.5 font-semibold">Dari</th><th class="px-4 py-2.5 font-semibold">Ke</th>
+                                    <th class="px-4 py-2.5 font-semibold">Catatan</th>
+                                </tr></thead>
+                                <tbody id="mutasiTableBody"></tbody>
+                            </table></div>
+                        </div>
+                    </div>
+
+                    <!-- PANE: PERAWATAN & PERBAIKAN -->
+                    <div id="opane-perawatan" class="op-pane hidden space-y-4">
+                        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Jadwal Perawatan Alat / Fasilitas</h3>
+                            <div class="grid sm:grid-cols-4 gap-3">
+                                <select id="pwtFormProperty" class="border rounded-xl px-3 py-2 text-xs w-full"></select>
+                                <input id="pwtFormAsset" placeholder="Aset (mis. AC 101)" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <select id="pwtFormFreq" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                    <option value="MINGGUAN">Mingguan</option><option value="BULANAN">Bulanan</option><option value="3 BULANAN">3 Bulanan</option><option value="TAHUNAN">Tahunan</option>
+                                </select>
+                                <input id="pwtFormNext" type="date" class="border rounded-xl px-3 py-2 text-xs w-full">
+                            </div>
+                            <div class="flex justify-end"><button onclick="addPerawatan()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Tambah Jadwal</button></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-100"><h3 class="font-extrabold text-slate-800 text-sm">Jadwal Terjadwal</h3></div>
+                            <div class="overflow-x-auto"><table class="w-full text-xs">
+                                <thead><tr class="text-left text-slate-400 border-b border-slate-100">
+                                    <th class="px-4 py-2.5 font-semibold">Aset</th><th class="px-4 py-2.5 font-semibold">Properti</th>
+                                    <th class="px-4 py-2.5 font-semibold">Frekuensi</th><th class="px-4 py-2.5 font-semibold">Jatuh Berikutnya</th>
+                                    <th class="px-4 py-2.5 font-semibold">Status</th><th></th>
+                                </tr></thead>
+                                <tbody id="perawatanTableBody"></tbody>
+                            </table></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Catat Perbaikan</h3>
+                            <div class="grid sm:grid-cols-4 gap-3">
+                                <input id="prbFormDate" type="date" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="prbFormAsset" placeholder="Aset / fasilitas" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="prbFormDesc" placeholder="Deskripsi kerusakan" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="prbFormCost" type="number" min="0" value="0" class="border rounded-xl px-3 py-2 text-xs w-full">
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <label class="flex items-center gap-2 text-xs text-slate-500 border rounded-xl px-3 py-2 cursor-pointer">
+                                    <i class="fa-solid fa-camera"></i> Foto (opsional)
+                                    <input id="prbFormPhoto" type="file" accept="image/*" class="hidden" onchange="readRepairPhoto(this)">
+                                </label>
+                                <span id="prbPhotoName" class="text-[10px] text-slate-400"></span>
+                                <select id="prbFormStatus" class="border rounded-xl px-3 py-2 text-xs w-full sm:ml-auto sm:max-w-[160px]">
+                                    <option>PERBAIKAN</option><option>SELESAI</option>
+                                </select>
+                                <button onclick="addPerbaikan()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Simpan Perbaikan</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                                <h3 class="font-extrabold text-slate-800 text-sm">Riwayat Perbaikan</h3>
+                                <span id="prbTotal" class="text-[10px] font-bold text-slate-500"></span>
+                            </div>
+                            <div class="overflow-x-auto"><table class="w-full text-xs">
+                                <thead><tr class="text-left text-slate-400 border-b border-slate-100">
+                                    <th class="px-4 py-2.5 font-semibold">Tanggal</th><th class="px-4 py-2.5 font-semibold">Aset</th>
+                                    <th class="px-4 py-2.5 font-semibold">Deskripsi</th><th class="px-4 py-2.5 font-semibold">Biaya</th>
+                                    <th class="px-4 py-2.5 font-semibold">Status</th><th class="px-4 py-2.5 font-semibold">Foto</th><th></th>
+                                </tr></thead>
+                                <tbody id="perbaikanTableBody"></tbody>
+                            </table></div>
+                        </div>
+                    </div>
+
+                    <!-- PANE: KONTRAK & TAGIHAN BERTAHAP -->
+                    <div id="opane-kontrak" class="op-pane hidden space-y-4">
+                        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Tambah Kontrak Sewa</h3>
+                            <div class="grid sm:grid-cols-5 gap-3">
+                                <input id="ktkFormTenant" placeholder="Nama penghuni" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="ktkFormRoom" placeholder="Kamar" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="ktkFormStart" type="date" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="ktkFormEnd" type="date" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="ktkFormRemind" type="number" min="0" value="30" placeholder="Ingatkan H-..." class="border rounded-xl px-3 py-2 text-xs w-full">
+                            </div>
+                            <div class="flex justify-end"><button onclick="addKontrak()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Tambah Kontrak</button></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                                <h3 class="font-extrabold text-slate-800 text-sm">Kontrak &amp; Akhir Masa Sewa</h3>
+                                <span id="ktkAlert" class="text-[10px] font-bold text-rose-600"></span>
+                            </div>
+                            <div class="overflow-x-auto"><table class="w-full text-xs">
+                                <thead><tr class="text-left text-slate-400 border-b border-slate-100">
+                                    <th class="px-4 py-2.5 font-semibold">Penghuni</th><th class="px-4 py-2.5 font-semibold">Kamar</th>
+                                    <th class="px-4 py-2.5 font-semibold">Mulai</th><th class="px-4 py-2.5 font-semibold">Akhir</th>
+                                    <th class="px-4 py-2.5 font-semibold">Sisa</th><th class="px-4 py-2.5 font-semibold">Status</th><th></th>
+                                </tr></thead>
+                                <tbody id="kontrakTableBody"></tbody>
+                            </table></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Buat Tagihan Bertahap</h3>
+                            <div class="grid sm:grid-cols-5 gap-3">
+                                <input id="tgbFormTenant" placeholder="Nama penghuni" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="tgbFormPhone" placeholder="No. WA" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="tgbFormPeriod" placeholder="Periode (mis. Oktober 2026)" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="tgbFormTotal" type="number" min="0" placeholder="Total tagihan" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="tgbFormStages" type="number" min="2" max="6" value="3" placeholder="Jumlah tahap" class="border rounded-xl px-3 py-2 text-xs w-full">
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] text-slate-400">Tahap dibagi rata otomatis.</span>
+                                <button onclick="addTagihanBertahap()" class="ml-auto px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Buat Tagihan Bertahap</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-100"><h3 class="font-extrabold text-slate-800 text-sm">Tagihan Bertahap / Cicilan</h3></div>
+                            <div id="tagihanBertahapList" class="divide-y divide-slate-100"></div>
+                        </div>
+                    </div>
+
+                    <!-- PANE: METER & LAPORAN -->
+                    <div id="opane-meter" class="op-pane hidden space-y-4">
+                        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Catat Meter Listrik / Air</h3>
+                            <div class="grid sm:grid-cols-5 gap-3">
+                                <select id="mtrFormType" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                    <option value="LISTRIK">Listrik</option><option value="AIR">Air</option>
+                                </select>
+                                <input id="mtrFormRef" placeholder="Kamar / area (mis. 101)" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="mtrFormDate" type="date" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="mtrFormReading" type="number" min="0" placeholder="Angka meter sekarang" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input id="mtrFormRate" type="number" min="0" placeholder="Tarif" class="border rounded-xl px-3 py-2 text-xs w-full">
+                            </div>
+                            <div class="flex justify-end"><button onclick="addMeter()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Simpan Catatan Meter</button></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-100"><h3 class="font-extrabold text-slate-800 text-sm">Riwayat Meter Berkala</h3></div>
+                            <div class="overflow-x-auto"><table class="w-full text-xs">
+                                <thead><tr class="text-left text-slate-400 border-b border-slate-100">
+                                    <th class="px-4 py-2.5 font-semibold">Jenis</th><th class="px-4 py-2.5 font-semibold">Lokasi</th>
+                                    <th class="px-4 py-2.5 font-semibold">Tanggal</th><th class="px-4 py-2.5 font-semibold">Meter</th>
+                                    <th class="px-4 py-2.5 font-semibold">Pemakaian</th><th class="px-4 py-2.5 font-semibold">Biaya</th><th></th>
+                                </tr></thead>
+                                <tbody id="meterTableBody"></tbody>
+                            </table></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+                            <h3 class="font-extrabold text-slate-800 text-sm">Laporan Inventaris &amp; Biaya Operasional</h3>
+                            <div id="laporanStats" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+                            <div class="grid lg:grid-cols-2 gap-4">
+                                <div class="border border-slate-200 rounded-xl p-3">
+                                    <h4 class="font-bold text-slate-700 text-xs mb-2">Ringkasan Inventaris per Properti</h4>
+                                    <div id="laporanInventaris" class="space-y-1.5 text-[11px] text-slate-600"></div>
+                                </div>
+                                <div class="border border-slate-200 rounded-xl p-3">
+                                    <h4 class="font-bold text-slate-700 text-xs mb-2">Pemakaian Meter (Periode Terakhir)</h4>
+                                    <div id="laporanMeter" class="space-y-1.5 text-[11px] text-slate-600"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
             </main>
 
             <!-- Mobile Bottom Navigation -->
@@ -1979,6 +2242,10 @@
                 <button onclick="switchTab('reminders')" id="mnav-reminders" class="mnav-btn flex flex-col items-center py-1 px-3 text-slate-400">
                     <i class="fa-brands fa-whatsapp text-base"></i>
                     <span class="text-[10px] font-medium mt-0.5">WA Outbox</span>
+                </button>
+                <button onclick="switchTab('operasional')" id="mnav-operasional" class="mnav-btn flex flex-col items-center py-1 px-3 text-slate-400">
+                    <i class="fa-solid fa-boxes-stacked text-base"></i>
+                    <span class="text-[10px] font-medium mt-0.5">Operasional</span>
                 </button>
             </nav>
         </div>
@@ -2532,6 +2799,36 @@
                 { id: 'C1', roomNumber: '105', title: 'Pengecatan ulang & perbaikan plafon rembes', desc: 'Sedang dikerjakan tukang, target selesai 2 hari lagi.', priority: 'Mendesak', status: 'IN_PROGRESS', date: '2026-10-28' },
                 { id: 'C2', roomNumber: '104', title: 'Freon AC kurang dingin', desc: 'Jadwal teknisi cuci AC hari Sabtu pagi.', priority: 'Normal', status: 'REPORTED', date: '2026-10-29' },
                 { id: 'C3', roomNumber: '201', title: 'Ganti lampu kamar mandi', desc: 'Sudah diganti dengan LED Philips 9W.', priority: 'Rendah', status: 'RESOLVED', date: '2026-10-22' }
+            ],
+            inventaris: [
+                { id: 'INV-1', propertyId: 'PROP-1', roomRef: '101', item: 'AC Split 1/2 PK Panasonic', category: 'Elektronik', qty: 1, condition: 'Baik', notes: 'Servis cuci filter terakhir 2026-10-15' },
+                { id: 'INV-2', propertyId: 'PROP-1', roomRef: 'Umum', item: 'Kamera CCTV Dome 4MP', category: 'Keamanan', qty: 6, condition: 'Baik', notes: 'Perekaman 24 jam' },
+                { id: 'INV-3', propertyId: 'PROP-2', roomRef: 'A-01', item: 'Springbed Queen + Matras', category: 'Furnitur', qty: 1, condition: 'Baik', notes: '' }
+            ],
+            stok: [
+                { id: 'STK-1', name: 'Sabun cuci piring', unit: 'botol', qty: 8, minStock: 4, location: 'Gudang utama' },
+                { id: 'STK-2', name: 'Pemutih pakaian', unit: 'liter', qty: 2, minStock: 5, location: 'Gudang utama' },
+                { id: 'STK-3', name: 'Air mineral galon', unit: 'galon', qty: 12, minStock: 6, location: 'Dapur bersama' }
+            ],
+            stokMutasi: [
+                { id: 'MUT-1', ts: '2026-10-20T08:00', type: 'MASUK', itemId: 'STK-1', qty: 12, from: 'Supplier grosir', to: 'Gudang utama', note: 'Pembelian bulanan' }
+            ],
+            perawatan: [
+                { id: 'PWT-1', asset: 'AC kamar 101', propertyId: 'PROP-1', frequency: 'BULANAN', nextDate: '2026-11-15', lastDate: '2026-10-15', notes: '' },
+                { id: 'PWT-2', asset: 'Pompa air & tandon', propertyId: 'PROP-1', frequency: '3 BULANAN', nextDate: '2027-01-05', lastDate: '2026-10-05', notes: '' }
+            ],
+            perbaikan: [
+                { id: 'PRB-1', date: '2026-10-18', asset: 'Pompa air', desc: 'Ganti bantalan & seal bocor', cost: 250000, photo: '', status: 'SELESAI', propertyId: 'PROP-1' }
+            ],
+            kontrak: [
+                { id: 'KTK-1', tenantName: 'Fajar Nugroho', roomNumber: 'A-01', startDate: '2026-07-20', endDate: '2027-07-19', remindDays: 30, notified: false }
+            ],
+            tagihanBertahap: [
+                { id: 'TGB-1', tenantName: 'Nadia Safitri', phone: '085712345678', period: 'Oktober 2026', total: 1845000, stages: [ { n: 1, due: '2026-10-05', amount: 700000, status: 'LUNAS' }, { n: 2, due: '2026-10-15', amount: 600000, status: 'LUNAS' }, { n: 3, due: '2026-10-25', amount: 545000, status: 'BELUM' } ] }
+            ],
+            meter: [
+                { id: 'MTR-1', type: 'LISTRIK', ref: '101', date: '2026-10-01', reading: 1420, usage: 118, rate: 1600, cost: 188800 },
+                { id: 'MTR-2', type: 'AIR', ref: 'Umum', date: '2026-10-01', reading: 855, usage: 42, rate: 7500, cost: 315000 }
             ]
         };
 
@@ -2546,6 +2843,14 @@
                     if (!parsed.expenses) parsed.expenses = defaultData.expenses;
                     if (!parsed.plugins) parsed.plugins = defaultData.plugins;
                     if (!parsed.waLogs) parsed.waLogs = defaultData.waLogs;
+                    if (!parsed.inventaris) parsed.inventaris = defaultData.inventaris;
+                    if (!parsed.stok) parsed.stok = defaultData.stok;
+                    if (!parsed.stokMutasi) parsed.stokMutasi = defaultData.stokMutasi;
+                    if (!parsed.perawatan) parsed.perawatan = defaultData.perawatan;
+                    if (!parsed.perbaikan) parsed.perbaikan = defaultData.perbaikan;
+                    if (!parsed.kontrak) parsed.kontrak = defaultData.kontrak;
+                    if (!parsed.tagihanBertahap) parsed.tagihanBertahap = defaultData.tagihanBertahap;
+                    if (!parsed.meter) parsed.meter = defaultData.meter;
                     return parsed;
                 }
             } catch (e) {
@@ -2923,7 +3228,8 @@
                 pengeluaran: ['Buku Arus Kas & Pengeluaran', 'Pantau biaya operasional bulanan untuk menghitung laba bersih (Net Profit) properti Anda'],
                 keluhan: ['Maintenance Ticket Workflow', 'Alur kerja tiket perbaikan: Reported (Dilaporkan) → In-Progress (Dikerjakan) → Resolved (Selesai)'],
                 plugins: ['Plugins Registry & Spatie RBAC', 'Kelola ekstensi modular dan simulasi hak akses pengguna (Owner, Admin, Staff)'],
-                pengaturan: ['Pengaturan', 'Sesuaikan profil kuitansi kos, tarif kWh listrik, dan unduh cadangan data JSON']
+                pengaturan: ['Pengaturan', 'Sesuaikan profil kuitansi kos, tarif kWh listrik, dan unduh cadangan data JSON'],
+                operasional: ['Operasional & Inventaris', 'Inventaris properti/kamar, stok habis pakai, perawatan & perbaikan, kontrak & tagihan bertahap, meter listrik/air, dan laporan biaya operasional']
             };
             if (titles[tabId]) {
                 const pTitle = document.getElementById('pageTitle');
@@ -2956,6 +3262,7 @@
             renderBills();
             renderExpenses();
             renderComplaints();
+            renderOperasional();
             renderPluginsAndLogs();
             populateSettingsForm();
         }
@@ -4226,6 +4533,565 @@
         function deleteComplaint(id) {
             appData.complaints = appData.complaints.filter(c => c.id !== id);
             saveData();
+        }
+
+        // ==================== OPERASIONAL & INVENTARIS ====================
+        let repairPhotoData = '';
+
+        function switchOper(pane) {
+            document.querySelectorAll('.op-pane').forEach(el => el.classList.add('hidden'));
+            const t = document.getElementById('opane-' + pane);
+            if (t) t.classList.remove('hidden');
+            document.querySelectorAll('.op-btn').forEach(b => {
+                b.className = 'op-btn px-3.5 py-2 rounded-xl text-xs font-semibold border transition border-slate-200 text-slate-500 hover:bg-slate-50';
+            });
+            const a = document.getElementById('op-nav-' + pane);
+            if (a) a.className = 'op-btn px-3.5 py-2 rounded-xl text-xs font-bold border transition border-emerald-600 bg-emerald-600 text-white shadow-md shadow-emerald-600/20';
+        }
+
+        function fillOpPropertySelects() {
+            const opts = (appData.properties || []).map(p => `<option value="${escapePropertyText(p.id)}">${escapePropertyText(p.name)}</option>`).join('');
+            ['invFormProperty', 'pwtFormProperty'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = opts;
+            });
+        }
+
+        function lowStockItems() {
+            return (appData.stok || []).filter(s => Number(s.qty || 0) <= Number(s.minStock || 0));
+        }
+
+        function contractAlerts() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return (appData.kontrak || []).filter(k => {
+                if (!k.endDate) return false;
+                const end = new Date(k.endDate + 'T00:00:00');
+                const ms = end - today;
+                const days = ms / 86400000;
+                return days >= -1 && days <= Number(k.remindDays || 30);
+            });
+        }
+
+        function renderOperasional() {
+            fillOpPropertySelects();
+            renderInventaris();
+            renderStok();
+            renderMutasi();
+            renderPerawatan();
+            renderPerbaikan();
+            renderKontrak();
+            renderTagihanBertahap();
+            renderMeter();
+            renderLaporan();
+            renderOperasionalAlert();
+        }
+
+        function renderOperasionalAlert() {
+            const low = lowStockItems();
+            const contracts = contractAlerts();
+            const el = document.getElementById('op-alert');
+            const badge = document.getElementById('badge-operasional');
+            if (!el) return;
+            const parts = [];
+            if (low.length) parts.push(`⚠️ <b>${low.length}</b> barang stok menipis (di bawah batas minimum).`);
+            if (contracts.length) parts.push(`📅 <b>${contracts.length}</b> kontrak segera berakhir.`);
+            if (parts.length) {
+                el.classList.remove('hidden');
+                el.className = 'rounded-xl border px-4 py-3 text-xs space-y-1 bg-amber-50 border-amber-200 text-amber-800';
+                el.innerHTML = parts.join('<div class="pt-1"></div>');
+                badge.classList.remove('hidden');
+                badge.textContent = low.length + contracts.length;
+            } else {
+                el.classList.add('hidden');
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderInventaris() {
+            const tbody = document.getElementById('inventarisTableBody');
+            const count = document.getElementById('invCount');
+            const list = appData.inventaris || [];
+            if (count) count.textContent = list.length + ' aset';
+            if (!tbody) return;
+            if (!list.length) {
+                tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400 text-xs">Belum ada aset tercatat.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = list.map(x => `
+                <tr class="border-b border-slate-50 hover:bg-slate-50/60">
+                    <td class="px-4 py-3 text-slate-600">${escapePropertyText(getPropertyName(x.propertyId))}</td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">${escapePropertyText(x.roomRef)}</td>
+                    <td class="px-4 py-3 text-slate-800">${escapePropertyText(x.item)}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">${escapePropertyText(x.category)}</span></td>
+                    <td class="px-4 py-3 text-center font-bold text-slate-700">${escapePropertyText(x.qty)}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-md ${x.condition === 'Baik' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'} text-[10px] font-bold">${escapePropertyText(x.condition)}</span></td>
+                    <td class="px-4 py-3 text-slate-500 max-w-[220px] truncate">${escapePropertyText(x.notes || '')}</td>
+                    <td class="px-4 py-3 text-right"><button onclick="deleteInventaris(${safeCallArg(x.id)})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`).join('');
+        }
+
+        function addInventaris() {
+            const item = document.getElementById('invFormItem').value.trim();
+            if (!item) { showToast('Nama barang wajib diisi.', 'warning'); return; }
+            appData.inventaris.unshift({
+                id: 'INV-' + Date.now(),
+                propertyId: document.getElementById('invFormProperty').value,
+                roomRef: document.getElementById('invFormRoom').value.trim() || 'Umum',
+                item,
+                category: document.getElementById('invFormCategory').value,
+                qty: Number(document.getElementById('invFormQty').value) || 1,
+                condition: document.getElementById('invFormCondition').value,
+                notes: document.getElementById('invFormNotes').value.trim()
+            });
+            document.getElementById('invFormItem').value = '';
+            document.getElementById('invFormRoom').value = '';
+            document.getElementById('invFormNotes').value = '';
+            showToast('Aset inventaris ditambahkan.');
+            saveData();
+        }
+
+        function deleteInventaris(id) {
+            appData.inventaris = appData.inventaris.filter(x => x.id !== id);
+            saveData();
+        }
+
+        function renderStok() {
+            const tbody = document.getElementById('stokTableBody');
+            const lowCount = document.getElementById('stkLowCount');
+            const itemSel = document.getElementById('mutFormItem');
+            const list = appData.stok || [];
+            const low = lowStockItems();
+            if (lowCount) lowCount.textContent = low.length ? low.length + ' barang menipis' : '';
+            if (itemSel) itemSel.innerHTML = list.map(s => `<option value="${escapePropertyText(s.id)}">${escapePropertyText(s.name)}</option>`).join('');
+            if (!tbody) return;
+            if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Belum ada barang stok.</td></tr>`; return; }
+            tbody.innerHTML = list.map(s => {
+                const isLow = Number(s.qty || 0) <= Number(s.minStock || 0);
+                return `
+                <tr class="border-b border-slate-50 hover:bg-slate-50/60">
+                    <td class="px-4 py-3 font-semibold text-slate-800">${escapePropertyText(s.name)}</td>
+                    <td class="px-4 py-3 text-slate-500">${escapePropertyText(s.unit)}</td>
+                    <td class="px-4 py-3 text-center font-bold ${isLow ? 'text-rose-600' : 'text-slate-700'}">${escapePropertyText(s.qty)}</td>
+                    <td class="px-4 py-3 text-center text-slate-500">${escapePropertyText(s.minStock)}</td>
+                    <td class="px-4 py-3 text-slate-600">${escapePropertyText(s.location)}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${isLow ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}">${isLow ? 'MENIPIS' : 'CUKUP'}</span></td>
+                    <td class="px-4 py-3 text-right"><button onclick="deleteStok(${safeCallArg(s.id)})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`; }).join('');
+        }
+
+        function addStok() {
+            const name = document.getElementById('stkFormName').value.trim();
+            if (!name) { showToast('Nama barang wajib diisi.', 'warning'); return; }
+            appData.stok.unshift({
+                id: 'STK-' + Date.now(),
+                name,
+                unit: document.getElementById('stkFormUnit').value.trim() || 'pcs',
+                qty: Number(document.getElementById('stkFormQty').value) || 0,
+                minStock: Number(document.getElementById('stkFormMin').value) || 0,
+                location: document.getElementById('stkFormLoc').value.trim() || 'Gudang'
+            });
+            ['stkFormName', 'stkFormUnit', 'stkFormLoc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            showToast('Barang stok ditambahkan.');
+            saveData();
+        }
+
+        function deleteStok(id) {
+            appData.stok = appData.stok.filter(s => s.id !== id);
+            saveData();
+        }
+
+        function renderMutasi() {
+            const tbody = document.getElementById('mutasiTableBody');
+            const list = appData.stokMutasi || [];
+            if (!tbody) return;
+            if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Belum ada mutasi barang.</td></tr>`; return; }
+            const nameOf = id => { const s = (appData.stok || []).find(x => x.id === id); return s ? s.name : id; };
+            tbody.innerHTML = list.map(m => `
+                <tr class="border-b border-slate-50">
+                    <td class="px-4 py-3 text-slate-500">${escapePropertyText(String(m.ts).replace('T', ' '))}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${m.type === 'MASUK' ? 'bg-emerald-50 text-emerald-700' : m.type === 'KELUAR' ? 'bg-rose-50 text-rose-700' : 'bg-sky-50 text-sky-700'}">${escapePropertyText(m.type)}</span></td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">${escapePropertyText(nameOf(m.itemId))}</td>
+                    <td class="px-4 py-3 text-center font-bold text-slate-700">${escapePropertyText(m.qty)}</td>
+                    <td class="px-4 py-3 text-slate-600">${escapePropertyText(m.from || '-')}</td>
+                    <td class="px-4 py-3 text-slate-600">${escapePropertyText(m.to || '-')}</td>
+                    <td class="px-4 py-3 text-slate-500">${escapePropertyText(m.note || '')}</td>
+                </tr>`).join('');
+        }
+
+        function addMutasi() {
+            const itemId = document.getElementById('mutFormItem').value;
+            const type = document.getElementById('mutFormType').value;
+            const qty = Number(document.getElementById('mutFormQty').value) || 1;
+            const item = (appData.stok || []).find(s => s.id === itemId);
+            if (!item) { showToast('Pilih barang dahulu.', 'warning'); return; }
+            if (type === 'MASUK') { item.qty = Number(item.qty || 0) + qty; }
+            else if (type === 'KELUAR') {
+                const after = Number(item.qty || 0) - qty;
+                if (after < 0) { showToast('Stok tidak cukup untuk dikeluarkan.', 'warning'); return; }
+                item.qty = after;
+            } else if (type === 'PINDAH') {
+                const to = document.getElementById('mutFormTo').value.trim();
+                const oldLoc = item.location;
+                if (to) item.location = to;
+                appData.stokMutasi.unshift({
+                    id: 'MUT-' + Date.now(),
+                    ts: new Date().toISOString().slice(0, 16),
+                    type,
+                    itemId,
+                    qty: 0,
+                    from: oldLoc,
+                    to: to || oldLoc,
+                    note: document.getElementById('mutFormNote').value.trim()
+                });
+                document.getElementById('mutFormNote').value = '';
+                document.getElementById('mutFormTo').value = '';
+                showToast('Barang dipindahkan.');
+                saveData();
+                return;
+            }
+            appData.stokMutasi.unshift({
+                id: 'MUT-' + Date.now(),
+                ts: new Date().toISOString().slice(0, 16),
+                type,
+                itemId,
+                qty,
+                from: 'Stok',
+                to: document.getElementById('mutFormTo').value.trim() || 'Stok',
+                note: document.getElementById('mutFormNote').value.trim()
+            });
+            document.getElementById('mutFormNote').value = '';
+            document.getElementById('mutFormTo').value = '';
+            showToast('Mutasi barang dicatat.');
+            saveData();
+        }
+
+        function renderPerawatan() {
+            const tbody = document.getElementById('perawatanTableBody');
+            const list = appData.perawatan || [];
+            if (!tbody) return;
+            if (!list.length) { tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 text-xs">Belum ada jadwal perawatan.</td></tr>`; return; }
+            const today = new Date();
+            tbody.innerHTML = list.map(p => {
+                const overdue = p.nextDate && new Date(p.nextDate + 'T00:00:00') < today;
+                return `
+                <tr class="border-b border-slate-50">
+                    <td class="px-4 py-3 font-semibold text-slate-800">${escapePropertyText(p.asset)}</td>
+                    <td class="px-4 py-3 text-slate-600">${escapePropertyText(getPropertyName(p.propertyId))}</td>
+                    <td class="px-4 py-3 text-slate-500">${escapePropertyText(p.frequency)}</td>
+                    <td class="px-4 py-3 text-slate-700">${escapePropertyText(p.nextDate)}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${overdue ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}">${overdue ? 'TERLEWAT' : 'TERJADWAL'}</span></td>
+                    <td class="px-4 py-3 text-right"><button onclick="deletePerawatan(${safeCallArg(p.id)})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`; }).join('');
+        }
+
+        function addPerawatan() {
+            const asset = document.getElementById('pwtFormAsset').value.trim();
+            if (!asset) { showToast('Nama aset wajib diisi.', 'warning'); return; }
+            appData.perawatan.unshift({
+                id: 'PWT-' + Date.now(),
+                asset,
+                propertyId: document.getElementById('pwtFormProperty').value,
+                frequency: document.getElementById('pwtFormFreq').value,
+                nextDate: document.getElementById('pwtFormNext').value || '',
+                lastDate: '',
+                notes: ''
+            });
+            document.getElementById('pwtFormAsset').value = '';
+            showToast('Jadwal perawatan ditambahkan.');
+            saveData();
+        }
+
+        function deletePerawatan(id) {
+            appData.perawatan = appData.perawatan.filter(p => p.id !== id);
+            saveData();
+        }
+
+        function readRepairPhoto(input) {
+            const file = input.files && input.files[0];
+            const label = document.getElementById('prbPhotoName');
+            if (!file) return;
+            if (file.size > 1200000) { showToast('Foto maksimal 1,2MB.', 'warning'); input.value = ''; return; }
+            const reader = new FileReader();
+            reader.onload = e => { repairPhotoData = e.target.result; if (label) label.textContent = '📷 ' + file.name; };
+            reader.readAsDataURL(file);
+        }
+
+        function renderPerbaikan() {
+            const tbody = document.getElementById('perbaikanTableBody');
+            const total = document.getElementById('prbTotal');
+            const list = appData.perbaikan || [];
+            const sum = list.reduce((a, b) => a + Number(b.cost || 0), 0);
+            if (total) total.textContent = 'Total biaya: ' + formatRupiah(sum);
+            if (!tbody) return;
+            if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Belum ada catatan perbaikan.</td></tr>`; return; }
+            tbody.innerHTML = list.map(r => `
+                <tr class="border-b border-slate-50">
+                    <td class="px-4 py-3 text-slate-500">${escapePropertyText(r.date)}</td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">${escapePropertyText(r.asset)}</td>
+                    <td class="px-4 py-3 text-slate-600">${escapePropertyText(r.desc)}</td>
+                    <td class="px-4 py-3 font-extrabold text-rose-600">${formatRupiah(r.cost)}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${r.status === 'SELESAI' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">${escapePropertyText(r.status)}</span></td>
+                    <td class="px-4 py-3">${r.photo ? `<a href="${r.photo}" target="_blank" rel="noopener" class="text-sky-600 hover:underline"><i class="fa-solid fa-image"></i> Lihat</a>` : '<span class="text-slate-300">-</span>'}</td>
+                    <td class="px-4 py-3 text-right"><button onclick="deletePerbaikan(${safeCallArg(r.id)})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`).join('');
+        }
+
+        function addPerbaikan() {
+            const desc = document.getElementById('prbFormDesc').value.trim();
+            if (!desc) { showToast('Deskripsi wajib diisi.', 'warning'); return; }
+            const asset = document.getElementById('prbFormAsset').value.trim();
+            appData.perbaikan.unshift({
+                id: 'PRB-' + Date.now(),
+                date: document.getElementById('prbFormDate').value || new Date().toISOString().slice(0, 10),
+                asset: asset || 'Fasilitas Umum',
+                desc,
+                cost: Number(document.getElementById('prbFormCost').value) || 0,
+                photo: repairPhotoData,
+                status: document.getElementById('prbFormStatus').value,
+                propertyId: document.getElementById('pwtFormProperty').value
+            });
+            repairPhotoData = '';
+            const inp = document.getElementById('prbFormPhoto'); if (inp) inp.value = '';
+            const lbl = document.getElementById('prbPhotoName'); if (lbl) lbl.textContent = '';
+            ['prbFormDesc', 'prbFormAsset'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            showToast('Perbaikan dicatat.');
+            saveData();
+        }
+
+        function deletePerbaikan(id) {
+            appData.perbaikan = appData.perbaikan.filter(r => r.id !== id);
+            saveData();
+        }
+
+        function renderKontrak() {
+            const tbody = document.getElementById('kontrakTableBody');
+            const alertEl = document.getElementById('ktkAlert');
+            const list = appData.kontrak || [];
+            const alerts = contractAlerts();
+            if (alertEl) alertEl.textContent = alerts.length ? alerts.length + ' segera berakhir' : '';
+            if (!tbody) return;
+            if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Belum ada kontrak sewa.</td></tr>`; return; }
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            tbody.innerHTML = list.map(k => {
+                const end = new Date(k.endDate + 'T00:00:00');
+                const daysLeft = Math.round((end - today) / 86400000);
+                const near = daysLeft >= 0 && daysLeft <= Number(k.remindDays || 30);
+                const expired = daysLeft < 0;
+                return `
+                <tr class="border-b border-slate-50">
+                    <td class="px-4 py-3 font-semibold text-slate-800">${escapePropertyText(k.tenantName)}</td>
+                    <td class="px-4 py-3 text-slate-600">Kamar ${escapePropertyText(k.roomNumber)}</td>
+                    <td class="px-4 py-3 text-slate-500">${escapePropertyText(k.startDate)}</td>
+                    <td class="px-4 py-3 text-slate-700 font-semibold">${escapePropertyText(k.endDate)}</td>
+                    <td class="px-4 py-3 text-slate-500">${expired ? 'Lewat' : daysLeft + ' hari'}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${expired ? 'bg-rose-50 text-rose-700' : near ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}">${expired ? 'BERAKHIR' : near ? 'MENDEKAT' : 'AKTIF'}</span></td>
+                    <td class="px-4 py-3 text-right space-x-1">
+                        <button onclick="remindKontrak(${safeCallArg(k.id)})" class="text-slate-400 hover:text-emerald-600" title="Kirim pengingat WA"><i class="fa-brands fa-whatsapp"></i></button>
+                        <button onclick="deleteKontrak(${safeCallArg(k.id)})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`; }).join('');
+        }
+
+        function addKontrak() {
+            const tenant = document.getElementById('ktkFormTenant').value.trim();
+            const end = document.getElementById('ktkFormEnd').value;
+            if (!tenant) { showToast('Nama penghuni wajib diisi.', 'warning'); return; }
+            appData.kontrak.unshift({
+                id: 'KTK-' + Date.now(),
+                tenantName: tenant,
+                roomNumber: document.getElementById('ktkFormRoom').value.trim() || '-',
+                startDate: document.getElementById('ktkFormStart').value || '',
+                endDate: end || '',
+                remindDays: Number(document.getElementById('ktkFormRemind').value) || 30,
+                notified: false
+            });
+            ['ktkFormTenant', 'ktkFormRoom', 'ktkFormStart'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            showToast('Kontrak sewa ditambahkan.');
+            saveData();
+        }
+
+        function deleteKontrak(id) {
+            appData.kontrak = appData.kontrak.filter(k => k.id !== id);
+            saveData();
+        }
+
+        function remindKontrak(id) {
+            const k = (appData.kontrak || []).find(x => x.id === id);
+            if (!k) return;
+            const tenant = (appData.tenants || []).find(t => t.roomNumber === k.roomNumber);
+            const phone = tenant && tenant.phone ? tenant.phone : '';
+            const msg = `📅 *Pengingat Akhir Kontrak*\n━━━━━━━━━━━━━━━━━━━━\nKepada Yth. *${k.tenantName}*\nKontrak sewa Anda untuk Kamar ${k.roomNumber} di *${appData.settings.kostName}* akan berakhir pada *${k.endDate}*.\n\nMohon konfirmasi perpanjangan atau rencana pengosongan kamar.\n\nHormat kami,\n*${appData.settings.ownerName}* (Pengelola)`;
+            if (phone) window.open(`https://wa.me/${cleanWaNumber(phone)}?text=${encodeURIComponent(msg)}`, '_blank');
+            if (appData.waLogs) {
+                appData.waLogs.unshift({ id: 'LOG-' + Date.now(), timestamp: new Date().toLocaleString('id-ID'), type: 'PENGINGAT KONTRAK', recipient: k.tenantName + ' (' + phone + ')', summary: 'Akhir kontrak ' + k.endDate, status: 'SENT' });
+            }
+            showToast('Pengingat akhir kontrak dikirim ke WA.');
+            saveData();
+        }
+
+        function renderTagihanBertahap() {
+            const listEl = document.getElementById('tagihanBertahapList');
+            const list = appData.tagihanBertahap || [];
+            if (!listEl) return;
+            if (!list.length) { listEl.innerHTML = `<div class="px-4 py-8 text-center text-slate-400 text-xs">Belum ada tagihan bertahap.</div>`; return; }
+            listEl.innerHTML = list.map(t => {
+                const stageRows = (t.stages || []).map(st => `
+                    <div class="flex items-center justify-between py-1.5 text-[11px]">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${st.status === 'LUNAS' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${st.n}</span>
+                            <span class="text-slate-600">Jatuh tempo ${escapePropertyText(st.due)}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-700">${formatRupiah(st.amount)}</span>
+                            ${st.status === 'LUNAS'
+                                ? '<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[9px] font-bold">LUNAS</span>'
+                                : `<button onclick="markStagePaid('${escapePropertyText(t.id)}',${st.n})" class="px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-bold">Tandai Lunas</button>
+                                   <button onclick="remindStage('${escapePropertyText(t.id)}',${st.n})" title="Pengingat WA" class="text-slate-400 hover:text-emerald-600"><i class="fa-brands fa-whatsapp"></i></button>`}
+                        </div>
+                    </div>`).join('');
+                const done = (t.stages || []).filter(st => st.status === 'LUNAS').length;
+                const totalStages = (t.stages || []).length;
+                return `
+                <div class="px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 text-sm">${escapePropertyText(t.tenantName)} <span class="text-slate-400 font-medium">- ${escapePropertyText(t.period)}</span></p>
+                            <p class="text-[10px] text-slate-400">Total ${formatRupiah(t.total)} · ${done}/${totalStages} tahap lunas</p>
+                        </div>
+                        <button onclick="deleteTagihanBertahap('${escapePropertyText(t.id)}')" class="text-slate-400 hover:text-rose-600 text-xs"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div class="mt-2 space-y-1">${stageRows}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function addTagihanBertahap() {
+            const tenant = document.getElementById('tgbFormTenant').value.trim();
+            const total = Number(document.getElementById('tgbFormTotal').value) || 0;
+            const stages = Math.max(2, Math.min(6, Number(document.getElementById('tgbFormStages').value) || 3));
+            if (!tenant || total <= 0) { showToast('Nama dan total tagihan wajib diisi.', 'warning'); return; }
+            const per = Math.floor(total / stages);
+            const stagesArr = [];
+            for (let i = 1; i <= stages; i++) {
+                const isLast = i === stages;
+                stagesArr.push({ n: i, due: '', amount: isLast ? total - per * (stages - 1) : per, status: 'BELUM' });
+            }
+            appData.tagihanBertahap.unshift({
+                id: 'TGB-' + Date.now(),
+                tenantName: tenant,
+                phone: document.getElementById('tgbFormPhone').value.trim(),
+                period: document.getElementById('tgbFormPeriod').value.trim() || '-',
+                total,
+                stages: stagesArr
+            });
+            ['tgbFormTenant', 'tgbFormPhone', 'tgbFormPeriod'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            showToast('Tagihan bertahap dibuat.');
+            saveData();
+        }
+
+        function deleteTagihanBertahap(id) {
+            appData.tagihanBertahap = appData.tagihanBertahap.filter(t => t.id !== id);
+            saveData();
+        }
+
+        function markStagePaid(id, stageN) {
+            const t = (appData.tagihanBertahap || []).find(x => x.id === id);
+            if (!t) return;
+            const st = (t.stages || []).find(s => s.n === stageN);
+            if (st) st.status = 'LUNAS';
+            showToast('Tahap ditandai lunas.');
+            saveData();
+        }
+
+        function remindStage(id, stageN) {
+            const t = (appData.tagihanBertahap || []).find(x => x.id === id);
+            if (!t) return;
+            const st = (t.stages || []).find(s => s.n === stageN);
+            if (!st) return;
+            const msg = `💰 *Pengingat Cicilan Tahap ${st.n}*\n━━━━━━━━━━━━━━━━━━━━\nKepada Yth. *${t.tenantName}*\nUntuk tagihan *${t.period}* di ${appData.settings.kostName}, pembayaran tahap ${st.n} sebesar *${formatRupiah(st.amount)}* belum kami terima.\n\nPembayaran dapat ditransfer ke:\n💳 ${appData.settings.bankInfo || '-'}\n\nHormat kami,\n*${appData.settings.ownerName}* (Pengelola)`;
+            if (t.phone) window.open(`https://wa.me/${cleanWaNumber(t.phone)}?text=${encodeURIComponent(msg)}`, '_blank');
+            if (appData.waLogs) {
+                appData.waLogs.unshift({ id: 'LOG-' + Date.now(), timestamp: new Date().toLocaleString('id-ID'), type: 'PENGINGAT TAGIHAN BERTAHAP', recipient: t.tenantName + ' (' + t.phone + ')', summary: 'Tahap ' + st.n + ' - ' + formatRupiah(st.amount), status: 'SENT' });
+            }
+            showToast('Pengingat tahap dikirim ke WA.');
+            saveData();
+        }
+
+        function renderMeter() {
+            const tbody = document.getElementById('meterTableBody');
+            const list = appData.meter || [];
+            if (!tbody) return;
+            if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Belum ada catatan meter.</td></tr>`; return; }
+            tbody.innerHTML = list.map(m => `
+                <tr class="border-b border-slate-50">
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${m.type === 'LISTRIK' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700'}">${escapePropertyText(m.type)}</span></td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">${escapePropertyText(m.ref)}</td>
+                    <td class="px-4 py-3 text-slate-500">${escapePropertyText(m.date)}</td>
+                    <td class="px-4 py-3 text-slate-700">${escapePropertyText(m.reading)}</td>
+                    <td class="px-4 py-3 text-slate-600">${escapePropertyText(m.usage)}</td>
+                    <td class="px-4 py-3 font-bold text-slate-700">${formatRupiah(m.cost)}</td>
+                    <td class="px-4 py-3 text-right"><button onclick="deleteMeter(${safeCallArg(m.id)})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`).join('');
+        }
+
+        function addMeter() {
+            const reading = Number(document.getElementById('mtrFormReading').value);
+            const type = document.getElementById('mtrFormType').value;
+            const ref = document.getElementById('mtrFormRef').value.trim() || 'Umum';
+            if (!reading) { showToast('Angka meter wajib diisi.', 'warning'); return; }
+            const prev = (appData.meter || []).filter(m => m.type === type && m.ref === ref).sort((a, b) => b.date.localeCompare(a.date))[0];
+            const usage = prev ? Math.max(0, reading - Number(prev.reading)) : 0;
+            const rate = Number(document.getElementById('mtrFormRate').value) || (type === 'LISTRIK' ? Number(appData.settings.kwhRate || 1600) : 7500);
+            appData.meter.unshift({
+                id: 'MTR-' + Date.now(),
+                type,
+                ref,
+                date: document.getElementById('mtrFormDate').value || new Date().toISOString().slice(0, 10),
+                reading,
+                usage,
+                rate,
+                cost: usage * rate
+            });
+            document.getElementById('mtrFormReading').value = '';
+            if (prev) document.getElementById('mtrFormRate').value = rate;
+            showToast('Catatan meter disimpan.');
+            saveData();
+        }
+
+        function deleteMeter(id) {
+            appData.meter = appData.meter.filter(m => m.id !== id);
+            saveData();
+        }
+
+        function renderLaporan() {
+            const stats = document.getElementById('laporanStats');
+            const invEl = document.getElementById('laporanInventaris');
+            const meterEl = document.getElementById('laporanMeter');
+            if (stats) {
+                const assetCount = (appData.inventaris || []).length;
+                const stockCount = (appData.stok || []).length;
+                const lowCount = lowStockItems().length;
+                const repairCost = (appData.perbaikan || []).reduce((a, b) => a + Number(b.cost || 0), 0);
+                const expenseTotal = (appData.expenses || []).reduce((a, b) => a + Number(b.amount || 0), 0);
+                const card = (label, value, cls) => `<div class="rounded-xl border border-slate-200 p-3 text-center"><p class="text-[9px] font-bold uppercase tracking-wide text-slate-400">${label}</p><p class="mt-1 ${cls}">${value}</p></div>`;
+                stats.innerHTML = card('Aset Inventaris', assetCount, 'text-xl font-black text-slate-800') +
+                    card('Barang Stok', stockCount, 'text-xl font-black text-slate-800') +
+                    card('Stok Menipis', lowCount, `text-xl font-black ${lowCount ? 'text-rose-600' : 'text-emerald-600'}`) +
+                    card('Biaya Perbaikan', formatRupiah(repairCost), 'text-sm font-black text-slate-800') +
+                    card('Pengeluaran Operasional', formatRupiah(expenseTotal), 'text-sm font-black text-slate-800');
+            }
+            if (invEl) {
+                const byProp = {};
+                (appData.inventaris || []).forEach(x => { byProp[x.propertyId] = (byProp[x.propertyId] || 0) + 1; });
+                invEl.innerHTML = Object.keys(byProp).length ? Object.keys(byProp).map(pid => `
+                    <div class="flex items-center justify-between"><span>${escapePropertyText(getPropertyName(pid))}</span><span class="font-bold text-slate-700">${byProp[pid]} aset</span></div>`).join('') : '<p class="text-slate-400">Belum ada data.</p>';
+            }
+            if (meterEl) {
+                const meterRows = (appData.meter || []).slice(0, 4).map(m => `
+                    <div class="flex items-center justify-between"><span class="text-slate-500">${escapePropertyText(m.type)} · ${escapePropertyText(m.ref)} (${escapePropertyText(m.date)})</span><span class="font-bold text-slate-700">${escapePropertyText(m.usage)} unit · ${formatRupiah(m.cost)}</span></div>`).join('');
+                meterEl.innerHTML = meterRows || '<p class="text-slate-400">Belum ada data.</p>';
+            }
         }
 
         // ==================== 7. PLUGINS & RBAC ====================
