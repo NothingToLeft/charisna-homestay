@@ -2,11 +2,12 @@
 
 ## Cloud isolation
 
-Firestore owner data is stored under `users/{uid}/...`. Security Rules permit the owner UID to access its subtree. Active cleaners can read only their assigned tasks and their own cleaning photo records. The Charisna Google account also holds `Cloud Datastore User` IAM access for the private Apps Script archive. IAM bypasses client Security Rules and can read/write the whole Firestore database; protect that account with two-step verification.
+Firestore owner data is stored under `users/{uid}/...`. Security Rules authorize by UID: the signed-in user owns the subtree at their own UID. Active cleaners can read only their assigned tasks and their own cleaning photo records. The Charisna Google account also holds `Cloud Datastore User` IAM access for the private Apps Script archive. IAM bypasses client Security Rules and can read/write the whole Firestore database; protect that account with two-step verification.
 
 ## Credentials
 
 - Firebase Web API keys are public configuration identifiers. Authorization depends on Firebase Authentication, Security Rules, and IAM. The key is API restricted in Google Cloud Console; review its allowed API list before any change.
+- The client no longer hardcodes the owner email for authorization. Role resolution reads Firestore (user UID vs. the `staff` collection), and Security Rules enforce access by UID. No owner email constant ships in the published client.
 - Do not commit service-account JSON, keystores, passwords, or private tokens.
 - Runtime Firebase config is stored locally in the browser/WebView profile.
 - Firebase Authentication manages the password and persistent session.

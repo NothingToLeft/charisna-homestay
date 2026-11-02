@@ -1,6 +1,6 @@
 # Owner dan petugas kebersihan
 
-Owner masuk dengan akun Firebase `charisna.homestay@gmail.com`. Di **Kelola Petugas Kebersihan**, owner membuat nama, username, dan PIN 4 digit. Petugas memilih **Petugas kebersihan** pada halaman depan, lalu memasukkan username dan PIN. Petugas tidak dapat mendaftar sendiri.
+Owner masuk dengan akun Firebase (email + kata sandi) pada pilihan **Login Owner**. Di **Kelola Petugas Kebersihan**, owner membuat nama, username, dan PIN 4 digit. Petugas memilih **Petugas kebersihan** pada halaman depan, lalu memasukkan username dan PIN. Petugas tidak dapat mendaftar sendiri.
 
 Owner dapat melihat PIN yang terlupa, mengganti PIN dengan memasukkan PIN lama dan baru, mengubah nama, serta menonaktifkan akun. PIN disimpan sebagai teks di dokumen Firestore `users/{ownerUid}/staffPins/{staffUid}` yang hanya dapat dibaca owner menurut `firestore.rules`. Jangan tampilkan PIN di layar bersama. Profil staf tidak menyimpan PIN. Karena PIN 4 digit hanya memiliki 10.000 kombinasi, gunakan PIN berbeda per petugas dan nonaktifkan akun yang tidak dipakai. Firebase Authentication menangani percobaan login; UI tidak mengklaim pembatasan percobaan sendiri.
 

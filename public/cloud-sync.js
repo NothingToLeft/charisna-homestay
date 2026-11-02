@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
-import { OWNER_EMAIL, staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js';
+import { staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCXu5b6BKVKYczMTIL8Nc-MuLvLQdiQXtI',
@@ -113,7 +113,7 @@ loginForm.addEventListener('submit', async (event) => {
   const pin = document.getElementById('auth-password').value;
   const email = staff ? staffEmail(username) : document.getElementById('auth-email').value.trim().toLowerCase();
   if (staff && (!email || !/^\d{4}$/.test(pin))) return showError('Isi username dan PIN 4 digit.');
-  if (!staff && email !== OWNER_EMAIL) return showError('Email pemilik tidak cocok.');
+  if (!staff && !email) return showError('Isi email pemilik.');
   loginButton.disabled = true; showError('Memeriksa akun...');
   try {
     await setPersistence(auth, browserLocalPersistence);
