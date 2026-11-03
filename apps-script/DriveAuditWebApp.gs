@@ -17,7 +17,7 @@
  * Every upload requires a valid Firebase owner ID token. Never log tokens.
  */
 
-var ROOT_FOLDER_NAME = 'Charisna Audit';
+var ROOT_FOLDER_NAME = 'Rekap Bulanan';
 
 function doPost(e) {
   try {
@@ -31,6 +31,7 @@ function doPost(e) {
 
     // 1) Excel (.xlsx) dari Spreadsheet
     var ss = SpreadsheetApp.create('Rekap ' + (payload.monthLabel || monthKey));
+    DriveApp.getFileById(ss.getId()).moveTo(getOrCreateFolder(getOrCreateFolder(charisnaRoot(), 'Sistem'), 'Proses Rekap'));
     var sheets = payload.sheets || {};
     Object.keys(sheets).forEach(function (name) {
       var rows = sheets[name];
@@ -119,7 +120,7 @@ function requireAuditOwner(idToken) {
 
 function ensureFolderChain(payload) {
   var year = String(payload.year || '');
-  var folder = getOrCreateFolder(DriveApp.getRootFolder(), ROOT_FOLDER_NAME);
+  var folder = getOrCreateFolder(charisnaRoot(), ROOT_FOLDER_NAME);
   var assetName = String(payload.assetName || 'Gabungan Semua Properti').trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 100);
   if (!assetName || assetName === '.' || assetName === '..') throw new Error('Nama properti tidak valid');
   folder = getOrCreateFolder(folder, assetName);
@@ -136,4 +137,30 @@ function getOrCreateFolder(parent, name) {
 function doGet() {
   return ContentService.createTextOutput('DriveAuditWebApp OK. Gunakan POST JSON.')
     .setMimeType(ContentService.MimeType.TEXT);
+}
+
+function charisnaRoot() {
+  return getOrCreateFolder(DriveApp.getRootFolder(), 'CHARISNA KOST');
+}
+
+// One-time organization preserves file IDs and existing sharing permissions.
+function organizeCharisnaDrive() {
+  var root = charisnaRoot();
+  var system = getOrCreateFolder(root, 'Sistem');
+  var automation = getOrCreateFolder(system, 'Otomasi');
+  var recovery = getOrCreateFolder(system, 'Pemulihan');
+  var oldFolders = DriveApp.getRootFolder().getFoldersByName('Charisna Audit');
+  while (oldFolders.hasNext()) {
+    var old = oldFolders.next();
+    old.moveTo(root);
+    old.setName(ROOT_FOLDER_NAME);
+  }
+  var names = ['CHARISNA KOST - Rekap Bulanan', 'CHARISNA KOST - Arsip Foto Kebersihan'];
+  names.forEach(function(name) {
+    var files = DriveApp.getRootFolder().getFilesByName(name);
+    while (files.hasNext()) files.next().moveTo(automation);
+  });
+  var failed = DriveApp.getRootFolder().getFilesByName('Rekap November 2026');
+  while (failed.hasNext()) failed.next().moveTo(recovery);
+  return root.getUrl();
 }
