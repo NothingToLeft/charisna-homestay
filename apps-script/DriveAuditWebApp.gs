@@ -76,8 +76,12 @@ function doPost(e) {
     var def = ss.getSheetByName('Sheet1');
     if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
 
-    var driveFile = DriveApp.getFileById(ss.getId());
-    var bytes = driveFile.getAs('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    SpreadsheetApp.flush();
+    var exportResponse = UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + encodeURIComponent(ss.getId()) + '/export?format=xlsx', {
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true
+    });
+    if (exportResponse.getResponseCode() !== 200) throw new Error('Ekspor XLSX gagal: ' + exportResponse.getResponseCode());
+    var bytes = exportResponse.getBlob();
     folder.createFile(bytes.setName('Rekap-' + monthKey + '.xlsx'));
     DriveApp.getFileById(ss.getId()).setTrashed(true); // bersihkan spreadsheet kerja
 
