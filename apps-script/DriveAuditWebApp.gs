@@ -120,6 +120,9 @@ function requireAuditOwner(idToken) {
 function ensureFolderChain(payload) {
   var year = String(payload.year || '');
   var folder = getOrCreateFolder(DriveApp.getRootFolder(), ROOT_FOLDER_NAME);
+  var assetName = String(payload.assetName || 'Gabungan Semua Properti').trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 100);
+  if (!assetName || assetName === '.' || assetName === '..') throw new Error('Nama properti tidak valid');
+  folder = getOrCreateFolder(folder, assetName);
   if (year) folder = getOrCreateFolder(folder, year);
   return getOrCreateFolder(folder, payload.monthKey || 'bulan');
 }

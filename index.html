@@ -2228,7 +2228,7 @@
                     <div id="opane-rekap" class="op-pane hidden space-y-4">
                         <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
                             <h3 class="font-extrabold text-slate-800 text-sm">Rekap Bulanan &amp; Arsip Google Drive</h3>
-                            <p class="text-[11px] text-slate-500">Agregasi data bulan berjalan → ringkasan → kartu audit PNG → unggah otomatis ke Google Drive (folder Tahun → Bulan → Excel + PNG).</p>
+                            <p class="text-[11px] text-slate-500">Agregasi data bulan berjalan → ringkasan → kartu audit PNG → unggah otomatis ke Google Drive (folder Properti → Tahun → Bulan → Excel + PNG; mengikuti Scope Properti. Data tanpa properti yang dapat dipastikan hanya masuk rekap gabungan.).</p>
                             <div class="grid sm:grid-cols-3 gap-3 items-end">
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Bulan Rekap</label>
@@ -2766,6 +2766,7 @@
     </div>
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script src="./audit-scope.js"></script>
     <script>
         const STORAGE_KEY = 'CHARISNA_HOMESTAY_ENTERPRISE_V6:' + (sessionStorage.getItem('CHARISNA_ACTIVE_UID') || 'guest');
         let currentPropertyFilter = 'ALL';
@@ -5147,37 +5148,39 @@
         function inMonthS(monthKey, d) { return typeof d === 'string' && d.indexOf(monthKey) === 0; }
 
         function collectRekapData(monthStr) {
+            const scoped = auditScopeData(appData, currentPropertyFilter);
             const monthKey = monthStr;
-            const paidBills = (appData.bills || []).filter(b => b.status === 'LUNAS' && inMonthS(monthKey, b.paidDate));
-            const unpaidBills = (appData.bills || []).filter(b => b.status !== 'LUNAS');
+            const paidBills = (scoped.bills || []).filter(b => b.status === 'LUNAS' && inMonthS(monthKey, b.paidDate));
+            const unpaidBills = (scoped.bills || []).filter(b => b.status !== 'LUNAS');
             const income = paidBills.reduce((s, b) => s + Number(b.amount || 0), 0);
-            const expList = (appData.expenses || []).filter(e => inMonthS(monthKey, e.date));
+            const expList = (scoped.expenses || []).filter(e => inMonthS(monthKey, e.date));
             const expense = expList.reduce((s, e) => s + Number(e.amount || 0), 0);
-            const prbMonth = (appData.perbaikan || []).filter(p => inMonthS(monthKey, p.date));
+            const prbMonth = (scoped.perbaikan || []).filter(p => inMonthS(monthKey, p.date));
             const maintCost = prbMonth.reduce((s, p) => s + Number(p.cost || 0), 0);
-            const meterMonth = (appData.meter || []).filter(m => inMonthS(monthKey, m.date));
+            const meterMonth = (scoped.meter || []).filter(m => inMonthS(monthKey, m.date));
             const elec = meterMonth.filter(m => m.type === 'LISTRIK').reduce((s, m) => s + Number(m.cost || 0), 0);
             const water = meterMonth.filter(m => m.type === 'AIR').reduce((s, m) => s + Number(m.cost || 0), 0);
             const elecUsage = meterMonth.filter(m => m.type === 'LISTRIK').reduce((s, m) => s + Number(m.usage || 0), 0);
             const waterUsage = meterMonth.filter(m => m.type === 'AIR').reduce((s, m) => s + Number(m.usage || 0), 0);
-            const mutasiMonth = (appData.stokMutasi || []).filter(x => inMonthS(monthKey, x.ts));
+            const mutasiMonth = (scoped.stokMutasi || []).filter(x => inMonthS(monthKey, x.ts));
             const masuk = mutasiMonth.filter(x => x.type === 'MASUK').reduce((s, x) => s + Number(x.qtyChange || 0), 0);
             const keluar = mutasiMonth.filter(x => x.type === 'KELUAR').reduce((s, x) => s + Number(x.qtyChange || 0), 0);
-            const low = lowStockItems();
+            const low = (scoped.stok || []).filter(s => Number(s.qty || 0) <= Number(s.minStock || 0));
             const isoToday = new Date().toISOString().slice(0, 10);
-            const nearContract = (appData.kontrak || []).filter(k => {
+            const nearContract = (scoped.kontrak || []).filter(k => {
                 if (!k.endDate) return false;
                 const diff = (new Date(k.endDate) - new Date(isoToday)) / 86400000;
                 return diff <= (Number(k.remindDays) || 30) && diff >= -1;
             });
-            const tenants = appData.tenants || [];
+            const tenants = scoped.tenants || [];
             const ktpVerified = tenants.filter(t => t.ktpVerified).length;
-            const tagihan = appData.tagihanBertahap || [];
+            const tagihan = scoped.tagihanBertahap || [];
             const lunasStage = tagihan.reduce((s, t) => s + (t.stages || []).filter(st => st.status === 'LUNAS').length, 0);
             const totStage = tagihan.reduce((s, t) => s + (t.stages || []).length, 0);
 
             return {
-                app: appData.settings.kostName,
+                app: scoped.settings.kostName,
+                assetName: currentPropertyFilter === 'ALL' ? 'Gabungan Semua Properti' : getPropertyName(currentPropertyFilter),
                 monthKey,
                 year: monthStr.split('-')[0],
                 monthLabel: monthLabel(monthStr),
@@ -5192,9 +5195,9 @@
                     maintenanceCost: maintCost,
                     elecUsage, waterUsage,
                     elecCost: elec, waterCost: water,
-                    stockTotal: (appData.stok || []).length,
+                    stockTotal: (scoped.stok || []).length,
                     stockLow: low.length,
-                    inventoryTotal: (appData.inventaris || []).length,
+                    inventoryTotal: (scoped.inventaris || []).length,
                     masuk, keluar,
                     billPaid: paidBills.length,
                     billUnpaid: unpaidBills.length,
@@ -5205,8 +5208,8 @@
                     'Pendapatan': paidBills.map(b => ({ Invoice: b.id, Kamar: b.roomNumber, Penghuni: b.tenantName, Periode: b.period, Jumlah: Number(b.amount || 0), Status: b.status, TanggalLunas: b.paidDate })),
                     'Pengeluaran': expList.map(e => ({ Tanggal: e.date, Kategori: e.category, Uraian: e.title, Jumlah: Number(e.amount || 0) })),
                     'Perbaikan': prbMonth.map(p => ({ Tanggal: p.date, Aset: p.asset, Deskripsi: p.desc, Biaya: Number(p.cost || 0), Status: p.status })),
-                    'Stok': (appData.stok || []).map(s => ({ Barang: s.name, Satuan: s.unit, Stok: s.qty, Minimal: s.minStock, Lokasi: s.location, Status: Number(s.qty || 0) <= Number(s.minStock || 0) ? 'MENIPIS' : 'AMAN' })),
-                    'Inventaris': (appData.inventaris || []).map(x => ({ Properti: getPropertyName(x.propertyId), Kamar: x.roomRef, Barang: x.item, Kategori: x.category, Jumlah: x.qty, Kondisi: x.condition, Catatan: x.notes || '' })),
+                    'Stok': (scoped.stok || []).map(s => ({ Barang: s.name, Satuan: s.unit, Stok: s.qty, Minimal: s.minStock, Lokasi: s.location, Status: Number(s.qty || 0) <= Number(s.minStock || 0) ? 'MENIPIS' : 'AMAN' })),
+                    'Inventaris': (scoped.inventaris || []).map(x => ({ Properti: getPropertyName(x.propertyId), Kamar: x.roomRef, Barang: x.item, Kategori: x.category, Jumlah: x.qty, Kondisi: x.condition, Catatan: x.notes || '' })),
                     'Mutasi': mutasiMonth.map(x => ({ Waktu: x.ts, Jenis: x.type, Barang: x.itemId, Jumlah: Number(x.qtyChange || 0), Dari: x.from || '', Ke: x.to || '', Catatan: x.note || '' })),
                     'Meter': meterMonth.map(m => ({ Jenis: m.type, Lokasi: m.ref, Tanggal: m.date, Pemakaian: Number(m.usage || 0), Tarif: Number(m.rate || 0), Biaya: Number(m.cost || 0) })),
                     'Penghuni': tenants.map(t => ({ Nama: t.name, NIK: t.nik, Kamar: t.roomNumber, Telepon: t.phone, KTP: t.ktpVerified ? 'OK' : 'BELUM' }))
@@ -5224,7 +5227,7 @@
             g.fillStyle = '#ffffff'; g.font = 'bold 40px sans-serif'; g.textBaseline = 'middle';
             g.fillText('REKAP BULANAN', 40, 48);
             g.font = '22px sans-serif';
-            g.fillText(`${data.app} — ${data.monthLabel}`, 40, 80);
+            g.fillText(`${data.assetName || data.app} — ${data.monthLabel}`, 40, 80);
             const s = data.summary;
             const rows = [
                 ['Pendapatan', formatRupiah(s.income)],
