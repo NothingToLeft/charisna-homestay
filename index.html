@@ -5283,18 +5283,22 @@
         async function uploadRekap() {
             const script = (appData.settings.driveScriptUrl || '').trim();
             if (!script) { showToast('Isi URL Apps Script di Pengaturan dulu', 'error'); return; }
+            if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(script)) { showToast('URL Web App tidak valid.', 'error'); return; }
             if (!window.__lastRekap) { showToast('Klik "Buat Rekap" dulu', 'error'); return; }
             const btn = document.getElementById('btnUploadRekap');
             const orig = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = 'Mengunggah…';
             try {
+                const idToken = await window.charisnaAuditToken();
                 const resp = await fetch(script, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({ ...window.__lastRekap.data, pngBase64: window.__lastRekap.png })
+                    body: JSON.stringify({ ...window.__lastRekap.data, idToken, pngBase64: window.__lastRekap.png })
                 });
                 const txt = await resp.text();
-                if (!resp.ok) throw new Error(txt.slice(0, 160));
+                if (!resp.ok) throw new Error('Server unggahan menolak permintaan.');
+                const result = JSON.parse(txt);
+                if (result.ok !== true) throw new Error(result.error || 'Unggahan belum berhasil.');
                 showToast('Rekap terunggah ke Google Drive! ✓');
             } catch (err) {
                 showToast('Gagal unggah: ' + err.message, 'error');
@@ -5483,5 +5487,3 @@
 <script>setTimeout(() => { if (!window.CHARISNA_AUTH_READY) document.getElementById("auth-error").textContent = "Login memerlukan internet untuk memuat Firebase."; }, 12000);</script>
 <script type="module" src="./cloud-sync.js?v=mobile2"></script>
 </body></html>
-
-
