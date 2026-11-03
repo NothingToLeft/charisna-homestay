@@ -92,7 +92,7 @@ export function setupOwnerManager({ db, account, firebaseConfig, onMessage }) {
     try {
       status('Memuat petugas dan tugas...');
       const [staff, tasks, photos] = await Promise.all([
-        getDocs(collection(db, 'staff')),
+        getDocs(query(collection(db, 'staff'), where('ownerUid', '==', account.uid))),
         getDocs(collection(db, 'users', account.uid, 'cleaningTasks')),
         getDocs(query(collection(db, 'cleaningPhotos'), where('ownerUid', '==', account.uid)))
       ]);

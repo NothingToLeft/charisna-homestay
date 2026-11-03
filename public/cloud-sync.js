@@ -1,3 +1,4 @@
+import { unlockVault } from './vault-ui.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
@@ -86,6 +87,8 @@ async function handleAccount(account, revision = ++authRevision) {
     sessionStorage.setItem(ACTIVE_UID_KEY, account.uid);
     location.reload(); return;
   }
+  await unlockVault(dataKey(), () => signOut(auth));
+  if (revision !== authRevision || auth.currentUser?.uid !== account.uid) { location.reload(); return; }
   gate.hidden = true;
   document.body.classList.remove('auth-locked', 'cleaner-mode');
   message(`Masuk: ${account.email}`);
@@ -137,7 +140,8 @@ const cloudDoc = () => {
 panel.querySelector('#cloud-upload').onclick = async () => {
   try {
     cloudDoc();
-    const local = localStorage.getItem(dataKey());
+    await window.charisnaVault.flush();
+    const local = JSON.stringify(window.charisnaData.snapshot());
     if (!local) throw Error('Belum ada data lokal untuk diunggah.');
     if (!confirm('Timpa data cloud dengan data lokal akun ini? Buat backup JSON dulu.')) return;
     await setDoc(cloudDoc(), { data: JSON.parse(local), updatedAt: new Date().toISOString() });
@@ -151,13 +155,29 @@ panel.querySelector('#cloud-download').onclick = async () => {
     const data = snapshot.data().data;
     if (!data?.rooms || !data?.tenants || !data?.bills) throw Error('Format data cloud tidak valid.');
     if (!confirm('Timpa data lokal akun ini dengan data cloud? Buat backup JSON dulu.')) return;
-    localStorage.setItem(dataKey(), JSON.stringify(data)); location.reload();
+    const validated = window.charisnaData.validate(data);
+    await window.charisnaVault.save(validated);
+    window.charisnaData.hydrate(validated);
+    message('Data cloud tersimpan terenkripsi pada perangkat.');
   } catch (cloudError) { message(cloudError.message); }
 };
-panel.querySelector('#cloud-logout').onclick = () => signOut(auth);
+async function logoutOwner() {
+  try { await window.charisnaVault?.flush(); await signOut(auth); }
+  catch { message('Penyimpanan belum selesai. Ekspor cadangan sebelum keluar.'); }
+}
+panel.querySelector('#cloud-logout').onclick = logoutOwner;
 const logoutButton = document.getElementById('owner-logout');
-logoutButton.onclick = () => signOut(auth);
+logoutButton.onclick = logoutOwner;
 document.getElementById('settings-account-actions').append(logoutButton);
 
 
 window.charisnaAuditToken = async () => { if (!auth.currentUser || verifiedRole !== 'OWNER') throw Error('Login owner diperlukan.'); return auth.currentUser.getIdToken(true); };
+
+const lockButton = document.createElement('button');
+lockButton.textContent = 'Kunci brankas';
+lockButton.className = 'rounded-lg bg-slate-700 px-4 py-3 text-white';
+lockButton.onclick = async () => {
+  try { await window.charisnaVault?.flush(); location.reload(); }
+  catch { message('Ekspor cadangan perubahan sebelum mengunci.'); }
+};
+document.getElementById('settings-account-actions').append(lockButton);

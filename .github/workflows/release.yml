@@ -1,85 +1,63 @@
 name: Build Release
-
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Versi rilis, contoh v1.0.4'
+        description: 'Versi sesuai package.json, contoh v1.0.5'
         required: true
         type: string
   push:
-    tags:
-      - 'v*'
-
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 env:
   RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
-
-permissions:
-  contents: write
-
 jobs:
-  create-release:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate release tag
-        run: |
-          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]] || exit 1
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" > /dev/null 2>&1 || gh release create "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" --title "CHARISNA KOST ${RELEASE_TAG}" --target "$GITHUB_SHA" --generate-notes
-
-  windows:
-    needs: create-release
-    runs-on: windows-latest
-    steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ env.RELEASE_TAG }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           package-manager-cache: false
-      - name: Install dependencies
-        run: npm ci --no-audit --no-fund
-      - name: Build Windows installer and portable package
-        run: npm run build:desktop:win
-      - name: Verify Windows packages
+      - name: Validate version
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          node -e "if ('v'+require('./package.json').version !== process.env.RELEASE_TAG) process.exit(1)"
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check && npm test && npm run build
+      - run: npm audit --audit-level=high
+  windows:
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build:desktop:win
+      - name: Verify installer and portable
         shell: pwsh
         run: |
-          $packages = @(
-            Get-ChildItem release -File -Filter *.exe |
-              Where-Object { $_.Name -notlike '*.__uninstaller.exe' }
-          )
-
-          if ($packages.Count -lt 2) {
-            Write-Host 'Isi folder release:'
-            Get-ChildItem release -File | Format-Table Name, Length
-            throw 'Installer NSIS dan portable EXE tidak ditemukan lengkap.'
-          }
-
-          $packages | Format-Table Name, Length
-      - name: Upload Windows packages directly to Release
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          Get-ChildItem release -File -Filter *.exe |
-            Where-Object { $_.Name -notlike '*.__uninstaller.exe' } |
-            ForEach-Object {
-              gh release upload $env:RELEASE_TAG $_.FullName --repo $env:GITHUB_REPOSITORY --clobber
-              if ($LASTEXITCODE -ne 0) {
-                throw "Gagal mengunggah $($_.Name) ke GitHub Release."
-              }
-            }
-
+          $packages = @(Get-ChildItem release -File -Filter *.exe | Where-Object { $_.Name -notlike '*.__uninstaller.exe' })
+          if ($packages.Count -lt 2) { throw 'Installer dan portable belum lengkap.' }
+          if ($packages.Where({ $_.Length -lt 1MB }).Count) { throw 'Paket Windows tidak valid.' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-packages
+          path: release/*.exe
+          retention-days: 7
   android:
-    needs: create-release
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ env.RELEASE_TAG }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -88,24 +66,57 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Install dependencies
-        run: npm ci --no-audit --no-fund
-      - name: Build web assets
-        run: npm run build
-      - name: Create Android project
-        run: npx cap add android
-      - name: Synchronize Capacitor
-        run: npx cap sync android
-      - name: Build Android debug APK
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: npx cap add android && npx cap sync android
+      - name: Prepare signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo 'Signing secret belum tersedia'; exit 1; }
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/charisna-release.jks"
+          node scripts/configure-android-release.mjs
+      - name: Build signed release APK
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/charisna-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           chmod +x android/gradlew
-          cd android
-          ./gradlew assembleDebug
-      - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk "CHARISNA-KOST-${RELEASE_TAG}-debug.apk"
-      - name: Verify APK
-        run: test -s "CHARISNA-KOST-${RELEASE_TAG}-debug.apk"
-      - name: Upload Android APK directly to Release
+          cd android && ./gradlew assembleRelease
+      - name: Verify APK signature
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$SIGNER" verify --verbose "$APK"
+          cp "$APK" "CHARISNA-KOST-${RELEASE_TAG}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-package
+          path: CHARISNA-KOST-*.apk
+          retention-days: 7
+      - name: Remove runner signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/charisna-release.jks"
+  draft:
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: packages
+          merge-multiple: true
+      - name: Create reviewable draft after both builds pass
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$RELEASE_TAG" "CHARISNA-KOST-${RELEASE_TAG}-debug.apk" --repo "$GITHUB_REPOSITORY" --clobber
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Rilis sudah ada. Gunakan versi baru; artefak lama tidak ditimpa.' >&2
+            exit 1
+          fi
+          cd packages
+          sha256sum *.exe *.apk > SHA256SUMS.txt
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" --title "CHARISNA KOST $RELEASE_TAG" --notes 'APK release bertanda tangan, installer Windows dan portable. Windows belum memakai sertifikat Authenticode. Cadangkan data sebelum berpindah dari APK debug karena tanda tangan berbeda. Uji perangkat fisik sebelum Publish.' *.exe *.apk SHA256SUMS.txt
