@@ -159,3 +159,5 @@ const logoutButton = document.getElementById('owner-logout');
 logoutButton.onclick = () => signOut(auth);
 document.getElementById('settings-account-actions').append(logoutButton);
 
+
+window.charisnaAuditToken = async () => { if (!auth.currentUser || verifiedRole !== 'OWNER') throw Error('Login owner diperlukan.'); return auth.currentUser.getIdToken(true); };

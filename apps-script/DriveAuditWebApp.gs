@@ -13,16 +13,18 @@
  *      - Who has access: "Anyone with link" (aplikasi memanggil via fetch).
  *   4. Salin URL Web App → tempel di Pengaturan → "URL Google Apps Script".
  *
- * Catatan keamanan: siapa pun yang punya URL dapat mengirim data dan
- * hanya akan menulis ke folder root khusus (default "Charisna Audit").
- * Ganti ROOT_FOLDER_NAME bila perlu.
+ * Set Script Property FIREBASE_API_KEY to the project's Firebase Web API key.
+ * Every upload requires a valid Firebase owner ID token. Never log tokens.
  */
 
 var ROOT_FOLDER_NAME = 'Charisna Audit';
 
 function doPost(e) {
   try {
+    if (!e || !e.postData || e.postData.contents.length > 6000000) throw new Error('Payload tidak valid atau terlalu besar');
     var payload = JSON.parse(e.postData.contents);
+    requireAuditOwner(payload.idToken);
+    if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(payload.monthKey || '') || String(payload.year) !== payload.monthKey.slice(0, 4)) throw new Error('Bulan rekap tidak valid');
     var folder = ensureFolderChain(payload);
     var monthKey = payload.monthKey || 'unknown';
     var label = monthKey + '-' + (payload.monthLabel || '');
@@ -97,6 +99,18 @@ function doPost(e) {
       error: String(err)
     })).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+function requireAuditOwner(idToken) {
+  if (typeof idToken !== 'string' || idToken.length < 100 || idToken.length > 10000) throw new Error('Login owner diperlukan');
+  var apiKey = PropertiesService.getScriptProperties().getProperty('FIREBASE_API_KEY');
+  if (!apiKey) throw new Error('Konfigurasi autentikasi server belum lengkap');
+  var response = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(apiKey), {
+    method: 'post', contentType: 'application/json', payload: JSON.stringify({ idToken: idToken }), muteHttpExceptions: true
+  });
+  if (response.getResponseCode() !== 200) throw new Error('Sesi owner tidak valid');
+  var account = JSON.parse(response.getContentText()).users;
+  if (!account || account.length !== 1 || account[0].disabled || account[0].email !== 'charisna.homestay@gmail.com') throw new Error('Akses hanya untuk owner');
 }
 
 function ensureFolderChain(payload) {
