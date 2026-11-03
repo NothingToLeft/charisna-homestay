@@ -14,6 +14,23 @@ Aplikasi manajemen kos multi-properti. [Buka pratinjau web](https://nothingtolef
 - Panel Cloud owner untuk transfer data manual dengan konfirmasi.
 - Pratinjau web otomatis lewat GitHub Pages.
 
+## Struktur Google Drive
+
+Rekap bulanan dan arsip foto disimpan dalam satu folder root `CHARISNA KOST` dengan struktur aset → tahun → bulan:
+
+```text
+CHARISNA KOST/
+├── <Aset>/                  # mis. "Kost 1", "Gabungan Semua Properti"
+│   └── <Tahun>/             # mis. 2026
+│       └── <Tahun-Bulan>/   # mis. 2026-11
+│           ├── Rekap-2026-11.xlsx
+│           ├── Audit-2026-11.png
+│           └── Kebersihan/<Tanggal>/<Petugas>/<Foto>
+└── Sistem/Otomasi, Pemulihan, Proses Rekap
+```
+
+Arsip lama dari `CHARISNA KOST/Rekap Bulanan/...` dipindah otomatis ke struktur baru tanpa menghapus atau menduplikasi file (idempotent).
+
 ## Login dan data
 
 Aplikasi menampilkan halaman login Firebase sebelum dashboard. Alamat repo masih memakai slug lama agar tautan pratinjau tetap berfungsi. Akun harus dibuat atau diaktifkan di Firebase Authentication. Reset password tersedia dari halaman login. Data lokal disimpan terpisah menurut UID akun; saat login pertama, aplikasi menawarkan menyalin data lokal dari versi lama. Login pertama memerlukan internet. Sesi yang sudah tersimpan dapat dipulihkan oleh Firebase, tetapi aset dari CDN tetap memerlukan koneksi bila belum ada dalam cache.

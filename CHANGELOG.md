@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-03
+
+- Struktur Google Drive dirapikan: rekap bulanan dan foto kebersihan kini langsung di `CHARISNA KOST/<Aset>/<Tahun>/<Tahun-Bulan>/` (lapisan "Rekap Bulanan" dihapus). Migrasi arsip lama berjalan otomatis, idempotent, tanpa menghapus atau menduplikasi file.
+- Tambah pengujian unit untuk algoritma layout folder + migrasi (`tests/drive-layout.test.js`).
+
 ## 2026-10-31
 
 - Audit keamanan: escape data pada tampilan aktif, perlindungan ekspor CSV, pembatasan foto, pembaruan dependensi dan lockfile, serta pemeriksaan CI yang lebih ketat.
