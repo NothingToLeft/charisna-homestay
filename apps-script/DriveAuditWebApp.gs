@@ -2,7 +2,7 @@
  * DriveAuditWebApp.gs
  * Web App Google Apps Script untuk menerima rekapan bulanan dari
  * aplikasi Charisna Kost lalu menyimpannya ke Google Drive:
- *   Drive / <nama root> / <Tahun> / <Tahun-Bulan> / Rekap-<Tahun-Bulan>.xlsx
+ *   Drive / <nama root> / <Aset> / <Tahun> / <Tahun-Bulan> / Rekap-<Tahun-Bulan>.xlsx
  *                                                / Audit-<Tahun-Bulan>.png
  *
  * Cara deploy:
@@ -25,6 +25,8 @@ function doPost(e) {
     var payload = JSON.parse(e.postData.contents);
     requireAuditOwner(payload.idToken);
     if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(payload.monthKey || '') || String(payload.year) !== payload.monthKey.slice(0, 4)) throw new Error('Bulan rekap tidak valid');
+    var root = charisnaRoot();
+    try { migrateLegacyLayout(root); } catch (migErr) { console.error('Migrasi layout lama gagal: ' + migErr); }
     var folder = ensureFolderChain(payload);
     var monthKey = payload.monthKey || 'unknown';
     var label = monthKey + '-' + (payload.monthLabel || '');
@@ -120,12 +122,54 @@ function requireAuditOwner(idToken) {
 
 function ensureFolderChain(payload) {
   var year = String(payload.year || '');
-  var folder = getOrCreateFolder(charisnaRoot(), ROOT_FOLDER_NAME);
   var assetName = String(payload.assetName || 'Gabungan Semua Properti').trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 100);
   if (!assetName || assetName === '.' || assetName === '..') throw new Error('Nama properti tidak valid');
-  folder = getOrCreateFolder(folder, assetName);
+  var folder = getOrCreateFolder(charisnaRoot(), assetName);
   if (year) folder = getOrCreateFolder(folder, year);
   return getOrCreateFolder(folder, payload.monthKey || 'bulan');
+}
+
+// One-time, idempotent migration for the legacy layout
+//   CHARISNA KOST/Rekap Bulanan/<asset>/<year>/<month>
+// into
+//   CHARISNA KOST/<asset>/<year>/<month>.
+// Preserves file IDs and never overwrites or duplicates files. An empty
+// legacy folder simply has nothing left to move, so re-running is safe.
+function migrateLegacyLayout(root) {
+  var it = root.getFoldersByName(ROOT_FOLDER_NAME);
+  while (it.hasNext()) {
+    var legacy = it.next();
+    var assets = legacy.getFolders();
+    while (assets.hasNext()) {
+      var asset = assets.next();
+      migrateFolderTree(asset, getOrCreateFolder(root, asset.getName()));
+    }
+  }
+}
+
+function migrateFolderTree(src, dst) {
+  var groups = src.getFolders();
+  while (groups.hasNext()) {
+    var group = groups.next();
+    var groupDst = getOrCreateFolder(dst, group.getName());
+    var months = group.getFolders();
+    while (months.hasNext()) {
+      var month = months.next();
+      migrateFilesInto(month, getOrCreateFolder(groupDst, month.getName()));
+    }
+    migrateFilesInto(group, groupDst);
+  }
+  migrateFilesInto(src, dst);
+}
+
+function migrateFilesInto(src, dst) {
+  var files = src.getFiles();
+  while (files.hasNext()) {
+    var file = files.next();
+    if (file.getParents().hasNext() && file.getParents().next().getId() !== src.getId()) continue;
+    if (dst.getFilesByName(file.getName()).hasNext()) continue; // hindari duplikat
+    file.moveTo(dst);
+  }
 }
 
 function getOrCreateFolder(parent, name) {
@@ -162,5 +206,6 @@ function organizeCharisnaDrive() {
   });
   var failed = DriveApp.getRootFolder().getFilesByName('Rekap November 2026');
   while (failed.hasNext()) failed.next().moveTo(recovery);
+  migrateLegacyLayout(root);
   return root.getUrl();
 }

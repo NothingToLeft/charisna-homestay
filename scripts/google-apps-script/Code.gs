@@ -75,8 +75,11 @@ function syncCleaningPhotos() {
         const raw = Utilities.base64Decode(field(photo, 'data'));
         if (raw.length < 3 || raw.length > 270000 || (raw[0] & 255) !== 255 || (raw[1] & 255) !== 216 || (raw[2] & 255) !== 255) throw new Error('File bukan JPEG yang valid');
         const date = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd');
+        const year = date.slice(0, 4);
+        const month = date.slice(0, 7);
+        const prop = field(task, 'property') || 'Gabungan Semua Properti';
         const root = folder(DriveApp.getRootFolder(), 'CHARISNA KOST');
-        const destination = folder(folder(folder(folder(root, 'Kebersihan'), date), field(task, 'property')), field(staff, 'username') || staffUid);
+        const destination = folder(folder(folder(folder(folder(folder(root, prop), year), month), 'Kebersihan'), date), field(staff, 'username') || staffUid);
         const filename = `${taskId}_${field(photo, 'kind')}_${photoId}.jpg`;
         const existing = destination.getFilesByName(filename);
         const file = existing.hasNext() ? existing.next() : destination.createFile(Utilities.newBlob(raw, 'image/jpeg', filename));
