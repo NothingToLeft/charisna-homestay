@@ -142,8 +142,14 @@ function migrateLegacyLayout(root) {
     var assets = legacy.getFolders();
     while (assets.hasNext()) {
       var asset = assets.next();
-      migrateFolderTree(asset, getOrCreateFolder(root, asset.getName()));
+      if (/^20\d{2}$/.test(asset.getName())) {
+        var combined = getOrCreateFolder(root, 'Gabungan Semua Properti');
+        migrateFolderTree(asset, getOrCreateFolder(combined, asset.getName()));
+      } else {
+        migrateFolderTree(asset, getOrCreateFolder(root, asset.getName()));
+      }
     }
+    migrateFilesInto(legacy, getOrCreateFolder(getOrCreateFolder(root, 'Sistem'), 'Pemulihan'));
   }
 }
 
@@ -152,12 +158,7 @@ function migrateFolderTree(src, dst) {
   while (groups.hasNext()) {
     var group = groups.next();
     var groupDst = getOrCreateFolder(dst, group.getName());
-    var months = group.getFolders();
-    while (months.hasNext()) {
-      var month = months.next();
-      migrateFilesInto(month, getOrCreateFolder(groupDst, month.getName()));
-    }
-    migrateFilesInto(group, groupDst);
+    migrateFolderTree(group, groupDst);
   }
   migrateFilesInto(src, dst);
 }
@@ -167,7 +168,12 @@ function migrateFilesInto(src, dst) {
   while (files.hasNext()) {
     var file = files.next();
     if (file.getParents().hasNext() && file.getParents().next().getId() !== src.getId()) continue;
-    if (dst.getFilesByName(file.getName()).hasNext()) continue; // hindari duplikat
+    if (dst.getFilesByName(file.getName()).hasNext()) {
+      // Preserve both distinct files and make repeated migration a no-op.
+      var name = file.getName();
+      var dot = name.lastIndexOf('.');
+      file.setName((dot > 0 ? name.slice(0, dot) : name) + ' - arsip ' + file.getId() + (dot > 0 ? name.slice(dot) : ''));
+    }
     file.moveTo(dst);
   }
 }
