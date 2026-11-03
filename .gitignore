@@ -9,3 +9,9 @@ android/app/build/
 !.env.example
 .DS_Store
 Thumbs.db
+
+.tmp/
+*.jks
+*.keystore
+*.dpapi
+*-debug.log

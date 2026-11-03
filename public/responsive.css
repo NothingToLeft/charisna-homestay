@@ -26,3 +26,12 @@ body > div[id$="Modal"] > div { max-height: calc(100dvh - 32px); overflow-y: aut
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+.vault-dialog { width: min(92vw, 440px); max-height: 90dvh; overflow: auto; border: 0; border-radius: 18px; padding: 24px; color: #172033; }
+.vault-dialog::backdrop { background: #0f172acc; }
+.vault-dialog h2 { font-size: 20px; font-weight: 700; }
+.vault-dialog p { margin: 12px 0; line-height: 1.5; }
+.vault-dialog label { display: block; margin: 12px 0; }
+.vault-dialog input { display: block; width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+.vault-dialog button { padding: 12px; margin: 4px; border-radius: 8px; background: #047857; color: white; min-height: 44px; }
+.vault-dialog button:disabled { opacity: .5; }
