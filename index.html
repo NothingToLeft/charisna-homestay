@@ -2776,6 +2776,7 @@
         let activeProofBillId = null;
 
         const defaultData = {
+            meta: { exampleData: true },
             settings: {
                 kostName: 'CHARISNA KOST',
                 ownerName: 'Ibu Charisna Wijaya',
@@ -2899,6 +2900,7 @@
         function saveData() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                window.dispatchEvent(new Event('charisna:data-saved'));
             } catch (e) {
                 showToast('Memori browser penuh.', 'warning');
             }

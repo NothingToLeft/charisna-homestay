@@ -2,6 +2,7 @@ import { mkdir, copyFile, writeFile } from 'node:fs/promises';
 await mkdir('dist', { recursive: true });
 await copyFile('index.html', 'dist/index.html');
 await copyFile('public/cloud-sync.js', 'dist/cloud-sync.js');
+await copyFile('public/superapp-summary.js', 'dist/superapp-summary.js');
 await copyFile('public/roles.js', 'dist/roles.js');
 await copyFile('public/responsive.css', 'dist/responsive.css');
 await copyFile('public/audit-scope.js', 'dist/audit-scope.js');
