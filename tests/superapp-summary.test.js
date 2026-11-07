@@ -15,15 +15,20 @@ describe('ringkasan KOST untuk SuperApp',()=>{
   it('menghitung tiap properti tanpa mengirim identitas penghuni',()=>{
     const result=buildKostSnapshot(data(),new Date('2026-11-07T02:00:00Z'));
     expect(result.month).toBe('2026-11');
+    expect(result.is_demo).toBe(false);
     expect(result.properties).toEqual([
       {id:'P-1',name:'Kost Utama',occupied_rooms:1,total_rooms:2,paid_this_month_idr:'1200000',unpaid_bills_idr:'0'},
       {id:'P-2',name:'Kost Kedua',occupied_rooms:1,total_rooms:2,paid_this_month_idr:'0',unpaid_bills_idr:'1000000'}]);
     expect(result.unassigned_bills).toBe(1);
     expect(JSON.stringify(result)).not.toMatch(/Private Name|08123|B1/);
   });
-  it('menolak data contoh dan nominal di luar batas',()=>{
-    expect(isExampleKostData({...data(),meta:{exampleData:true}})).toBe(true);
-    expect(()=>buildKostSnapshot({...data(),meta:{exampleData:true}})).toThrow(/contoh/);
+  it('menandai contoh dan melepas label setelah data contoh diganti',()=>{
+    const example=data();example.properties[0]={id:'PROP-1',name:'CHARISNA KOST Pusat'};
+    expect(isExampleKostData(example)).toBe(true);
+    expect(buildKostSnapshot(example).is_demo).toBe(true);
+    expect(buildKostSnapshot({...data(),meta:{exampleData:true}}).is_demo).toBe(false);
+  });
+  it('menolak nominal tidak valid',()=>{
     const invalid=data();invalid.bills[0].amount=-1;
     expect(()=>buildKostSnapshot(invalid,new Date('2026-11-07'))).toThrow(/Nominal/);
   });

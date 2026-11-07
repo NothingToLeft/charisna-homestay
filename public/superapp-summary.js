@@ -9,15 +9,15 @@ const rupiah = value => {
 };
 
 export function isExampleKostData(data){
-  if(data?.meta?.exampleData===true)return true;
-  return Boolean(data?.rooms?.some(room=>room.id==='R101'&&room.number==='101')
-    &&data?.tenants?.some(tenant=>tenant.id==='T1'&&tenant.name==='Dimas Anggara')
-    &&data?.bills?.some(bill=>bill.id==='INV-101'&&bill.roomNumber==='101'));
+  return Boolean(data?.properties?.some(property=>property.id==='PROP-1'&&property.name==='CHARISNA KOST Pusat')
+    ||data?.properties?.some(property=>property.id==='PROP-2'&&property.name==='CHARISNA KOST Suites')
+    ||data?.rooms?.some(room=>room.id==='R101'&&room.number==='101'&&room.propertyId==='PROP-1')
+    ||data?.tenants?.some(tenant=>tenant.id==='T1'&&tenant.name==='Dimas Anggara')
+    ||data?.bills?.some(bill=>bill.id==='INV-101'&&bill.roomNumber==='101'));
 }
 
 export function buildKostSnapshot(data, now=new Date()){
   if(!data||!Array.isArray(data.properties)||!Array.isArray(data.rooms)||!Array.isArray(data.bills))throw Error('Data KOST belum lengkap.');
-  if(isExampleKostData(data))throw Error('Data contoh masih aktif. Ganti dengan data usaha nyata sebelum menghubungkan.');
   const properties=data.properties.map(property=>{
     if(typeof property?.id!=='string'||!/^[\w-]{1,100}$/.test(property.id)||typeof property.name!=='string'||!property.name.trim()||property.name.length>100)throw Error('Identitas properti tidak valid.');
     return {id:property.id,name:property.name.trim()};
@@ -43,5 +43,5 @@ export function buildKostSnapshot(data, now=new Date()){
       paid_this_month_idr:String(paidTotal),unpaid_bills_idr:String(unpaidTotal)};
   });
   const unassigned_bills=data.bills.filter(bill=>!matchingProperty(bill)).length;
-  return {schema:1,month,source:'local_snapshot',properties:summary,unassigned_bills};
+  return {schema:1,month,source:'local_snapshot',is_demo:isExampleKostData(data),properties:summary,unassigned_bills};
 }
