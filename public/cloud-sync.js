@@ -47,16 +47,17 @@ panel.querySelector('#cloud-close').onclick = () => panel.close();
 const message = (text) => { panel.querySelector('#cloud-message').textContent = text; status.textContent = `Cloud: ${text}`; };
 const superAppSection=document.createElement('section');
 superAppSection.hidden=true;
-superAppSection.innerHTML='<hr style="margin:18px 0"><h3 style="font-weight:bold;font-size:16px">CHARISNA SuperApp</h3><p>Ringkasan lokal per properti: kamar terisi, pembayaran bulan ini, dan tagihan belum lunas. Data contoh tidak dikirim.</p><p><a href="https://zen.charisna-superapp.workers.dev/kost" target="_blank" rel="noopener noreferrer">Buka SuperApp dan buat kode penghubung</a></p><label for="kost-superapp-code">Kode penghubung</label><input id="kost-superapp-code" maxlength="24" autocomplete="off" style="display:block;width:100%;padding:8px;border:1px solid #bbb;border-radius:6px"><button id="kost-superapp-connect" type="button">Hubungkan dan kirim ringkasan</button><p id="kost-superapp-status" role="status"></p>';
+superAppSection.innerHTML='<hr style="margin:18px 0"><h3 style="font-weight:bold;font-size:16px">CHARISNA SuperApp</h3><p>Ringkasan lokal per properti: kamar terisi, pembayaran bulan ini, dan tagihan belum lunas. Data bawaan boleh dikirim dan akan ditandai sebagai contoh.</p><p><a href="https://zen.charisna-superapp.workers.dev/kost" target="_blank" rel="noopener noreferrer">Buka SuperApp dan buat kode penghubung</a></p><label for="kost-superapp-code">Kode penghubung</label><input id="kost-superapp-code" maxlength="24" autocomplete="off" style="display:block;width:100%;padding:8px;border:1px solid #bbb;border-radius:6px"><button id="kost-superapp-connect" type="button">Hubungkan dan kirim ringkasan</button><p id="kost-superapp-status" role="status"></p>';
 panel.append(superAppSection);
 superAppSection.querySelector('button').style.cssText='padding:8px;background:#059669;color:white;border-radius:6px;margin-top:8px';
 const superAppCode=superAppSection.querySelector('#kost-superapp-code');
 const superAppStatus=superAppSection.querySelector('#kost-superapp-status');
 const superAppKey=()=>`charisna-kost:superapp:v1:${user?.uid||''}`;
 const superAppSnapshot=()=>{
+  const current=window.getCharisnaKostDataForSuperApp?.();
   const raw=localStorage.getItem(dataKey());
-  if(!raw)throw Error('Belum ada data lokal tersimpan. Data contoh tidak dikirim.');
-  return buildKostSnapshot(JSON.parse(raw));
+  if(!current&&!raw)throw Error('Data lokal belum tersedia.');
+  return buildKostSnapshot(current||JSON.parse(raw));
 };
 let lastSuperAppPayload='',lastSuperAppAt=0,superAppTimer=0;
 async function sendSuperApp(code=''){
@@ -87,7 +88,7 @@ superAppSection.querySelector('#kost-superapp-connect').onclick=async()=>{
   const code=superAppCode.value.trim().toUpperCase();
   if(!/^[A-Z2-9]{24}$/.test(code)){superAppStatus.textContent='Kode harus 24 karakter.';return;}
   button.disabled=true;superAppStatus.textContent='Mengirim ringkasan…';
-  try{await sendSuperApp(code);superAppCode.value='';superAppStatus.textContent='Terhubung. Ringkasan setiap properti terkirim.';}
+  try{await sendSuperApp(code);superAppCode.value='';superAppStatus.textContent='Terhubung. Ringkasan setiap properti terkirim, termasuk label data contoh bila masih ada.';}
   catch(error){superAppStatus.textContent=error.message||'Koneksi gagal.';}
   finally{button.disabled=false;}
 };
