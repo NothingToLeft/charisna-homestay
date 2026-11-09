@@ -21,3 +21,11 @@
 - Enkripsi lokal tidak melindungi memori saat aplikasi terbuka. Firebase/Drive memakai kontrol akses, bukan E2EE.
 - Audit bukan jaminan bebas seluruh bug. Pantau hasil workflow dan backup sebelum memperbarui APK debug yang memakai tanda tangan berbeda.
 - Verifikasi akhir CI e536831 berhasil (run 42699347164). Pengulangan lokal mengalami timeout kriptografi bahkan pada 30 detik; kelulusan tes merujuk runner CI, bukan hasil lokal tersebut.
+
+## Hasil publikasi
+- PR #22 digabung menjadi 9adb49d; Pages run 42699899503 berhasil. HTML versi terbaru dan seluruh modul brankas merespons HTTP 200.
+- Firestore Rules berhasil diterbitkan ke charisna-kost-manager setelah web baru aktif.
+- Build Release 42699902876 berhasil. Rilis publik v1.0.5 mencakup APK, installer Windows, portable, dan SHA256SUMS.txt.
+- APK diunduh ulang: apksigner valid v2, package com.charisna.kost, versionCode 10005, SDK minimum 24/target 36, supports-screens small/normal/large/xlarge.
+- SHA-256 APK: 581708b4fbc99f6e680214fb8d94a1cf8ded4f399997e5d8967bc39f92f81f80.
+- GitHub mengubah spasi nama aset menjadi titik; nama dalam checksum rilis disesuaikan. Workflow berikutnya menormalisasi nama sebelum menghitung checksum.

@@ -118,5 +118,9 @@ jobs:
             exit 1
           fi
           cd packages
+          for file in *.exe; do
+            normalized="${file// /.}"
+            if [ "$file" != "$normalized" ]; then mv -- "$file" "$normalized"; fi
+          done
           sha256sum *.exe *.apk > SHA256SUMS.txt
           gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" --title "CHARISNA KOST $RELEASE_TAG" --notes 'APK release bertanda tangan, installer Windows dan portable. Windows belum memakai sertifikat Authenticode. Cadangkan data sebelum berpindah dari APK debug karena tanda tangan berbeda. Uji perangkat fisik sebelum Publish.' *.exe *.apk SHA256SUMS.txt
