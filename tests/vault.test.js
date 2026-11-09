@@ -44,4 +44,13 @@ describe('encrypted local storage', () => {
     storage.fail = false; await vault.save({ n: 5 });
     expect(vault.failed).toBe(false); expect(vault.pending).toBe(0);
   });
+  it('rejects stale writes from a second tab without overwriting newer data', async () => {
+    const storage = new Storage(); const first = new VaultStore(storage, 'owner');
+    await first.unlock(password, sample);
+    const second = new VaultStore(storage, 'owner'); await second.unlock(password, {});
+    await first.save({ revision: 2 });
+    await expect(second.save({ revision: 1 })).rejects.toThrow('tab lain');
+    expect(await new VaultStore(storage, 'owner').unlock(password, {})).toEqual({ revision: 2 });
+  });
+
 });

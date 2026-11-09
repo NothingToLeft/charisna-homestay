@@ -5260,7 +5260,7 @@
             for (let i = 0; i < rows.length; i++) {
                 const col = i % 4, rowI = Math.floor(i / 4);
                 const x = 40 + col * (boxW + gap), y = 130 + rowI * (boxH + gap);
-                g.beginPath(); g.roundRect(x, y, boxW, boxH, 14);
+                g.beginPath(); if (g.roundRect) g.roundRect(x, y, boxW, boxH, 14); else g.rect(x, y, boxW, boxH);
                 g.fillStyle = '#f0fdf4'; g.fill();
                 g.strokeStyle = '#a7f3d0'; g.lineWidth = 2; g.stroke();
                 g.fillStyle = '#065f46'; g.font = 'bold 15px sans-serif';
@@ -5462,7 +5462,7 @@
             try {
                 if (file.size > 30000000) throw Error('Cadangan maksimal 30 MB.');
                 let imported = JSON.parse(await file.text());
-                if (imported.format === 'CHARISNA_VAULT') imported = await window.charisnaVault.readBackup(imported);
+                if (imported.format === 'CHARISNA_VAULT') imported = await window.charisnaDecryptBackup(imported);
                 imported = normalizeData(imported);
                 if (!confirm('Ganti data perangkat dengan cadangan ini? Pastikan cadangan data sekarang sudah disimpan.')) return;
                 await window.charisnaVault.save(imported);

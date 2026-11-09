@@ -38,3 +38,26 @@ window.addEventListener('beforeunload', event => {
   const store = window.charisnaVault;
   if (store?.pending || store?.failed) { event.preventDefault(); event.returnValue = ''; }
 });
+
+window.charisnaDecryptBackup = async envelope => {
+  try { return await window.charisnaVault.readBackup(envelope); }
+  catch { /* A backup from another device can use a different vault password. */ }
+  const dialog = document.createElement('dialog');
+  dialog.className = 'vault-dialog';
+  dialog.innerHTML = '<form><h2>Buka cadangan</h2><p>Masukkan sandi brankas saat cadangan ini dibuat. Data sekarang tetap aman sampai pemulihan dikonfirmasi.</p><label>Sandi cadangan<input name="password" type="password" required minlength="12" autocomplete="off"></label><p role="status"></p><button type="submit">Buka cadangan</button><button type="button">Batal</button></form>';
+  document.body.append(dialog); dialog.showModal();
+  return new Promise((resolve, reject) => {
+    const close = () => { dialog.close(); dialog.remove(); };
+    const cancel = () => { close(); reject(Error('Pemulihan dibatalkan.')); };
+    dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
+    dialog.querySelector('button[type=button]').onclick = cancel;
+    dialog.querySelector('form').onsubmit = async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      form.querySelector('button').disabled = true;
+      try { const data = await window.charisnaVault.readBackup(envelope, form.elements.password.value); form.reset(); close(); resolve(data); }
+      catch (error) { form.querySelector('[role=status]').textContent = error.message; }
+      finally { if (form.isConnected) form.querySelector('button').disabled = false; }
+    };
+  });
+};
