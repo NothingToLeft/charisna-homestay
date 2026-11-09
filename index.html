@@ -2781,6 +2781,7 @@
         let activeProofBillId = null;
 
         const defaultData = {
+            meta: { exampleData: true },
             settings: {
                 kostName: 'CHARISNA KOST',
                 ownerName: 'Ibu Charisna Wijaya',
@@ -2875,6 +2876,7 @@
         };
 
         let appData = loadData();
+        window.getCharisnaKostDataForSuperApp = () => appData;
 
         function loadData() {
             // Real records are loaded only after account verification and vault unlock.
@@ -2902,6 +2904,7 @@
             try {
                 if (!window.charisnaVault) throw Error('Brankas masih terkunci.');
                 await window.charisnaVault.save(appData);
+                window.dispatchEvent(new Event('charisna:data-saved'));
                 renderAll();
                 return true;
             } catch (error) {

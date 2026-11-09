@@ -3,6 +3,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebas
 import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js';
+import { buildKostSnapshot } from './superapp-summary.js?v=superapp-demo-20261107';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCXu5b6BKVKYczMTIL8Nc-MuLvLQdiQXtI',
@@ -45,6 +46,59 @@ openButton.onclick = () => panel.showModal();
 document.getElementById('settings-account-actions').append(openButton);
 panel.querySelector('#cloud-close').onclick = () => panel.close();
 const message = (text) => { panel.querySelector('#cloud-message').textContent = text; status.textContent = `Cloud: ${text}`; };
+const superAppSection=document.createElement('section');
+superAppSection.hidden=true;
+superAppSection.innerHTML='<hr style="margin:18px 0"><h3 style="font-weight:bold;font-size:16px">CHARISNA SuperApp</h3><p>Ringkasan lokal per properti: kamar terisi, pembayaran bulan ini, dan tagihan belum lunas. Data bawaan boleh dikirim dan akan ditandai sebagai contoh.</p><p><a href="https://zen.charisna-superapp.workers.dev/kost" target="_blank" rel="noopener noreferrer">Buka SuperApp dan buat kode penghubung</a></p><label for="kost-superapp-code">Kode penghubung</label><input id="kost-superapp-code" maxlength="24" autocomplete="off" style="display:block;width:100%;padding:8px;border:1px solid #bbb;border-radius:6px"><button id="kost-superapp-connect" type="button">Hubungkan dan kirim ringkasan</button><p id="kost-superapp-status" role="status"></p>';
+panel.append(superAppSection);
+superAppSection.querySelector('button').style.cssText='padding:8px;background:#059669;color:white;border-radius:6px;margin-top:8px';
+const superAppCode=superAppSection.querySelector('#kost-superapp-code');
+const superAppStatus=superAppSection.querySelector('#kost-superapp-status');
+const superAppKey=()=>`charisna-kost:superapp:v1:${user?.uid||''}`;
+const savedSuperAppKey=()=>window.charisnaVault ? window.charisnaData.snapshot().privateIntegrations?.superAppKey : null;
+async function saveSuperAppKey(key) {
+  const data=window.charisnaData.snapshot();
+  data.privateIntegrations={...data.privateIntegrations,superAppKey:key};
+  window.charisnaData.hydrate(data);
+  await window.charisnaVault.save(data);
+}
+const superAppSnapshot=()=>{
+  const current=window.getCharisnaKostDataForSuperApp?.();
+  if(!window.charisnaVault||!current)throw Error('Buka brankas dahulu.');
+  return buildKostSnapshot(current);
+};
+let lastSuperAppPayload='',lastSuperAppAt=0,superAppTimer=0;
+async function sendSuperApp(code=''){
+  if(!user||verifiedRole!=='OWNER'||auth.currentUser?.uid!==user.uid)throw Error('Masuk sebagai Owner dahulu.');
+  const key=code?'':savedSuperAppKey();
+  if(!code&&!key)throw Error('Buat kode penghubung di SuperApp dahulu.');
+  const snapshot=superAppSnapshot();
+  const payload=JSON.stringify(snapshot);
+  if(!code&&payload===lastSuperAppPayload&&Date.now()-lastSuperAppAt<15*60*1000)return;
+  const response=await fetch('https://zen.charisna-superapp.workers.dev/kost/push',{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({snapshot,...(code?{pairCode:code}:{syncKey:key})}),cache:'no-store'
+  });
+  if(!response.ok)throw Error(response.status===403||response.status===409?'Koneksi ditolak. Putuskan koneksi lama di SuperApp, lalu buat kode baru.':'Ringkasan gagal dikirim. Coba lagi nanti.');
+  const result=await response.json();
+  if(result.syncKey)await saveSuperAppKey(result.syncKey);
+  lastSuperAppPayload=payload;lastSuperAppAt=Date.now();
+  return result;
+}
+function scheduleSuperApp(){
+  if(verifiedRole!=='OWNER'||!user||!savedSuperAppKey())return;
+  clearTimeout(superAppTimer);
+  superAppTimer=setTimeout(()=>{void sendSuperApp().catch(()=>{});},2000);
+}
+window.addEventListener('charisna:data-saved',scheduleSuperApp);
+setInterval(scheduleSuperApp,15*60*1000);
+superAppSection.querySelector('#kost-superapp-connect').onclick=async()=>{
+  const button=superAppSection.querySelector('#kost-superapp-connect');
+  const code=superAppCode.value.trim().toUpperCase();
+  if(!/^[A-Z2-9]{24}$/.test(code)){superAppStatus.textContent='Kode harus 24 karakter.';return;}
+  button.disabled=true;superAppStatus.textContent='Mengirim ringkasan…';
+  try{await sendSuperApp(code);superAppCode.value='';superAppStatus.textContent='Terhubung. Ringkasan setiap properti terkirim, termasuk label data contoh bila masih ada.';}
+  catch(error){superAppStatus.textContent=error.message||'Koneksi gagal.';}
+  finally{button.disabled=false;}
+};
 const showLogin = () => {
   gate.hidden = false; loginForm.hidden = false; pendingSignout.hidden = true;
   document.body.classList.remove('cleaner-mode');
@@ -64,6 +118,7 @@ async function handleAccount(account, revision = ++authRevision) {
   }
   if (revision !== authRevision || auth.currentUser?.uid !== account.uid) return;
   verifiedRole = resolved.role;
+  superAppSection.hidden=resolved.role!=='OWNER';
   if (resolved.role === 'PENDING') {
     sessionStorage.removeItem(ACTIVE_UID_KEY);
     document.body.classList.remove('cleaner-mode');
@@ -83,7 +138,7 @@ async function handleAccount(account, revision = ++authRevision) {
   if (activeUid !== account.uid) {
     const accountKey = `${DATA_PREFIX}:${account.uid}`;
     const oldData = localStorage.getItem(DATA_PREFIX);
-    if (!localStorage.getItem(accountKey) && oldData && confirm('Data lama ditemukan. Salin ke akun owner?')) localStorage.setItem(accountKey, oldData);
+    if (!localStorage.getItem(accountKey) && !localStorage.getItem(accountKey + ':vault') && oldData && confirm('Data lama ditemukan. Salin ke akun owner?')) localStorage.setItem(accountKey, oldData);
     sessionStorage.setItem(ACTIVE_UID_KEY, account.uid);
     location.reload(); return;
   }
@@ -93,6 +148,12 @@ async function handleAccount(account, revision = ++authRevision) {
   document.body.classList.remove('auth-locked', 'cleaner-mode');
   message(`Masuk: ${account.email}`);
   setupOwnerManager({ db, account, firebaseConfig, onMessage: message });
+  const legacySyncKey=localStorage.getItem(superAppKey());
+  if(legacySyncKey){
+    try { await saveSuperAppKey(legacySyncKey); localStorage.removeItem(superAppKey()); }
+    catch { message('Kunci SuperApp belum terenkripsi. Coba lagi setelah ruang penyimpanan tersedia.'); }
+  }
+  if(resolved.role==='OWNER')scheduleSuperApp();
 }
 onAuthStateChanged(auth, (account) => { const revision = ++authRevision; void handleAccount(account, revision); }, (authError) => showError(`Login tidak tersedia: ${authError.message}`));
 roleSelect.onchange = () => {
@@ -141,7 +202,9 @@ panel.querySelector('#cloud-upload').onclick = async () => {
   try {
     cloudDoc();
     await window.charisnaVault.flush();
-    const local = JSON.stringify(window.charisnaData.snapshot());
+    const uploadData = window.charisnaData.snapshot();
+    delete uploadData.privateIntegrations;
+    const local = JSON.stringify(uploadData);
     if (!local) throw Error('Belum ada data lokal untuk diunggah.');
     if (!confirm('Timpa data cloud dengan data lokal akun ini? Buat backup JSON dulu.')) return;
     await setDoc(cloudDoc(), { data: JSON.parse(local), updatedAt: new Date().toISOString() });
@@ -156,6 +219,7 @@ panel.querySelector('#cloud-download').onclick = async () => {
     if (!data?.rooms || !data?.tenants || !data?.bills) throw Error('Format data cloud tidak valid.');
     if (!confirm('Timpa data lokal akun ini dengan data cloud? Buat backup JSON dulu.')) return;
     const validated = window.charisnaData.validate(data);
+    validated.privateIntegrations = window.charisnaData.snapshot().privateIntegrations || {};
     await window.charisnaVault.save(validated);
     window.charisnaData.hydrate(validated);
     message('Data cloud tersimpan terenkripsi pada perangkat.');
