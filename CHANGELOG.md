@@ -1,3 +1,11 @@
+## 1.0.5
+
+- Aktifkan brankas lokal dan backup terenkripsi dengan migrasi serta deteksi konflik tab.
+- Batasi akses profil staf/owner dan validasi checklist tugas selesai.
+- Sertakan seluruh aset Pages; perbaiki foto perbaikan, aksi cicilan, dan ekspor kode privat.
+- Siapkan draft rilis Windows dan APK release bertanda tangan.
+- Tambahkan regresi brankas, Firestore emulator, dan migrasi Drive dari kode asli.
+
 # Changelog
 
 ## 2026-11-03

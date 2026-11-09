@@ -20,5 +20,11 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run check
       - run: npm test
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify Firestore authorization on local emulator
+        run: npx --yes firebase-tools@15.34.2 emulators:exec --only firestore --project demo-charisna-security --config firebase.test.json "node tests/firestore-rules.mjs"
       - run: npm run build
       - run: npm audit --audit-level=high

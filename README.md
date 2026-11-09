@@ -39,7 +39,7 @@ Aplikasi menampilkan halaman login Firebase sebelum dashboard. Alamat repo masih
 
 Buka pratinjau web. Di sidebar, tekan **Kelola** pada **Scope Properti** untuk menambah, mengubah, atau menghapus properti dan lantai. Kamar harus dipindahkan lebih dulu sebelum properti atau lantainya dapat dihapus.
 
-Data disimpan di `localStorage` browser. Buat backup JSON sebelum membersihkan data browser atau pindah perangkat. Penghapusan data browser menghapus data lokal yang belum diunggah.
+Data disimpan terenkripsi di `localStorage` browser setelah brankas dibuka. Buat backup JSON sebelum membersihkan data browser atau pindah perangkat. Penghapusan data browser menghapus data lokal yang belum diunggah.
 
 ## Peran dan Firebase
 
@@ -63,5 +63,19 @@ Lihat [audit keamanan](docs/SECURITY_AUDIT_2026-10-31.md) dan [kebijakan keamana
 
 ## Rilis lewat GitHub
 
-Buka Actions → Build Release → Run workflow pada branch main. Isi versi unik seperti v1.0.4. Workflow membuat GitHub Release lalu mengunggah installer Windows, portable EXE, dan APK debug. APK debug untuk uji coba; belum merupakan APK produksi dengan kunci tanda tangan tetap. Paket Windows belum memiliki sertifikat penandatanganan kode. Jangan memakai ulang tag versi yang sudah diterbitkan.
+Lihat bagian Menyiapkan rilis GitHub di bawah. Workflow menghasilkan draft dengan APK release bertanda tangan dan paket Windows.
 
+
+
+## Pembaruan v1.0.5
+Data perangkat kini memakai brankas terenkripsi. Saat pertama membuka sebagai owner, buat sandi brankas minimal 12 karakter dan simpan sendiri. Backup JSON baru ikut terenkripsi. Lihat [status lengkap](docs/PROJECT_STATUS.md).
+
+### Menyiapkan rilis GitHub
+1. Buka Actions → Build Release → Run workflow pada main.
+2. Isi versi yang sama dengan package.json, misalnya `v1.0.5`.
+3. Tunggu verify, Windows, dan Android selesai. Workflow menyiapkan draft GitHub Release.
+4. Unduh dan uji paket, lalu tekan Publish release ketika siap.
+
+APK release memakai GitHub Actions secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`. Jangan mengganti keystore untuk pembaruan berikutnya. Pengguna APK debug harus mencadangkan data sebelum pindah ke APK release; tanda tangannya berbeda. Windows installer/portable belum menggunakan sertifikat Authenticode.
+
+Lihat [panduan rilis](docs/RELEASE.md). © Charisna.

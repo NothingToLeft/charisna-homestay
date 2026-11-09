@@ -26,3 +26,27 @@ body > div[id$="Modal"] > div { max-height: calc(100dvh - 32px); overflow-y: aut
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+.vault-dialog { width: min(92vw, 440px); max-height: 90dvh; overflow: auto; border: 0; border-radius: 18px; padding: 24px; color: #172033; }
+.vault-dialog::backdrop { background: #0f172acc; }
+.vault-dialog h2 { font-size: 20px; font-weight: 700; }
+.vault-dialog p { margin: 12px 0; line-height: 1.5; }
+.vault-dialog label { display: block; margin: 12px 0; }
+.vault-dialog input { display: block; width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+.vault-dialog button { padding: 12px; margin: 4px; border-radius: 8px; background: #047857; color: white; min-height: 44px; }
+.vault-dialog button:disabled { opacity: .5; }
+
+/* Keep actions reachable when the sidebar reduces the content width. */
+header > div:first-child { flex: 1 1 auto; min-width: 0; }
+header > div:last-child { flex: 0 0 auto; }
+header h2 { overflow-wrap: anywhere; }
+@media (min-width: 768px) and (max-width: 1100px) {
+  header { padding-left: 20px !important; padding-right: 20px !important; gap: 12px; }
+  #pageTitle { font-size: 18px; line-height: 1.25; }
+  #pageSubtitle, #activeRoleBadge { display: none; }
+  header button { min-width: 44px; }
+}
+@supports not (height: 100dvh) {
+  body > .flex.h-screen { height: 100vh; }
+  dialog, body > div[id$="Modal"] > div { max-height: calc(100vh - 32px); }
+}

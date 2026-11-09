@@ -4,9 +4,8 @@ on:
     branches: [main]
     paths:
       - index.html
-      - public/cloud-sync.js
-      - public/superapp-summary.js
-      - public/roles.js
+      - 'public/**'
+      - scripts/build-static.mjs
       - .github/workflows/pages.yml
   workflow_dispatch:
 permissions:
@@ -28,9 +27,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html _site/index.html
-          cp public/cloud-sync.js _site/cloud-sync.js
-          cp public/superapp-summary.js _site/superapp-summary.js
-          cp public/roles.js _site/roles.js
+          cp -R public/. _site/
           touch _site/.nojekyll
           if grep -Eq 'eyJhbGci|__initial_auth_token|data-bard-client-injected' _site/index.html; then
             echo 'Editor session token found in public page' >&2
