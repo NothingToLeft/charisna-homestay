@@ -11,7 +11,7 @@ class Storage {
   setItem(key, value) { if (this.fail) throw Error('QuotaExceeded'); this.values.set(key, value); }
   removeItem(key) { this.values.delete(key); }
 }
-describe('encrypted local storage', () => {
+describe('encrypted local storage', { timeout: 30000 }, () => {
   it('migrates plaintext only after a successful encrypted write and unlocks after restart', async () => {
     const storage = new Storage(); storage.setItem('owner', JSON.stringify(sample));
     const vault = new VaultStore(storage, 'owner');

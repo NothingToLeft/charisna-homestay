@@ -3,7 +3,7 @@
 ## Perubahan
 - Brankas lokal per akun: AES-256-GCM, PBKDF2-SHA256 600.000 iterasi, salt/IV acak. Sandi tidak dipersistenkan.
 - Migrasi menulis snapshot terenkripsi sebelum menghapus salinan lokal biasa. Gagal tulis mempertahankan sumber.
-- Backup JSON baru terenkripsi; impor JSON lama tetap didukung. Backup terenkripsi memerlukan sandi yang sama.
+- Backup JSON baru terenkripsi; impor JSON lama tetap didukung. Backup terenkripsi memerlukan sandi saat backup dibuat; dialog impor mendukung sandi backup dari perangkat lain.
 - Konflik tab menolak penimpaan. Ekspor cadangan tetap bisa dilakukan saat kuota penyimpanan penuh.
 - Firestore membatasi daftar staf ke owner terkait; staf tidak dapat membaca PIN atau data penghuni owner.
 - Pages menyertakan semua aset public, termasuk CSS responsif dan helper rekap.

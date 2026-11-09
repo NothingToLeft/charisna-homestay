@@ -16,3 +16,6 @@ Browser menyimpan data utama lokal. Upload/download Cloud mengganti satu snapsho
 ## Arah berikutnya
 
 Pindahkan logika dari satu HTML ke modul bertipe; gunakan penyimpanan lokal terstruktur, sinkronisasi per-entitas, penyimpanan foto terpisah, dan migrasi data versi lama. Semua memerlukan uji data nyata sebelum diaktifkan.
+
+## Brankas v1.0.5
+Snapshot lokal memakai kunci per akun bersufiks `:vault`, dienkripsi AES-256-GCM oleh `vault-crypto.js` dan `vault-store.js`. Migrasi mempertahankan sumber sampai ciphertext tersimpan. UI dibuka setelah brankas berhasil didekripsi. Konflik penulisan antartab ditolak. Kunci integrasi SuperApp berada dalam `privateIntegrations` di brankas dan tidak ikut snapshot Cloud. Enkripsi lokal tidak berarti Cloud terenkripsi end-to-end.
