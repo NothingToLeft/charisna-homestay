@@ -1873,7 +1873,13 @@
 
                 <!-- ==================== TAB 9: PENGATURAN & BACKUP ==================== -->
                 <section id="tab-pengaturan" class="tab-content fade-in max-w-3xl space-y-6">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"><h3 class="font-bold text-slate-800">Akun &amp; Layanan</h3><p id="account-sync-status" class="text-xs text-slate-500 break-words" role="status">Cloud: menunggu login</p><div id="settings-account-actions" class="flex flex-wrap gap-2"></div></div><!-- Profil Kos -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"><h3 class="font-bold text-slate-800">Akun &amp; Layanan</h3><p id="account-sync-status" class="text-xs text-slate-500 break-words" role="status">Cloud: menunggu login</p><div id="settings-account-actions" class="flex flex-wrap gap-2"></div><div class="md:hidden flex flex-wrap gap-2 mt-4" aria-label="Menu lainnya">
+<button onclick="switchTab('reminders')" class="rounded-lg bg-slate-100 p-3 text-sm">WhatsApp</button>
+<button onclick="switchTab('pengeluaran')" class="rounded-lg bg-slate-100 p-3 text-sm">Pengeluaran</button>
+<button onclick="switchTab('keluhan')" class="rounded-lg bg-slate-100 p-3 text-sm">Keluhan</button>
+<button onclick="openPropertyManager()" class="rounded-lg bg-slate-100 p-3 text-sm">Properti &amp; Lantai</button>
+<button onclick="switchTab('plugins')" class="rounded-lg bg-slate-100 p-3 text-sm">Modul</button>
+</div></div><!-- Profil Kos -->
                     <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
                         <div class="border-b border-slate-100 pb-3">
                             <h3 class="font-bold text-slate-800 text-base">Profil &amp; Identitas Kos</h3>
@@ -1924,12 +1930,12 @@
                     <!-- Backup, Export ZIP & Restore JSON -->
                     <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
                         <div class="border-b border-slate-100 pb-3">
-                            <h3 class="font-bold text-slate-800 text-base">Export Proyek ZIP &amp; Backup Data</h3>
-                            <p class="text-xs text-slate-500">Unduh file aplikasi instan (index.html) untuk di-deploy ke GitHub Pages atau unduh file cadangan JSON.</p>
+                            <h3 class="font-bold text-slate-800 text-base">Kode Aplikasi &amp; Cadangan Terenkripsi</h3>
+                            <p class="text-xs text-slate-500">Buka kode sumber publik atau unduh cadangan data terenkripsi. Simpan sandi brankas untuk memulihkan cadangan.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <button onclick="exportProjectZip()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-2">
-                                <i class="fa-solid fa-file-zipper"></i> Export Project (Siap GitHub)
+                                <i class="fa-solid fa-file-zipper"></i> Buka Repo GitHub
                             </button>
                             <button onclick="exportData()" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-2">
                                 <i class="fa-solid fa-download"></i> Unduh Backup Data (.json)
@@ -1953,10 +1959,10 @@
                         <div class="space-y-3 text-xs">
                             <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="font-extrabold text-slate-800">v2.5.0 Enterprise (Current)</span>
+                                    <span class="font-extrabold text-slate-800">v1.0.5</span>
                                     <span class="text-[10px] text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded">Terbaru</span>
                                 </div>
-                                <p class="text-slate-600">• Penambahan fitur Export Project ZIP untuk deployment instan ke GitHub Pages.<br>• Rebranding penuh menjadi <b>CHARISNA KOST</b>.<br>• Enhanced WhatsApp Driver outbox log &amp; KTP vault compression.</p>
+                                <p class="text-slate-600">• Brankas lokal terenkripsi, backup aman, dan draft rilis Windows/APK.<br>• Rebranding penuh menjadi <b>CHARISNA KOST</b>.<br>• Enhanced WhatsApp Driver outbox log &amp; KTP vault compression.</p>
                             </div>
                             <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                                 <div class="flex items-center justify-between">
@@ -2274,9 +2280,8 @@
                     <i class="fa-solid fa-file-invoice-dollar text-base"></i>
                     <span class="text-[10px] font-medium mt-0.5">Invoice</span>
                 </button>
-                <button onclick="switchTab('reminders')" id="mnav-reminders" class="mnav-btn flex flex-col items-center py-1 px-3 text-slate-400">
-                    <i class="fa-brands fa-whatsapp text-base"></i>
-                    <span class="text-[10px] font-medium mt-0.5">WA Outbox</span>
+                <button onclick="switchTab('pengaturan')" id="mnav-pengaturan" class="mnav-btn flex flex-col items-center py-1 px-3 text-slate-400">
+                    <i class="fa-solid fa-gear text-lg mb-1"></i><span class="text-[10px] font-semibold">Setelan</span>
                 </button>
                 <button onclick="switchTab('operasional')" id="mnav-operasional" class="mnav-btn flex flex-col items-center py-1 px-3 text-slate-400">
                     <i class="fa-solid fa-boxes-stacked text-base"></i>

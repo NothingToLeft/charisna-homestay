@@ -39,7 +39,7 @@ Aplikasi menampilkan halaman login Firebase sebelum dashboard. Alamat repo masih
 
 Buka pratinjau web. Di sidebar, tekan **Kelola** pada **Scope Properti** untuk menambah, mengubah, atau menghapus properti dan lantai. Kamar harus dipindahkan lebih dulu sebelum properti atau lantainya dapat dihapus.
 
-Data disimpan di `localStorage` browser. Buat backup JSON sebelum membersihkan data browser atau pindah perangkat. Penghapusan data browser menghapus data lokal yang belum diunggah.
+Data disimpan terenkripsi di `localStorage` browser setelah brankas dibuka. Buat backup JSON sebelum membersihkan data browser atau pindah perangkat. Penghapusan data browser menghapus data lokal yang belum diunggah.
 
 ## Peran dan Firebase
 
@@ -63,7 +63,7 @@ Lihat [audit keamanan](docs/SECURITY_AUDIT_2026-10-31.md) dan [kebijakan keamana
 
 ## Rilis lewat GitHub
 
-Buka Actions → Build Release → Run workflow pada branch main. Isi versi unik seperti v1.0.4. Workflow membuat GitHub Release lalu mengunggah installer Windows, portable EXE, dan APK debug. APK debug untuk uji coba; belum merupakan APK produksi dengan kunci tanda tangan tetap. Paket Windows belum memiliki sertifikat penandatanganan kode. Jangan memakai ulang tag versi yang sudah diterbitkan.
+Lihat bagian Menyiapkan rilis GitHub di bawah. Workflow menghasilkan draft dengan APK release bertanda tangan dan paket Windows.
 
 
 
