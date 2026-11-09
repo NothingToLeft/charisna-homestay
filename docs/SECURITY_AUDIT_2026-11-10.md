@@ -20,3 +20,4 @@
 - Advisory deepmerge berlevel rendah berada pada tool development; tidak dilakukan downgrade paksa yang merusak PWA.
 - Enkripsi lokal tidak melindungi memori saat aplikasi terbuka. Firebase/Drive memakai kontrol akses, bukan E2EE.
 - Audit bukan jaminan bebas seluruh bug. Pantau hasil workflow dan backup sebelum memperbarui APK debug yang memakai tanda tangan berbeda.
+- Verifikasi akhir CI e536831 berhasil (run 42699347164). Pengulangan lokal mengalami timeout kriptografi bahkan pada 30 detik; kelulusan tes merujuk runner CI, bukan hasil lokal tersebut.
