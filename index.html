@@ -2108,6 +2108,7 @@
                         <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
                             <h3 class="font-extrabold text-slate-800 text-sm">Catat Perbaikan</h3>
                             <div class="grid sm:grid-cols-4 gap-3">
+                                <select id="prbFormProperty" class="border rounded-xl px-3 py-2 text-xs w-full"></select>
                                 <input id="prbFormDate" type="date" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="prbFormAsset" placeholder="Aset / fasilitas" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="prbFormDesc" placeholder="Deskripsi kerusakan" class="border rounded-xl px-3 py-2 text-xs w-full">
@@ -3020,6 +3021,14 @@
             return typeof value === 'string' && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value) && value.length <= 3000000 ? value : '';
         }
 
+        function generateRecordId(prefix) {
+            let id;
+            do {
+                id = prefix + '-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(Math.random() * 46656).toString(36).toUpperCase().padStart(3, '0');
+            } while ((appData.bills || []).some(b => b.id === id) || (appData.waLogs || []).some(l => l.id === id));
+            return id;
+        }
+
         function getPropertyFloors(propertyId) {
             appData.floors ||= {};
             if (!appData.floors[propertyId]) {
@@ -3204,7 +3213,7 @@
             const now = new Date();
             const ts = `${now.toISOString().slice(0,10)} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
             appData.waLogs.unshift({
-                id: 'LOG-' + Math.floor(100 + Math.random() * 900),
+                id: generateRecordId('LOG'),
                 timestamp: ts,
                 type,
                 recipient,
@@ -3985,7 +3994,7 @@
                     const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
                     const now = new Date();
                     appData.bills.unshift({
-                        id: 'INV-' + Math.floor(100 + Math.random() * 900),
+                        id: generateRecordId('INV'),
                         tenantName: name,
                         phone: phone,
                         roomNumber: roomNumber,
@@ -4258,11 +4267,8 @@
                 showToast('Semua tagihan sudah lunas!', 'success');
                 return;
             }
-            unpaid.forEach(b => {
-                logWhatsAppMessage('BATCH REMINDER', `${b.tenantName} (${b.phone})`, `Invoice #${b.id} (${formatRupiah(b.amount)})`);
-            });
             sendWhatsAppReminder(unpaid[0].id);
-            showToast(`${unpaid.length} pengingat dicatat di Outbox & membuka WhatsApp penghuni pertama!`);
+            if (unpaid.length > 1) showToast(`${unpaid.length} tagihan belum lunas. WhatsApp penghuni pertama terbuka; kirim pengingat sisanya satu per satu dari daftar tagihan.`, 'warning');
         }
 
         function sendReceiptToWhatsApp(billId) {
@@ -4362,7 +4368,7 @@
             const otherAmount = Number(document.getElementById('billFormOther').value || 0);
 
             appData.bills.unshift({
-                id: 'INV-' + Math.floor(100 + Math.random() * 900),
+                id: generateRecordId('INV'),
                 tenantName: tenant.name,
                 phone: tenant.phone,
                 roomNumber: tenant.roomNumber,
@@ -4397,7 +4403,7 @@
                     const room = appData.rooms.find(r => r.number === t.roomNumber);
                     const base = room ? room.price : 1000000;
                     appData.bills.unshift({
-                        id: 'INV-' + Math.floor(100 + Math.random() * 900),
+                        id: generateRecordId('INV'),
                         tenantName: t.name,
                         phone: t.phone,
                         roomNumber: t.roomNumber,
@@ -4603,7 +4609,7 @@
 
         function fillOpPropertySelects() {
             const opts = (appData.properties || []).map(p => `<option value="${escapePropertyText(p.id)}">${escapePropertyText(p.name)}</option>`).join('');
-            ['invFormProperty', 'pwtFormProperty'].forEach(id => {
+            ['invFormProperty', 'pwtFormProperty', 'prbFormProperty'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = opts;
             });
@@ -4906,7 +4912,7 @@
                 cost: Number(document.getElementById('prbFormCost').value) || 0,
                 photo: repairPhotoData,
                 status: document.getElementById('prbFormStatus').value,
-                propertyId: document.getElementById('pwtFormProperty').value
+                propertyId: document.getElementById('prbFormProperty')?.value || document.getElementById('pwtFormProperty')?.value || ''
             });
             repairPhotoData = '';
             const inp = document.getElementById('prbFormPhoto'); if (inp) inp.value = '';
@@ -5180,8 +5186,8 @@
             const elecUsage = meterMonth.filter(m => m.type === 'LISTRIK').reduce((s, m) => s + Number(m.usage || 0), 0);
             const waterUsage = meterMonth.filter(m => m.type === 'AIR').reduce((s, m) => s + Number(m.usage || 0), 0);
             const mutasiMonth = (scoped.stokMutasi || []).filter(x => inMonthS(monthKey, x.ts));
-            const masuk = mutasiMonth.filter(x => x.type === 'MASUK').reduce((s, x) => s + Number(x.qtyChange || 0), 0);
-            const keluar = mutasiMonth.filter(x => x.type === 'KELUAR').reduce((s, x) => s + Number(x.qtyChange || 0), 0);
+            const masuk = mutasiMonth.filter(x => x.type === 'MASUK').reduce((s, x) => s + Number(x.qty || 0), 0);
+            const keluar = mutasiMonth.filter(x => x.type === 'KELUAR').reduce((s, x) => s + Number(x.qty || 0), 0);
             const low = (scoped.stok || []).filter(s => Number(s.qty || 0) <= Number(s.minStock || 0));
             const isoToday = new Date().toISOString().slice(0, 10);
             const nearContract = (scoped.kontrak || []).filter(k => {
@@ -5227,7 +5233,7 @@
                     'Perbaikan': prbMonth.map(p => ({ Tanggal: p.date, Aset: p.asset, Deskripsi: p.desc, Biaya: Number(p.cost || 0), Status: p.status })),
                     'Stok': (scoped.stok || []).map(s => ({ Barang: s.name, Satuan: s.unit, Stok: s.qty, Minimal: s.minStock, Lokasi: s.location, Status: Number(s.qty || 0) <= Number(s.minStock || 0) ? 'MENIPIS' : 'AMAN' })),
                     'Inventaris': (scoped.inventaris || []).map(x => ({ Properti: getPropertyName(x.propertyId), Kamar: x.roomRef, Barang: x.item, Kategori: x.category, Jumlah: x.qty, Kondisi: x.condition, Catatan: x.notes || '' })),
-                    'Mutasi': mutasiMonth.map(x => ({ Waktu: x.ts, Jenis: x.type, Barang: x.itemId, Jumlah: Number(x.qtyChange || 0), Dari: x.from || '', Ke: x.to || '', Catatan: x.note || '' })),
+                    'Mutasi': mutasiMonth.map(x => ({ Waktu: x.ts, Jenis: x.type, Barang: x.itemId, Jumlah: Number(x.qty || 0), Dari: x.from || '', Ke: x.to || '', Catatan: x.note || '' })),
                     'Meter': meterMonth.map(m => ({ Jenis: m.type, Lokasi: m.ref, Tanggal: m.date, Pemakaian: Number(m.usage || 0), Tarif: Number(m.rate || 0), Biaya: Number(m.cost || 0) })),
                     'Penghuni': tenants.map(t => ({ Nama: t.name, NIK: t.nik, Kamar: t.roomNumber, Telepon: t.phone, KTP: t.ktpVerified ? 'OK' : 'BELUM' }))
                 }
@@ -5473,6 +5479,12 @@
         }
 
         function resetDemoData() {
+            const isExample = Boolean(appData.meta && appData.meta.exampleData);
+            const totalRecords = (appData.tenants || []).length + (appData.bills || []).length + (appData.rooms || []).length;
+            const message = isExample
+                ? 'Reset data contoh ke kondisi awal?'
+                : `PERINGATAN: Database berisi data NYATA (${totalRecords} catatan kamar/penghuni/tagihan). Semua akan diganti data contoh dan tidak bisa dikembalikan kecuali Anda punya cadangan. Lanjutkan?`;
+            if (!confirm(message)) return;
             appData = JSON.parse(JSON.stringify(defaultData));
             currentPropertyFilter = 'ALL';
             saveData();
