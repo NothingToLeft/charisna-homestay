@@ -224,8 +224,8 @@ const setBadge = (kind, text, extra) => {
     off: 'bg-slate-100 text-slate-500 border-slate-200',
     error: 'bg-rose-100 text-rose-700 border-rose-200'
   };
-  badge.className = `hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold cursor-pointer ${styles[kind] || styles.off}`;
-  badge.innerHTML = extra ? `${text} ${extra}` : text;
+  badge.className = `inline-flex items-center max-w-[150px] sm:max-w-none gap-1.5 px-2 py-1 rounded-full border text-[10px] font-bold cursor-pointer shrink-0 ${styles[kind] || styles.off}`;
+  badge.innerHTML = `<span class="truncate">${extra ? text + ' ' + extra : text}</span>`;
   badge.dataset.state = kind;
   badge.title = text;
 };
@@ -249,6 +249,12 @@ async function pullCloudMeta() {
   const snapshot = await getDoc(cloudDoc());
   return snapshot.exists() ? snapshot.data() : null;
 }
+const hasUnsyncedChanges = () => {
+  const localAt = appDataMeta()?.localUpdatedAt || '';
+  if (!localAt) return false;
+  if (!syncState.localUpdatedAt) return true;
+  return new Date(localAt).getTime() > new Date(syncState.localUpdatedAt).getTime() + 500;
+};
 async function performUpload({ interactive = false } = {}) {
   if (syncState.syncing) return false;
   syncState.syncing = true;
@@ -367,6 +373,17 @@ function scheduleAutoUpload() {
   clearTimeout(syncState.uploadTimer);
   syncState.uploadTimer = setTimeout(() => { void performUpload({ interactive: false }).then(ok => { if (ok) checkCloudForNewerData(); }); }, SYNC_DEBOUNCE_MS);
 }
+function flushPendingUpload() {
+  if (!user || verifiedRole !== 'OWNER' || syncState.syncing) return;
+  if (!window.charisnaVault) return;
+  clearTimeout(syncState.uploadTimer);
+  const localAt = appDataMeta()?.localUpdatedAt || '';
+  if (localAt && syncState.localUpdatedAt && new Date(localAt).getTime() <= new Date(syncState.localUpdatedAt).getTime() + 500) return; // sudah sinkron
+  syncState.uploadTimer = setTimeout(() => { void performUpload({ interactive: false }); }, 300);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushPendingUpload(); });
+window.addEventListener('blur', flushPendingUpload);
+window.addEventListener('pagehide', flushPendingUpload);
 window.addEventListener('charisna:data-saved', () => {
   if (!window.charisnaVault) return;
   const meta = appDataMeta();
@@ -382,13 +399,20 @@ syncBadge()?.addEventListener('click', () => {
   else if (state === 'stale') void performUpload({ interactive: false });
   else panel.showModal();
 });
-window.addEventListener('online', () => { syncState.network = true; void checkCloudForNewerData(); });
+window.addEventListener('online', () => { syncState.network = true; void checkCloudForNewerData(); if (appDataMeta()?.localUpdatedAt) flushPendingUpload(); });
 window.addEventListener('offline', () => { syncState.network = false; setBadge('off', '○ Offline'); });
 setInterval(() => { if (syncState.network && !syncState.syncing && !document.hidden) void checkCloudForNewerData(); }, 60000);
 panel.querySelector('#cloud-upload').onclick = () => performUpload({ interactive: true });
 panel.querySelector('#cloud-download').onclick = () => downloadCloudData({ interactive: true });
 async function logoutOwner() {
-  try { await window.charisnaVault?.flush(); await signOut(auth); }
+  try {
+    await window.charisnaVault?.flush();
+    if (hasUnsyncedChanges()) {
+      setBadge('busy', '⟳ Mengunggah sebelum keluar…');
+      await performUpload({ interactive: false });
+    }
+    await signOut(auth);
+  }
   catch { message('Penyimpanan belum selesai. Ekspor cadangan sebelum keluar.'); }
 }
 panel.querySelector('#cloud-logout').onclick = logoutOwner;
@@ -403,7 +427,11 @@ const lockButton = document.createElement('button');
 lockButton.textContent = 'Kunci brankas';
 lockButton.className = 'rounded-lg bg-slate-700 px-4 py-3 text-white';
 lockButton.onclick = async () => {
-  try { await window.charisnaVault?.flush(); location.reload(); }
+  try {
+    await window.charisnaVault?.flush();
+    if (hasUnsyncedChanges()) await performUpload({ interactive: false });
+    location.reload();
+  }
   catch { message('Ekspor cadangan perubahan sebelum mengunci.'); }
 };
 document.getElementById('settings-account-actions').append(lockButton);

@@ -260,7 +260,7 @@
 
                 <!-- Right Actions -->
                 <div class="flex items-center gap-2.5 sm:gap-3">
-                    <button id="sync-status-badge" type="button" title="Status cloud" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold bg-slate-100 text-slate-500 border-slate-200">
+                    <button id="sync-status-badge" type="button" title="Status cloud" class="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-bold bg-slate-100 text-slate-500 border-slate-200">
                         <span>○ Cloud</span>
                     </button>
                     <button id="owner-logout" type="button" aria-label="Keluar akun" title="Keluar akun" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 transition">
@@ -2894,7 +2894,26 @@
             }
             result.settings = { ...defaultData.settings, ...(result.settings || {}) };
             result.meta = { ...(defaultData.meta || {}), ...(result.meta || {}) };
+            if (detectRealData(result)) result.meta.exampleData = false;
             return result;
+        }
+
+        function detectRealData(data = appData) {
+            if (!data) return false;
+            const exampleFingerprints = [
+                data.properties?.some(p => p.id === 'PROP-1' && p.name === 'CHARISNA KOST Pusat'),
+                data.properties?.some(p => p.id === 'PROP-2' && p.name === 'CHARISNA KOST Suites'),
+                data.rooms?.some(r => r.id === 'R101' && r.number === '101' && r.propertyId === 'PROP-1'),
+                data.tenants?.some(t => t.id === 'T1' && t.name === 'Dimas Anggara'),
+                data.bills?.some(b => b.id === 'INV-101' && b.roomNumber === '101')
+            ];
+            if (exampleFingerprints.some(Boolean)) return false;
+            const realSignals = [
+                (data.tenants || []).length > 0,
+                (data.bills || []).length > 0,
+                (data.expenses || []).length > 0
+            ];
+            return realSignals.some(Boolean);
         }
         window.charisnaData = {
             snapshot: () => structuredClone(appData),
@@ -2905,6 +2924,7 @@
             try {
                 if (!window.charisnaVault) throw Error('Brankas masih terkunci.');
                 if (appData.meta) appData.meta.localUpdatedAt = new Date().toISOString();
+                if (detectRealData()) appData.meta.exampleData = false;
                 await window.charisnaVault.save(appData);
                 window.dispatchEvent(new Event('charisna:data-saved'));
                 renderAll();
@@ -5506,8 +5526,9 @@
                 : `PERINGATAN: Database berisi data NYATA (${totalRecords} catatan kamar/penghuni/tagihan). Semua akan diganti data contoh dan tidak bisa dikembalikan kecuali Anda punya cadangan. Lanjutkan?`;
             if (!confirm(message)) return;
             appData = JSON.parse(JSON.stringify(defaultData));
-            currentPropertyFilter = 'ALL';
-            saveData();
+                currentPropertyFilter = 'ALL';
+                appData.meta.exampleData = true;
+                saveData();
             showToast('Database di-reset ke data contoh awal!');
         }
 
