@@ -153,7 +153,10 @@ async function handleAccount(account, revision = ++authRevision) {
     try { await saveSuperAppKey(legacySyncKey); localStorage.removeItem(superAppKey()); }
     catch { message('Kunci SuperApp belum terenkripsi. Coba lagi setelah ruang penyimpanan tersedia.'); }
   }
-  if(resolved.role==='OWNER')scheduleSuperApp();
+  if(resolved.role==='OWNER'){
+    scheduleSuperApp();
+    setTimeout(() => { void reconcileAtStartup(); }, 1500);
+  }
 }
 onAuthStateChanged(auth, (account) => { const revision = ++authRevision; void handleAccount(account, revision); }, (authError) => showError(`Login tidak tersedia: ${authError.message}`));
 roleSelect.onchange = () => {
@@ -198,33 +201,192 @@ const cloudDoc = () => {
   if (!user || verifiedRole !== 'OWNER') throw Error('Hanya owner boleh menggunakan data Cloud utama.');
   return doc(db, 'users', user.uid, 'charisna', 'current');
 };
-panel.querySelector('#cloud-upload').onclick = async () => {
+
+// ==================== AUTO SYNC ENGINE ====================
+const SYNC_DEBOUNCE_MS = 10000;
+const SYNC_BACKUP_PREFIX = 'CHARISNA_SYNC_RECOVERY_';
+const SYNC_BACKUP_KEEP = 3;
+const deviceId = (() => {
+  let id = localStorage.getItem('CHARISNA_DEVICE_ID');
+  if (!id) { id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); localStorage.setItem('CHARISNA_DEVICE_ID', id); }
+  return id;
+})();
+const syncState = { localUpdatedAt: null, cloudUpdatedAt: null, syncing: false, uploadTimer: 0, paused: false, network: true };
+const syncBadge = () => document.getElementById('sync-status-badge');
+const localMeta = () => window.charisnaData?.snapshot()?.meta || {};
+const setBadge = (kind, text, extra) => {
+  const badge = syncBadge();
+  if (!badge) return;
+  const styles = {
+    ok: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    busy: 'bg-sky-100 text-sky-700 border-sky-200 animate-pulse',
+    stale: 'bg-amber-100 text-amber-700 border-amber-200',
+    off: 'bg-slate-100 text-slate-500 border-slate-200',
+    error: 'bg-rose-100 text-rose-700 border-rose-200'
+  };
+  badge.className = `hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold cursor-pointer ${styles[kind] || styles.off}`;
+  badge.innerHTML = extra ? `${text} ${extra}` : text;
+  badge.dataset.state = kind;
+  badge.title = text;
+};
+const timeAgo = (iso) => {
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return 'baru saja';
+  if (minutes < 60) return minutes + ' menit lalu';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + ' jam lalu';
+  return Math.floor(hours / 24) + ' hari lalu';
+};
+function rememberSyncBackup(data) {
   try {
-    cloudDoc();
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    localStorage.setItem(SYNC_BACKUP_PREFIX + stamp, JSON.stringify(data));
+    const entries = Object.keys(localStorage).filter(k => k.startsWith(SYNC_BACKUP_PREFIX)).sort();
+    while (entries.length > SYNC_BACKUP_KEEP) localStorage.removeItem(entries.shift());
+  } catch (storageError) { /* localStorage full: sync continues without recovery copy. */ }
+}
+async function pullCloudMeta() {
+  const snapshot = await getDoc(cloudDoc());
+  return snapshot.exists() ? snapshot.data() : null;
+}
+async function performUpload({ interactive = false } = {}) {
+  if (syncState.syncing) return false;
+  syncState.syncing = true;
+  try {
+    cloudDoc(); // owner check
     await window.charisnaVault.flush();
     const uploadData = window.charisnaData.snapshot();
     delete uploadData.privateIntegrations;
-    const local = JSON.stringify(uploadData);
-    if (!local) throw Error('Belum ada data lokal untuk diunggah.');
-    if (!confirm('Timpa data cloud dengan data lokal akun ini? Buat backup JSON dulu.')) return;
-    await setDoc(cloudDoc(), { data: JSON.parse(local), updatedAt: new Date().toISOString() });
-    message('Data lokal berhasil diunggah.');
-  } catch (cloudError) { message(cloudError.message); }
-};
-panel.querySelector('#cloud-download').onclick = async () => {
+    if (!uploadData?.rooms) throw Error('Belum ada data lokal untuk diunggah.');
+    if (interactive && !confirm('Timpa data cloud dengan data lokal akun ini? Backup pemulihan otomatis tersimpan.')) return false;
+    const updatedAt = new Date().toISOString();
+    const meta = { ...(localMeta() || {}) };
+    meta.localUpdatedAt = updatedAt;
+    meta.syncedFrom = deviceId;
+    await setDoc(cloudDoc(), { data: JSON.parse(JSON.stringify(uploadData)), updatedAt, device: deviceId, deviceLabel: (navigator.platform || 'Perangkat') + ' (' + deviceId + ')' }, { merge: true });
+    syncState.cloudUpdatedAt = updatedAt;
+    syncState.localUpdatedAt = updatedAt;
+    message(interactive ? 'Data lokal berhasil diunggah.' : 'Perubahan tersimpan otomatis di cloud.');
+    setBadge('ok', '☁ Sinkron');
+    return true;
+  } catch (cloudError) {
+    setBadge('error', '⚠ Gagal unggah — klik untuk cek');
+    message('Auto-sync gagal: ' + cloudError.message);
+    if (interactive) message('Gagal unggah: ' + cloudError.message);
+    return false;
+  } finally { syncState.syncing = false; }
+}
+async function downloadCloudData({ interactive = true } = {}) {
+  if (syncState.syncing) return false;
+  syncState.syncing = true;
   try {
     const snapshot = await getDoc(cloudDoc());
     if (!snapshot.exists()) throw Error('Belum ada data cloud.');
-    const data = snapshot.data().data;
+    const cloud = snapshot.data();
+    const data = cloud.data;
     if (!data?.rooms || !data?.tenants || !data?.bills) throw Error('Format data cloud tidak valid.');
-    if (!confirm('Timpa data lokal akun ini dengan data cloud? Buat backup JSON dulu.')) return;
+    const localAt = localMeta().localUpdatedAt || '';
+    const localCount = [...(window.charisnaData.snapshot().rooms || []), ...(window.charisnaData.snapshot().tenants || []), ...(window.charisnaData.snapshot().bills || [])].length;
+    if (interactive && !confirm(localCount
+      ? 'Data lokal: ' + localCount + ' catatan (disimpan ' + (localAt ? timeAgo(localAt) : 'tanpa waktu') + ').\nTimpa dengan data cloud (perbarui ' + timeAgo(cloud.updatedAt) + ' dari ' + (cloud.deviceLabel || 'perangkat lain') + ')?\nSalinan lokal otomatis tersimpan untuk pemulihan.'
+      : 'Timpa data lokal dengan data cloud?')) return false;
+    rememberSyncBackup(window.charisnaData.snapshot());
     const validated = window.charisnaData.validate(data);
     validated.privateIntegrations = window.charisnaData.snapshot().privateIntegrations || {};
+    validated.meta = { ...validated.meta, localUpdatedAt: cloud.updatedAt, cloudUpdatedAt: cloud.updatedAt };
     await window.charisnaVault.save(validated);
     window.charisnaData.hydrate(validated);
+    syncState.localUpdatedAt = cloud.updatedAt;
+    syncState.cloudUpdatedAt = cloud.updatedAt;
     message('Data cloud tersimpan terenkripsi pada perangkat.');
-  } catch (cloudError) { message(cloudError.message); }
-};
+    setBadge('ok', '☁ Sinkron');
+    return true;
+  } catch (cloudError) {
+    message('Gagal unduh: ' + cloudError.message);
+    setBadge('error', '⚠ Gagal unduh — cek panel Cloud');
+    return false;
+} finally { syncState.syncing = false; }
+}
+async function checkCloudForNewerData() {
+  if (!user || verifiedRole !== 'OWNER' || syncState.syncing) return;
+  try {
+    const snapshot = await getDoc(cloudDoc());
+    if (!snapshot.exists()) { if (localMeta().localUpdatedAt) { setBadge('stale', '⇡ Belum diunggah — klik'); } return; }
+    const cloud = snapshot.data();
+    const localAt = localMeta().localUpdatedAt || '';
+    const localStamp = new Date(localAt).getTime() || 0;
+    const cloudStamp = new Date(cloud.updatedAt).getTime() || 0;
+    syncState.cloudUpdatedAt = cloud.updatedAt;
+    if (!localAt) { setBadge('stale', '⇣ Data cloud tersedia — klik'); return; }
+    if (cloudStamp > localStamp + 2000) {
+      setBadge('stale', '⇣ Cloud lebih baru (' + timeAgo(cloud.updatedAt) + ') — klik untuk unduh');
+    } else if (localStamp > cloudStamp + 2000) {
+      setBadge('stale', '⇡ Lokal lebih baru — belum diunggah');
+    } else {
+      setBadge('ok', '☁ Sinkron');
+    }
+  } catch (checkError) { setBadge('off', '○ Cloud tidak terjangkau'); }
+}
+async function reconcileAtStartup() {
+  if (syncState.syncing || syncState.paused) return;
+  try {
+    setBadge('busy', '⟳ Memeriksa cloud…');
+    const snapshot = await getDoc(cloudDoc());
+    if (!snapshot.exists()) {
+      setBadge('stale', '⇡ Belum diunggah — klik');
+      return;
+  }
+    const cloud = snapshot.data();
+    const localAt = localMeta().localUpdatedAt || '';
+    const localStamp = new Date(localAt).getTime() || 0;
+    const cloudStamp = new Date(cloud.updatedAt).getTime() || 0;
+    if (!localAt) {
+      const data = cloud.data;
+      if (data?.rooms) {
+        const confirmed = confirm('Data cloud ditemukan (diperbarui ' + timeAgo(cloud.updatedAt) + ' dari ' + (cloud.deviceLabel || 'perangkat lain') + ').\nPerangkat ini belum punya jejak waktu lokal.\nUnduh data cloud sekarang? (Rekomendasi — cadangan lokal otomatis dibuat)');
+        if (confirmed) await downloadCloudData({ interactive: false });
+        else setBadge('stale', '⇣ Cloud lebih baru — klik untuk unduh');
+      } else setBadge('ok', '☁ Sinkron');
+      return;
+    }
+    if (cloudStamp > localStamp + 2000) {
+      const confirmed = confirm('Ada data lebih baru di cloud:\n• Diperbarui ' + timeAgo(cloud.updatedAt) + ' dari ' + (cloud.deviceLabel || 'perangkat lain') + '\n• Perangkat ini terakhir: ' + timeAgo(localAt) + '\n\nUnduh data cloud ke perangkat ini? (Rekomendasi — cadangan lokal otomatis dibuat)');
+      if (confirmed) await downloadCloudData({ interactive: false });
+      else setBadge('stale', '⇣ Cloud lebih baru (' + timeAgo(cloud.updatedAt) + ') — klik untuk unduh');
+    } else if (localStamp > cloudStamp + 2000) {
+      await performUpload({ interactive: false });
+    } else {
+      setBadge('ok', '☁ Sinkron');
+    }
+  } catch (checkError) {
+    setBadge('off', '○ Cloud tidak terjangkau');
+  }
+}
+function scheduleAutoUpload() {
+  if (!user || verifiedRole !== 'OWNER' || syncState.syncing) return;
+  clearTimeout(syncState.uploadTimer);
+  syncState.uploadTimer = setTimeout(() => { void performUpload({ interactive: false }).then(ok => { if (ok) checkCloudForNewerData(); }); }, SYNC_DEBOUNCE_MS);
+}
+window.addEventListener('charisna:data-saved', () => {
+  if (!window.charisnaVault) return;
+  const meta = appDataMeta();
+  if (meta) meta.localUpdatedAt = new Date().toISOString();
+  scheduleAutoUpload();
+});
+function appDataMeta() {
+  try { const data = window.charisnaData.snapshot(); return data && data.meta ? data.meta : null; } catch { return null; }
+}
+syncBadge()?.addEventListener('click', () => {
+  const state = syncBadge()?.dataset.state;
+  if (state === 'stale' && (syncBadge()?.textContent || '').includes('Cloud lebih baru')) void downloadCloudData({ interactive: false });
+  else if (state === 'stale') void performUpload({ interactive: false });
+  else panel.showModal();
+});
+window.addEventListener('online', () => { syncState.network = true; void checkCloudForNewerData(); });
+window.addEventListener('offline', () => { syncState.network = false; setBadge('off', '○ Offline'); });
+setInterval(() => { if (syncState.network && !syncState.syncing && !document.hidden) void checkCloudForNewerData(); }, 60000);
+panel.querySelector('#cloud-upload').onclick = () => performUpload({ interactive: true });
+panel.querySelector('#cloud-download').onclick = () => downloadCloudData({ interactive: true });
 async function logoutOwner() {
   try { await window.charisnaVault?.flush(); await signOut(auth); }
   catch { message('Penyimpanan belum selesai. Ekspor cadangan sebelum keluar.'); }

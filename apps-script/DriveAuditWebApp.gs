@@ -85,14 +85,14 @@ function doPost(e) {
     });
     if (exportResponse.getResponseCode() !== 200) throw new Error('Ekspor XLSX gagal: ' + exportResponse.getResponseCode());
     var bytes = exportResponse.getBlob();
-    folder.createFile(bytes.setName('Rekap-' + monthKey + '.xlsx'));
+    replaceFileInFolder(folder, 'Rekap-' + monthKey + '.xlsx', bytes.setName('Rekap-' + monthKey + '.xlsx'));
     DriveApp.getFileById(ss.getId()).setTrashed(true); // bersihkan spreadsheet kerja
 
     // 2) PNG kartu audit
     if (payload.pngBase64) {
       var b64 = payload.pngBase64.split(',')[1] || payload.pngBase64;
       var blob = Utilities.newBlob(Utilities.base64Decode(b64), 'image/png', 'Audit-' + monthKey + '.png');
-      folder.createFile(blob);
+      replaceFileInFolder(folder, 'Audit-' + monthKey + '.png', blob);
     }
 
     return ContentService.createTextOutput(JSON.stringify({
@@ -176,6 +176,19 @@ function migrateFilesInto(src, dst) {
     }
     file.moveTo(dst);
   }
+}
+
+function replaceFileInFolder(folder, name, blob) {
+  var existing = folder.getFilesByName(name);
+  var replaced = false;
+  while (existing.hasNext()) {
+    var file = existing.next();
+    if (replaced) { file.setTrashed(true); continue; } // duplikat lama dari versi sebelumnya
+    file.setContent(blob);
+    replaced = true;
+  }
+  if (!replaced) folder.createFile(blob);
+  return folder.getFileByName(name);
 }
 
 function getOrCreateFolder(parent, name) {
