@@ -2722,15 +2722,11 @@
                         </tr>
                     </thead>
                     <tbody class="text-slate-700">
-                        <tr class="border-b border-slate-100">
+                        <tr id="recBaseRow">
                             <td class="py-2.5 px-6">Sewa Pokok Kamar</td>
                             <td id="recBase" class="py-2.5 px-6 text-right font-semibold">Rp 0</td>
                         </tr>
-                        <tr class="border-b border-slate-100">
-                            <td class="py-2.5 px-6">Listrik &amp; Air</td>
-                            <td id="recElectric" class="py-2.5 px-6 text-right font-semibold">Rp 0</td>
-                        </tr>
-                        <tr>
+                        <tr id="recOtherRow" class="hidden">
                             <td class="py-2.5 px-6">Biaya Lainnya</td>
                             <td id="recOther" class="py-2.5 px-6 text-right font-semibold">Rp 0</td>
                         </tr>
@@ -4252,12 +4248,16 @@
             if (!bill) return;
             const cleanPhone = cleanWaNumber(bill.phone);
             const base = bill.baseAmount || bill.amount;
-            const elec = bill.electricAmount || 0;
-            const other = bill.otherAmount || 0;
+            const elec = Number(bill.electricAmount || 0);
+            const other = Number(bill.otherAmount || 0);
 
             logWhatsAppMessage('PENGINGAT SEWA', `${bill.tenantName} (${bill.phone})`, `Invoice #${bill.id} periode ${bill.period} sebesar ${formatRupiah(bill.amount)}`);
 
-            const message = `Halo Kak *${bill.tenantName}* (Unit ${bill.roomNumber}),\n\nKami dari manajemen *${appData.settings.kostName}* mengirimkan rincian tagihan sewa untuk periode *${bill.period}*:\n\n📄 *No. Invoice:* #${bill.id}\n🏠 *Sewa Pokok:* ${formatRupiah(base)}\n⚡ *Listrik & Air:* ${formatRupiah(elec)}\n➕ *Biaya Lainnya:* ${formatRupiah(other)}\n━━━━━━━━━━━━━━━\n💰 *TOTAL TAGIHAN: ${formatRupiah(bill.amount)}*\n📅 *Jatuh Tempo:* ${bill.dueDate}\n\nPembayaran ditransfer via:\n💳 *${appData.settings.bankInfo}*\n\nTerima kasih! 🙏`;
+            let rincianTagihan = `🏠 *Sewa Pokok:* ${formatRupiah(base)}`;
+            if (elec > 0) rincianTagihan += `\n⚡ *Listrik & Air:* ${formatRupiah(elec)}`;
+            if (other > 0) rincianTagihan += `\n➕ *Biaya Lainnya:* ${formatRupiah(other)}`;
+
+            const message = `Halo Kak *${bill.tenantName}* (Unit ${bill.roomNumber}),\n\nKami dari manajemen *${appData.settings.kostName}* mengirimkan rincian tagihan sewa untuk periode *${bill.period}*:\n\n📄 *No. Invoice:* #${bill.id}\n${rincianTagihan}\n━━━━━━━━━━━━━━━\n💰 *TOTAL TAGIHAN: ${formatRupiah(bill.amount)}*\n📅 *Jatuh Tempo:* ${bill.dueDate}\n\nPembayaran ditransfer via:\n💳 *${appData.settings.bankInfo}*\n\nTerima kasih! 🙏`;
             window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
         }
 
@@ -4275,22 +4275,25 @@
             const bill = appData.bills.find(b => b.id === billId);
             if (!bill) return;
             const cleanPhone = cleanWaNumber(bill.phone);
-            const base = bill.baseAmount || bill.amount;
-            const elec = bill.electricAmount || 0;
-            const other = bill.otherAmount || 0;
+            const other = Number(bill.otherAmount || 0);
+            const base = (bill.amount && bill.amount > 0) ? (bill.amount - other) : Number(bill.baseAmount || 0);
 
             logWhatsAppMessage('KWITANSI LUNAS', `${bill.tenantName} (${bill.phone})`, `Kwitansi Resmi #${bill.id} LUNAS (${formatRupiah(bill.amount)})`);
 
-            const message = `🧾 *KWITANSI RESMI PEMBAYARAN*\n━━━━━━━━━━━━━━━━━━━━\n*${appData.settings.kostName.toUpperCase()}*\n${appData.settings.kostAddress}\n${appData.settings.ownerPhone ? 'Telp. ' + appData.settings.ownerPhone : ''}\n━━━━━━━━━━━━━━━━━━━━\nNo. Kwitansi: #${bill.id}\nDiterima dari: ${bill.tenantName}\nUnit Kamar: ${bill.roomNumber}\nPeriode: ${bill.period}\nTanggal Lunas: ${bill.paidDate || '-'}\n━━━━━━━━━━━━━━━━━━━━\n*RINCIAN PEMBAYARAN:*\n• Sewa Pokok ........ ${formatRupiah(base)}\n• Listrik & Air ..... ${formatRupiah(elec)}\n• Biaya Lainnya .... ${formatRupiah(other)}\n━━━━━━━━━━━━━━━━━━━━\n*TOTAL DIBAYAR: ${formatRupiah(bill.amount)}*\nTerbilang: ${terbilang(bill.amount)} rupiah\n*STATUS: LUNAS TERVERIFIKASI*\n━━━━━━━━━━━━━━━━━━━━\nPembayaran diterima melalui transfer ke:\n💳 ${appData.settings.bankInfo || '-'}\n━━━━━━━━━━━━━━━━━━━━\nTerima kasih Kak *${bill.tenantName}* atas pembayarannya. Kwitansi ini sah tanpa tanda tangan basah.\n\nHormat kami,\n*${appData.settings.ownerName}* (Pengelola)`;
+            let rincian = `• Sewa Pokok ........ ${formatRupiah(base)}`;
+            if (other > 0) {
+                rincian += `\n• Biaya Lainnya .... ${formatRupiah(other)}`;
+            }
+
+            const message = `🧾 *KWITANSI RESMI PEMBAYARAN*\n━━━━━━━━━━━━━━━━━━━━\n*${appData.settings.kostName.toUpperCase()}*\n${appData.settings.kostAddress}\n${appData.settings.ownerPhone ? 'Telp. ' + appData.settings.ownerPhone : ''}\n━━━━━━━━━━━━━━━━━━━━\nNo. Kwitansi: #${bill.id}\nDiterima dari: ${bill.tenantName}\nUnit Kamar: ${bill.roomNumber}\nPeriode: ${bill.period}\nTanggal Lunas: ${bill.paidDate || '-'}\n━━━━━━━━━━━━━━━━━━━━\n*RINCIAN PEMBAYARAN:*\n${rincian}\n━━━━━━━━━━━━━━━━━━━━\n*TOTAL DIBAYAR: ${formatRupiah(bill.amount)}*\nTerbilang: ${terbilang(bill.amount)} rupiah\n*STATUS: LUNAS TERVERIFIKASI*\n━━━━━━━━━━━━━━━━━━━━\nPembayaran diterima melalui transfer ke:\n💳 ${appData.settings.bankInfo || '-'}\n━━━━━━━━━━━━━━━━━━━━\nTerima kasih Kak *${bill.tenantName}* atas pembayarannya. Kwitansi ini sah tanpa tanda tangan basah.\n\nHormat kami,\n*${appData.settings.ownerName}* (Pengelola)`;
             window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
         }
 
         function openReceipt(billId) {
             const bill = appData.bills.find(b => b.id === billId);
             if (!bill) return;
-            const base = bill.baseAmount || bill.amount;
-            const elec = bill.electricAmount || 0;
-            const other = bill.otherAmount || 0;
+            const other = Number(bill.otherAmount || 0);
+            const base = (bill.amount && bill.amount > 0) ? (bill.amount - other) : Number(bill.baseAmount || 0);
 
             document.getElementById('recKostName').textContent = appData.settings.kostName;
             document.getElementById('recKostAddress').textContent = appData.settings.kostAddress;
@@ -4301,8 +4304,20 @@
             document.getElementById('recPeriod').textContent = bill.period;
             document.getElementById('recDate').textContent = bill.paidDate || '-';
             document.getElementById('recBase').textContent = formatRupiah(base);
-            document.getElementById('recElectric').textContent = formatRupiah(elec);
-            document.getElementById('recOther').textContent = formatRupiah(other);
+
+            const recOtherRow = document.getElementById('recOtherRow');
+            const recBaseRow = document.getElementById('recBaseRow');
+            if (recOtherRow) {
+                if (other > 0) {
+                    recOtherRow.classList.remove('hidden');
+                    document.getElementById('recOther').textContent = formatRupiah(other);
+                    if (recBaseRow) recBaseRow.classList.add('border-b', 'border-slate-100');
+                } else {
+                    recOtherRow.classList.add('hidden');
+                    if (recBaseRow) recBaseRow.classList.remove('border-b', 'border-slate-100');
+                }
+            }
+
             document.getElementById('recAmount').textContent = formatRupiah(bill.amount);
             document.getElementById('recTerbilang').textContent = `# ${terbilang(bill.amount)} Rupiah`;
             document.getElementById('recBank').textContent = appData.settings.bankInfo || '-';
