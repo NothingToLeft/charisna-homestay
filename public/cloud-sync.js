@@ -211,7 +211,7 @@ const deviceId = (() => {
   if (!id) { id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); localStorage.setItem('CHARISNA_DEVICE_ID', id); }
   return id;
 })();
-const syncState = { localUpdatedAt: null, cloudUpdatedAt: null, syncing: false, uploadTimer: 0, paused: false, network: true };
+const syncState = { localUpdatedAt: null, cloudUpdatedAt: null, syncing: false, uploadTimer: 0, paused: false, network: true, initialized: false };
 const syncBadge = () => document.getElementById('sync-status-badge');
 const localMeta = () => window.charisnaData?.snapshot()?.meta || {};
 const setBadge = (kind, text, extra) => {
@@ -336,12 +336,14 @@ async function checkCloudForNewerData() {
 async function reconcileAtStartup() {
   if (syncState.syncing || syncState.paused) return;
   try {
-    setBadge('busy', '⟳ Memeriksa cloud…');
+    setBadge('busy', '⟳ Mengambil data terbaru…');
     const snapshot = await getDoc(cloudDoc());
+    syncState.initialized = true;
+    syncState.localUpdatedAt = localMeta().localUpdatedAt || null;
     if (!snapshot.exists()) {
       setBadge('stale', '⇡ Belum diunggah — klik');
       return;
-  }
+    }
     const cloud = snapshot.data();
     const localAt = localMeta().localUpdatedAt || '';
     const localStamp = new Date(localAt).getTime() || 0;
@@ -349,16 +351,12 @@ async function reconcileAtStartup() {
     if (!localAt) {
       const data = cloud.data;
       if (data?.rooms) {
-        const confirmed = confirm('Data cloud ditemukan (diperbarui ' + timeAgo(cloud.updatedAt) + ' dari ' + (cloud.deviceLabel || 'perangkat lain') + ').\nPerangkat ini belum punya jejak waktu lokal.\nUnduh data cloud sekarang? (Rekomendasi — cadangan lokal otomatis dibuat)');
-        if (confirmed) await downloadCloudData({ interactive: false });
-        else setBadge('stale', '⇣ Cloud lebih baru — klik untuk unduh');
+        await downloadCloudData({ interactive: false });
       } else setBadge('ok', '☁ Sinkron');
       return;
     }
     if (cloudStamp > localStamp + 2000) {
-      const confirmed = confirm('Ada data lebih baru di cloud:\n• Diperbarui ' + timeAgo(cloud.updatedAt) + ' dari ' + (cloud.deviceLabel || 'perangkat lain') + '\n• Perangkat ini terakhir: ' + timeAgo(localAt) + '\n\nUnduh data cloud ke perangkat ini? (Rekomendasi — cadangan lokal otomatis dibuat)');
-      if (confirmed) await downloadCloudData({ interactive: false });
-      else setBadge('stale', '⇣ Cloud lebih baru (' + timeAgo(cloud.updatedAt) + ') — klik untuk unduh');
+      await downloadCloudData({ interactive: false });
     } else if (localStamp > cloudStamp + 2000) {
       await performUpload({ interactive: false });
     } else {
