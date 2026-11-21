@@ -1,7 +1,7 @@
 import { unlockVault } from './vault-ui.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js?v=20261122b';
 import { buildKostSnapshot } from './superapp-summary.js?v=superapp-demo-20261107';
 
@@ -435,3 +435,24 @@ lockButton.onclick = async () => {
   catch { message('Ekspor cadangan perubahan sebelum mengunci.'); }
 };
 document.getElementById('settings-account-actions').append(lockButton);
+
+window.charisnaPortal = {
+  async publish(token, snapshot) {
+    if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault) throw Error('Masuk owner dan buka brankas.');
+    await setDoc(doc(db, 'tenantPortals', token), { ownerUid: user.uid, snapshot,
+      expiresAt: new Date(Date.now() + 30 * 86400000) });
+  },
+  async revoke(token) {
+    if (!user || verifiedRole !== 'OWNER') throw Error('Masuk owner.');
+    await deleteDoc(doc(db, 'tenantPortals', token));
+  },
+  async inbox() {
+    if (!user || verifiedRole !== 'OWNER') throw Error('Masuk owner.');
+    const result = await getDocs(query(collection(db, 'tenantSubmissions'), where('ownerUid', '==', user.uid)));
+    return result.docs.map(entry => ({ ...entry.data(), id: entry.id }));
+  },
+  async remove(id) {
+    if (!user || verifiedRole !== 'OWNER') throw Error('Masuk owner.');
+    await deleteDoc(doc(db, 'tenantSubmissions', id));
+  }
+};

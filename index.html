@@ -1896,6 +1896,10 @@
 
                 <!-- ==================== TAB 9: PENGATURAN & BACKUP ==================== -->
                 <section id="tab-pengaturan" class="tab-content fade-in max-w-3xl space-y-6">
+                    <section class="bg-white rounded-2xl border p-5 space-y-3">
+                        <h2 class="font-bold text-lg">Layanan Penghuni</h2>
+                        <div id="strategicActions" class="flex flex-wrap gap-2"></div>
+                    </section>
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"><h3 class="font-bold text-slate-800">Akun &amp; Layanan</h3><p id="account-sync-status" class="text-xs text-slate-500 break-words" role="status">Cloud: menunggu login</p><div id="settings-account-actions" class="flex flex-wrap gap-2"></div><div class="md:hidden flex flex-wrap gap-2 mt-4" aria-label="Menu lainnya">
 <button onclick="switchTab('reminders')" class="rounded-lg bg-slate-100 p-3 text-sm">WhatsApp</button>
 <button onclick="switchTab('pengeluaran')" class="rounded-lg bg-slate-100 p-3 text-sm">Pengeluaran</button>
@@ -4599,6 +4603,17 @@
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
+            const receipt = document.getElementById('printableReceipt');
+            if (receipt && /^data:image\/(png|jpeg);base64,/.test(appData.settings.qrisImage || '')) {
+                const qr = document.createElement('img');
+                qr.src = appData.settings.qrisImage;
+                qr.alt = 'QRIS merchant';
+                qr.style.cssText = 'display:block;width:240px;max-width:100%;margin:16px auto';
+                const info = document.createElement('p');
+                info.textContent = 'Masukkan nominal sesuai tagihan. Pembayaran diperiksa pengelola.';
+                receipt.append(qr, info);
+            }
+
         }
 
         function openBillModal() {
@@ -5890,6 +5905,7 @@
             e.preventDefault();
             const before = structuredClone(appData.settings);
             const nextSettings = {
+                ...appData.settings,
                 kostName: document.getElementById('settingKostName').value.trim(),
                 ownerName: document.getElementById('settingOwnerName').value.trim(),
                 ownerPhone: document.getElementById('settingOwnerPhone').value.trim(),
@@ -5965,5 +5981,6 @@
 
 <script>setTimeout(() => { if (!window.CHARISNA_AUTH_READY) document.getElementById("auth-error").textContent = "Login memerlukan internet untuk memuat Firebase."; }, 12000);</script>
     <script src="./feature-modules.js"></script>
-    <script type="module" src="./cloud-sync.js?v=20261122b"></script>
+    <script type="module" src="./cloud-sync.js?v=20261122-suite"></script>
+<script src="./strategic-suite.js?v=20261122"></script>
 </body></html>

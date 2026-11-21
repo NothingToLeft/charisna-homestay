@@ -38,6 +38,27 @@ service cloud.firestore {
               && request.resource.data.get('checkedItems', []).hasAll(resource.data.get('checklist', []))))
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt', 'note', 'updatedAt', 'checkedItems']));
     }
+    match /tenantPortals/{token} {
+      allow get: if resource.data.expiresAt > request.time;
+      allow list: if false;
+      allow create: if owner() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if owner() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if owner() && resource.data.ownerUid == request.auth.uid;
+    }
+    match /tenantSubmissions/{id} {
+      allow read, delete: if owner() && resource.data.ownerUid == request.auth.uid;
+      allow create: if request.resource.data.keys().hasOnly(['token', 'ownerUid', 'kind', 'message', 'image', 'createdAt'])
+        && request.resource.data.token is string
+        && exists(/databases/$(database)/documents/tenantPortals/$(request.resource.data.token))
+        && get(/databases/$(database)/documents/tenantPortals/$(request.resource.data.token)).data.expiresAt > request.time
+        && request.resource.data.ownerUid == get(/databases/$(database)/documents/tenantPortals/$(request.resource.data.token)).data.ownerUid
+        && request.resource.data.kind in ['PAYMENT', 'COMPLAINT']
+        && request.resource.data.message is string && request.resource.data.message.size() <= 2000
+        && request.resource.data.image is string && request.resource.data.image.size() <= 200000
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+    }
     match /staffRequests/{staffUid} {
       allow read, write: if false;
     }
