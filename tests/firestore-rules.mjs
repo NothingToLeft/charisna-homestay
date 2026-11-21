@@ -29,6 +29,10 @@ try {
   await assertSucceeds(getDoc(doc(staff, 'staff/cleaner')));
   await assertSucceeds(getDocs(query(collection(staff, 'users/owner/cleaningTasks'), where('assigneeUid', '==', 'cleaner'))));
   await assertFails(updateDoc(doc(staff, 'users/owner/cleaningTasks/task'), { assigneeUid: 'foreign-cleaner' }));
+  const cleanerTask = doc(staff, 'users/owner/cleaningTasks/task');
+  await assertSucceeds(updateDoc(cleanerTask, { checkedItems: ['Floor'], updatedAt: '2026-11-22' }));
+  await assertFails(updateDoc(cleanerTask, { checkedItems: ['Invalid'] }));
+  await assertFails(updateDoc(cleanerTask, { note: 'Unexpected TODO edit' }));
   await assertFails(updateDoc(doc(staff, 'users/owner/cleaningTasks/task'), { status: 'DONE', checkedItems: ['Floor', 'Floor'] }));
   await assertSucceeds(updateDoc(doc(staff, 'users/owner/cleaningTasks/task'), { status: 'DONE', checkedItems: ['Floor', 'Trash'] }));
   await assertFails(setDoc(doc(staff, 'staff/privilege'), { ownerUid: 'cleaner', role: 'CLEANER', active: true }));
@@ -41,5 +45,5 @@ try {
   const scopedPhotos = await assertSucceeds(getDocs(query(photos, where('ownerUid', '==', 'owner'), where('uploadedBy', '==', 'cleaner'))));
   if (!scopedPhotos.docs.some(photoDoc => photoDoc.id === 'valid-photo')) throw new Error('Assigned photo missing');
   await assertFails(getDocs(query(photos, where('ownerUid', '==', 'another-owner'), where('uploadedBy', '==', 'cleaner'))));
-  console.log('20 Firestore permission checks passed. Synthetic emulator data only.');
+  console.log('23 Firestore permission checks passed. Synthetic emulator data only.');
 } finally { await env.cleanup(); }

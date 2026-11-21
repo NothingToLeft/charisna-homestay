@@ -24,7 +24,10 @@ service cloud.firestore {
         || (cleanerFor(ownerUid)
           && resource.data.assigneeUid == request.auth.uid
           && request.resource.data.assigneeUid == resource.data.assigneeUid
-          && request.resource.data.status in ['IN_PROGRESS', 'DONE']
+          && (request.resource.data.status in ['IN_PROGRESS', 'DONE']
+            || (resource.data.status == 'TODO'
+              && request.resource.data.status == 'TODO'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['checkedItems', 'updatedAt'])))
           && request.resource.data.note is string
           && request.resource.data.note.size() <= 1000
           && request.resource.data.get('checkedItems', []) is list
