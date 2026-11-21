@@ -4,7 +4,11 @@ Aplikasi manajemen kos multi-properti. [Buka pratinjau web](https://nothingtolef
 
 ## Fitur aktif
 
-- Kelola properti, lantai, kamar, kapasitas, dan status unit.
+- Global search lintas kamar, penghuni, tagihan, pengeluaran, dan inventaris.
+- Indikator Online/Offline sederhana, tema gelap, timeline ketersediaan kamar, reminder jatuh tempo, serta template WhatsApp.
+- Inventaris, stok, mutasi, maintenance/perbaikan, kontrak, tagihan bertahap, dan meter.
+- Audit log mutasi penting dengan undo privat serta pemeriksaan revision agar perubahan stale ditolak.
+- Ekspor CSV aman, laporan print, dan mask NIK.
 - Data penghuni, kontak darurat, foto KTP, deposit, tanggal masuk, akhir kontrak, pengingat kontrak yang mendekat, dan riwayat check-out.
 - Tagihan, kuitansi, bukti bayar, pengeluaran, ringkasan okupansi dan keuangan.
 - Pesan WhatsApp disiapkan untuk dibuka di WhatsApp; pengiriman otomatis belum tersedia.
@@ -51,9 +55,18 @@ Alur foto dan pengaturan Apps Script dijelaskan di [operasional kebersihan](docs
 
 Konfigurasi Web App project `charisna-kost-manager` sudah tertanam. Buka panel **Cloud** dan login dengan akun Firebase Anda. Aktifkan Email/Password Authentication dan deploy `firestore.rules` bila belum aktif. **Unggah lokal** dan **Unduh cloud** memerlukan konfirmasi karena mengganti seluruh snapshot. Sinkronisasi otomatis dan penyelesaian konflik antarperangkat belum tersedia. Dokumen dengan foto besar dapat melampaui batas Firestore.
 
-## Build
+## Audit dan pembaruan 2026-11-21
 
-`npm run build` menyiapkan halaman aktif di `dist/`. Build Android memakai Capacitor; build Windows memakai Electron. Paket terbaru belum diuji pada perangkat. Lihat [arsitektur](docs/ARCHITECTURE.md), [status fitur](docs/FEATURE_MATRIX.md), dan [catatan perubahan](CHANGELOG.md).
+Audit patch mengerjakan:
+
+- Menutup public sharing Drive untuk lampiran baru, memvalidasi signature MIME, membatasi ukuran, menormalisasi nama file, memakai replacement lock, dan menyediakan penghapusan lampiran terotorisasi.
+- Memisahkan snapshot undo privat dari audit display, membatasi 500 snapshot, dan menolak undo ketika revision entitas sudah berubah.
+- Menutup XSS pada action hasil render dinamis, formula injection CSV, timeline yang salah lintas properti/rentang tanggal, serta audit mutation yang sebelumnya terlewat.
+- Menambahkan changelog ini ke panel **Pengaturan → Changelog & Riwayat Pembaruan Sistem**.
+
+Gate lokal lulus: `npm run check`, `npm test -- --run` (5 file/19 test), `npm run build`, dan `git diff --check`. Uji authenticated Google Drive/Apps Script, Firebase RBAC, vault lintas klien, dan konflik dua perangkat belum dapat dijalankan lokal.
+
+Lihat [catatan perubahan](CHANGELOG.md), [arsitektur](docs/ARCHITECTURE.md), dan [status fitur](docs/FEATURE_MATRIX.md).
 
 Halaman memakai Tailwind, Font Awesome, Google Fonts, dan Firebase SDK dari CDN saat fitur cloud dipakai. Koneksi internet diperlukan untuk aset dan cloud tersebut.
 
