@@ -227,7 +227,7 @@ export function renderCleanerPortal({ db, account, ownerUid, name, onLogout }) {
     try {
       const [snapshot, photoSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'users', ownerUid, 'cleaningTasks'), where('assigneeUid', '==', account.uid))),
-        getDocs(query(collection(db, 'cleaningPhotos'), where('uploadedBy', '==', account.uid)))
+        getDocs(query(collection(db, 'cleaningPhotos'), where('ownerUid', '==', ownerUid), where('uploadedBy', '==', account.uid)))
       ]);
       const tasks = snapshot.docs.sort((a, b) => (a.data().dueDate || '').localeCompare(b.data().dueDate || ''));
       status.textContent = `${tasks.length} tugas untuk Anda`;
