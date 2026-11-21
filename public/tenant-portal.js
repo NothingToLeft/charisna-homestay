@@ -21,6 +21,12 @@ try {
   for (const bill of snapshot.bills || []) {
     content.append(line(`${bill.id} · Rp ${Number(bill.amount).toLocaleString('id-ID')} · ${bill.status} ${bill.paidDate}`));
   }
+  if (/^data:image\/(png|jpeg);base64,/.test(snapshot.qrisImage || '')) {
+    const image = document.createElement('img'); image.src = snapshot.qrisImage;
+    image.alt = 'QRIS merchant'; content.append(image, line('Masukkan nominal tagihan. Pengelola memeriksa bukti pembayaran.'));
+  }
+  const print = document.createElement('button'); print.textContent = 'Cetak ringkasan dan riwayat pembayaran';
+  print.onclick = () => window.print(); content.append(print);
   const form = document.createElement('form');
   const kind = document.createElement('select');
   kind.setAttribute('aria-label', 'Jenis kiriman');

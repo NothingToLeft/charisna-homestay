@@ -13,6 +13,10 @@ try {
     for (const text of ['Unit ' + room.number,room.type,room.facilities,'Rp ' + Number(room.price).toLocaleString('id-ID') + '/bulan']) {
       const line = document.createElement('p'); line.textContent = text; article.append(line);
     }
+    if (/^data:image\/(png|jpeg);base64,/.test(room.image || '')) {
+      const image = document.createElement('img'); image.src = room.image; image.alt = 'Foto unit ' + room.number;
+      image.style.maxWidth = '100%'; article.append(image);
+    }
     document.querySelector('main').append(article);
   }
   status.textContent = data.rooms.length ? 'Hubungi pengelola untuk memastikan ketersediaan. Diperbarui ' + data.updatedAt.slice(0,10) : 'Belum ada kamar ditawarkan.';

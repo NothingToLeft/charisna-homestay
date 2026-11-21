@@ -162,13 +162,27 @@
       const label = make('label');
       const checkbox = make('input'); checkbox.type = 'checkbox';
       label.append(checkbox, make('span', ' Unit ' + room.number + ' · ' + formatRupiah(room.price)));
+      const photo = field(modal, 'Foto pemasaran unit ' + room.number + ' (opsional, JPEG/PNG maksimum 140 KB)', 'file');
+      photo.accept = 'image/png,image/jpeg';
+      photo.onchange = async () => {
+        const file = photo.files[0];
+        if (!file) return;
+        if (!['image/png','image/jpeg'].includes(file.type) || file.size > 140000) {
+          showToast('Foto pemasaran maksimum 140 KB, JPEG/PNG.', 'warning'); photo.value = ''; return;
+        }
+        room.marketingImage = await new Promise((resolve,reject) => {
+          const reader = new FileReader(); reader.onload = () => resolve(reader.result);
+          reader.onerror = reject; reader.readAsDataURL(file);
+        });
+        await saveData();
+      };
       modal.append(label, make('br'));
       selected.push({ room, checkbox });
     }
     modal.append(make('p', 'Pilih kamar yang boleh dipublikasikan. File katalog dapat diunggah ke hosting atau dibagikan.'));
     modal.append(button('Terbitkan pilihan / perbarui tautan', async () => {
       const rooms = selected.filter(item => item.checkbox.checked).map(({room}) => ({
-        number:room.number,type:room.type || '',facilities:room.facilities || '',price:Number(room.price) || 0
+        number:room.number,type:room.type || '',facilities:room.facilities || '',price:Number(room.price) || 0,image:room.marketingImage || ''
       }));
       const url = await window.charisnaPortal.catalog(rooms);
       const link = field(modal, 'Tautan katalog publik'); link.value = url; link.readOnly = true;
@@ -242,7 +256,8 @@
       const bills = appData.bills.filter(bill => bill.roomNumber === tenant.roomNumber && (bill.tenantId === tenant.id || bill.tenantName === tenant.name));
       await window.charisnaPortal.publish(token, {
         name: tenant.name, room: tenant.roomNumber, endDate: tenant.endDate || '',
-        bills: bills.map(bill => ({ id: bill.id, amount: bill.amount, status: bill.status, paidDate: bill.paidDate || '' }))
+        qrisImage: appData.settings.qrisImage || '',
+        bills: bills.slice(-60).map(bill => ({ id: bill.id, amount: bill.amount, status: bill.status, paidDate: bill.paidDate || '' }))
       });
       const link = field(modal, 'Salin tautan privat');
       link.value = 'https://nothingtoleft.github.io/charisna-homestay/tenant.html#' + token;
@@ -282,6 +297,28 @@
       if (!entries.length) inbox.append(make('p', 'Belum ada kiriman.'));
     }));
   }
+
+  function insights() {
+    const modal = dialog('Ringkasan Bulanan');
+    const month = field(modal, 'Bulan', 'month');
+    month.value = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Jakarta'}).format(new Date()).slice(0,7);
+    modal.append(make('p', 'SuperApp memakai koneksi di Cloud & Akun. Ekspor berikut berisi ringkasan untuk MoniFlow.'));
+    modal.append(button('Unduh ringkasan keuangan JSON', () => {
+      if (!/^\d{4}-\d{2}$/.test(month.value)) throw Error('Pilih bulan.');
+      const properties = appData.properties.map(property => {
+        const rooms = appData.rooms.filter(room => room.propertyId === property.id);
+        const numbers = new Set(rooms.map(room => room.number));
+        const unique = number => appData.rooms.filter(room => room.number === number).length === 1;
+        const bills = appData.bills.filter(bill => bill.propertyId === property.id || (!bill.propertyId && numbers.has(bill.roomNumber) && unique(bill.roomNumber)));
+        const revenue = bills.filter(bill => bill.status === 'LUNAS' && bill.paidDate?.startsWith(month.value)).reduce((sum,bill) => sum + Number(bill.amount || 0),0);
+        const expenses = appData.expenses.filter(expense => expense.propertyId === property.id && expense.date?.startsWith(month.value)).reduce((sum,expense) => sum + Number(expense.amount || 0),0);
+        return {propertyId:property.id,name:property.name,revenue,expenses,net:revenue-expenses,
+          totalRooms:rooms.length,occupiedRooms:rooms.filter(room => room.status === 'TERISI').length};
+      });
+      const unassignedExpenses = appData.expenses.filter(expense => !expense.propertyId && expense.date?.startsWith(month.value)).reduce((sum,expense) => sum + Number(expense.amount || 0),0);
+      download('charisna-insights-' + month.value + '.json', JSON.stringify({schema:1,month:month.value,properties,unassignedExpenses},null,2),'application/json');
+    }));
+  }
   const actions = document.getElementById('strategicActions');
-  if (actions) actions.append(button('Serah terima kamar', handover), button('Catatan penghuni', records), button('Katalog kamar kosong', catalog), button('QRIS merchant', qrisSettings), button('Portal penghuni', portal));
+  if (actions) actions.append(button('Serah terima kamar', handover), button('Catatan penghuni', records), button('Katalog kamar kosong', catalog), button('QRIS merchant', qrisSettings), button('Portal penghuni', portal), button('Ringkasan bulanan', insights));
 })();

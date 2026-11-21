@@ -68,12 +68,8 @@ const superAppSnapshot=()=>{
 };
 let lastSuperAppPayload='',lastSuperAppAt=0,superAppTimer=0;
 async function recordSuperAppDelivery(state) {
-  if (!window.charisnaVault) return;
-  const data = window.charisnaData.snapshot();
-  data.privateIntegrations ||= {};
-  data.privateIntegrations.superAppDelivery = state;
-  await window.charisnaVault.save(data);
-  window.charisnaData.hydrate(data);
+  if (!user) return;
+  localStorage.setItem('charisna-superapp-delivery:' + user.uid, JSON.stringify(state));
 }
 async function sendSuperApp(code=''){
   if(!user||verifiedRole!=='OWNER'||auth.currentUser?.uid!==user.uid)throw Error('Masuk sebagai Owner dahulu.');
@@ -477,6 +473,6 @@ window.charisnaPortal = {
 window.addEventListener('online', scheduleSuperApp);
 setInterval(() => {
   if (!window.charisnaVault || verifiedRole !== 'OWNER') return;
-  const delivery = window.charisnaData.snapshot().privateIntegrations?.superAppDelivery;
+  const delivery = JSON.parse(localStorage.getItem('charisna-superapp-delivery:' + user.uid) || 'null');
   if (delivery?.status === 'PENDING') scheduleSuperApp();
 }, 60000);
