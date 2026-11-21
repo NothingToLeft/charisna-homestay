@@ -2722,6 +2722,7 @@
             </div>
             <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button onclick="closeModal('broadcastModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+                <button onclick="preparePropertyBroadcast()" class="rounded-xl border px-3 py-2">Siapkan draf per properti</button>
                 <button onclick="saveAnnouncement()" class="rounded-xl border px-3 py-2">Simpan arsip</button>
                 <button onclick="showAnnouncementArchive()" class="rounded-xl border px-3 py-2">Lihat arsip</button>
                 <button onclick="sendBroadcastWa()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5">
@@ -4286,7 +4287,19 @@
             const close = document.createElement('button');
             close.className = 'px-3 py-2 bg-slate-100 rounded-lg mb-3'; close.textContent = 'Tutup';
             close.onclick = () => modal.close();
-            modal.append(heading, close);
+            const search = document.createElement('input');
+            search.type = 'search';
+            search.placeholder = 'Cari nama atau nomor unit';
+            search.setAttribute('aria-label', search.placeholder);
+            search.className = 'block w-full rounded-lg border p-2 mb-3';
+            const results = document.createElement('div');
+            search.oninput = () => {
+                const term = search.value.trim().toLocaleLowerCase('id-ID');
+                for (const row of results.querySelectorAll('[data-history-search]')) {
+                    row.hidden = !row.dataset.historySearch.includes(term);
+                }
+            };
+            modal.append(heading, close, search, results);
             const history = [...(appData.tenantHistory || [])].reverse();
             if (!history.length) {
                 const empty = document.createElement('p'); empty.textContent = 'Belum ada riwayat check-out.'; modal.append(empty);
@@ -4294,6 +4307,7 @@
             for (const item of history) {
                 const row = document.createElement('div');
                 row.className = 'border-b py-2 text-sm';
+                row.dataset.historySearch = `${item.name} ${item.roomNumber}`.toLocaleLowerCase('id-ID');
                 row.textContent = `${item.name} • Unit ${item.roomNumber} • ${item.entryDate} → ${item.checkoutDate} • Deposit ${formatRupiah(item.deposit)}`;
                 if (Number.isSafeInteger(item.refund)) {
                     const details = document.createElement('p');
@@ -4304,7 +4318,7 @@
                     download.onclick = () => downloadDepositSettlement(item);
                     row.append(details, download);
                 }
-                modal.append(row);
+                results.append(row);
             }
             modal.showModal();
         }
@@ -5801,6 +5815,48 @@
             modal.addEventListener('close', () => modal.remove(), { once: true });
             document.body.append(modal);
             modal.showModal();
+        }
+
+        function preparePropertyBroadcast() {
+            const message = document.getElementById('broadcastMessage').value.trim();
+            if (!message || message.length > 2000) {
+                showToast('Isi pengumuman antara 1 dan 2.000 karakter.', 'warning');
+                return;
+            }
+            const rooms = new Set(getScopedRooms().map(room => room.number));
+            const roomCounts = new Map();
+            for (const room of appData.rooms) {
+                roomCounts.set(room.number, (roomCounts.get(room.number) || 0) + 1);
+            }
+            const recipients = new Map();
+            for (const tenant of appData.tenants) {
+                if (!rooms.has(tenant.roomNumber) || roomCounts.get(tenant.roomNumber) !== 1) continue;
+                const phone = cleanWaNumber(tenant.phone);
+                if (/^62[0-9]{8,13}$/.test(phone)) recipients.set(phone, tenant.name);
+            }
+            const dialog = document.createElement('dialog');
+            dialog.className = 'rounded-2xl p-5 w-[min(94vw,540px)] max-h-[85vh] overflow-auto space-y-3';
+            const title = document.createElement('h2');
+            title.className = 'text-lg font-bold';
+            title.textContent = `Draf WhatsApp · ${recipients.size} penerima`;
+            const info = document.createElement('p');
+            info.textContent = 'Buka dan kirim tiap draf dari WhatsApp. Nomor unit ganda dan nomor telepon tidak valid dilewati.';
+            const close = document.createElement('button');
+            close.textContent = 'Tutup';
+            close.onclick = () => dialog.close();
+            dialog.append(title, info, close);
+            for (const [phone, name] of recipients) {
+                const link = document.createElement('a');
+                link.className = 'block rounded-xl border p-3';
+                link.textContent = `Buka draf untuk ${name}`;
+                link.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                dialog.append(link);
+            }
+            dialog.addEventListener('close', () => dialog.remove(), { once: true });
+            document.body.append(dialog);
+            dialog.showModal();
         }
 
         function sendBroadcastWa() {
