@@ -835,7 +835,7 @@
         let html = `
             <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Visual Kalender Unit Kamar (${targetMonth})</h3>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Visual Kalendar Unit Kamar (${escapeHtml(targetMonth)})</h3>
                     <div class="flex items-center gap-2">
                         <input type="month" data-feature-action="timeline-month" value="${escapeHtml(targetMonth)}"
                             class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200">

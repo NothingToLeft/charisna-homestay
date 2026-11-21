@@ -205,7 +205,7 @@ const cloudDoc = () => {
 };
 
 // ==================== AUTO SYNC ENGINE ====================
-const SYNC_DEBOUNCE_MS = 10000;
+const SYNC_DEBOUNCE_MS = 500; // 0,5s debounce untuk auto‑sync yang terasa langsung
 const SYNC_BACKUP_PREFIX = 'CHARISNA_SYNC_RECOVERY_';
 const SYNC_BACKUP_KEEP = 3;
 const deviceId = (() => {
@@ -326,13 +326,22 @@ async function checkCloudForNewerData() {
     const cloudStamp = new Date(cloud.updatedAt).getTime() || 0;
     syncState.cloudUpdatedAt = cloud.updatedAt;
     if (!localAt) { setBadge('stale', '⇣ Data cloud tersedia — klik'); return; }
-    if (cloudStamp > localStamp + 2000) {
-      setBadge('stale', '⇣ Cloud lebih baru (' + timeAgo(cloud.updatedAt) + ') — klik untuk unduh');
-    } else if (localStamp > cloudStamp + 2000) {
-      setBadge('stale', '⇡ Lokal lebih baru — belum diunggah');
-    } else {
-      setBadge('ok', '☁ Sinkron');
-    }
+    if (cloudStamp > localStamp) {
+              if (!syncState.syncing) {
+                try {
+                  await downloadCloudData({ interactive: false });
+                } catch (err) {
+                  setBadge('error', '⚠ Gagal mengunduh data cloud — klik untuk coba lagi');
+                }
+              } else {
+                setBadge('busy', '⟳ Menunggu sinkronisasi…');
+              }
+            } else if (localStamp > cloudStamp) {
+              scheduleAutoUpload();
+              setBadge('busy', '⟳ Auto-uploading…');
+            } else {
+              setBadge('ok', '☁ Sinkron');
+            }
   } catch (checkError) { setBadge('off', '○ Cloud tidak terjangkau'); }
 }
 async function reconcileAtStartup() {
