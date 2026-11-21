@@ -1,7 +1,7 @@
 import { unlockVault } from './vault-ui.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js?v=20261122b';
 import { buildKostSnapshot } from './superapp-summary.js?v=superapp-demo-20261107';
 
@@ -67,6 +67,10 @@ const superAppSnapshot=()=>{
   return buildKostSnapshot(current);
 };
 let lastSuperAppPayload='',lastSuperAppAt=0,superAppTimer=0;
+async function recordSuperAppDelivery(state) {
+  if (!user) return;
+  localStorage.setItem('charisna-superapp-delivery:' + user.uid, JSON.stringify(state));
+}
 async function sendSuperApp(code=''){
   if(!user||verifiedRole!=='OWNER'||auth.currentUser?.uid!==user.uid)throw Error('Masuk sebagai Owner dahulu.');
   const key=code?'':savedSuperAppKey();
@@ -74,12 +78,14 @@ async function sendSuperApp(code=''){
   const snapshot=superAppSnapshot();
   const payload=JSON.stringify(snapshot);
   if(!code&&payload===lastSuperAppPayload&&Date.now()-lastSuperAppAt<15*60*1000)return;
+  await recordSuperAppDelivery({status:'PENDING',queuedAt:new Date().toISOString()});
   const response=await fetch('https://zen.charisna-superapp.workers.dev/kost/push',{
     method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({snapshot,...(code?{pairCode:code}:{syncKey:key})}),cache:'no-store'
   });
   if(!response.ok)throw Error(response.status===403||response.status===409?'Koneksi ditolak. Putuskan koneksi lama di SuperApp, lalu buat kode baru.':'Ringkasan gagal dikirim. Coba lagi nanti.');
   const result=await response.json();
   if(result.syncKey)await saveSuperAppKey(result.syncKey);
+  await recordSuperAppDelivery({status:'SENT',sentAt:new Date().toISOString()});
   lastSuperAppPayload=payload;lastSuperAppAt=Date.now();
   return result;
 }
@@ -435,3 +441,38 @@ lockButton.onclick = async () => {
   catch { message('Ekspor cadangan perubahan sebelum mengunci.'); }
 };
 document.getElementById('settings-account-actions').append(lockButton);
+
+window.charisnaPortal = {
+  async catalog(rooms) {
+    if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault) throw Error('Masuk owner dan buka brankas.');
+    const data = window.charisnaData.snapshot();
+    await setDoc(doc(db, 'publicCatalogs', user.uid), {ownerUid:user.uid,
+      name:data.settings.kostName,rooms,updatedAt:new Date().toISOString()});
+    return 'https://nothingtoleft.github.io/charisna-homestay/catalog.html#' + user.uid;
+  },
+  async publish(token, snapshot) {
+    if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault) throw Error('Masuk owner dan buka brankas.');
+    await setDoc(doc(db, 'tenantPortals', token), { ownerUid: user.uid, snapshot,
+      expiresAt: new Date(Date.now() + 30 * 86400000) });
+  },
+  async revoke(token) {
+    if (!user || verifiedRole !== 'OWNER') throw Error('Masuk owner.');
+    await deleteDoc(doc(db, 'tenantPortals', token));
+  },
+  async inbox() {
+    if (!user || verifiedRole !== 'OWNER') throw Error('Masuk owner.');
+    const result = await getDocs(query(collection(db, 'tenantSubmissions'), where('ownerUid', '==', user.uid)));
+    return result.docs.map(entry => ({ ...entry.data(), id: entry.id }));
+  },
+  async remove(id) {
+    if (!user || verifiedRole !== 'OWNER') throw Error('Masuk owner.');
+    await deleteDoc(doc(db, 'tenantSubmissions', id));
+  }
+};
+
+window.addEventListener('online', scheduleSuperApp);
+setInterval(() => {
+  if (!window.charisnaVault || verifiedRole !== 'OWNER') return;
+  const delivery = JSON.parse(localStorage.getItem('charisna-superapp-delivery:' + user.uid) || 'null');
+  if (delivery?.status === 'PENDING') scheduleSuperApp();
+}, 60000);

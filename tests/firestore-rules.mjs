@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({ projectId: 'demo-charisna-security', firestore: {
   host: '127.0.0.1', port: 8089, rules: readFileSync('firestore.rules', 'utf8')
@@ -45,5 +45,18 @@ try {
   const scopedPhotos = await assertSucceeds(getDocs(query(photos, where('ownerUid', '==', 'owner'), where('uploadedBy', '==', 'cleaner'))));
   if (!scopedPhotos.docs.some(photoDoc => photoDoc.id === 'valid-photo')) throw new Error('Assigned photo missing');
   await assertFails(getDocs(query(photos, where('ownerUid', '==', 'another-owner'), where('uploadedBy', '==', 'cleaner'))));
-  console.log('23 Firestore permission checks passed. Synthetic emulator data only.');
+  const token = 'a'.repeat(64);
+  await assertSucceeds(setDoc(doc(owner, 'tenantPortals', token), {ownerUid:'owner',snapshot:{name:'Synthetic'},expiresAt:new Date(Date.now()+86400000)}));
+  await assertSucceeds(getDoc(doc(anonymous, 'tenantPortals', token)));
+  await assertFails(getDocs(collection(anonymous, 'tenantPortals')));
+  await assertFails(setDoc(doc(outsider, 'tenantPortals', token), {ownerUid:'other-owner',snapshot:{},expiresAt:new Date(Date.now()+86400000)}));
+  const submission = {token,ownerUid:'owner',kind:'COMPLAINT',message:'Synthetic report',image:'',createdAt:serverTimestamp()};
+  await assertSucceeds(setDoc(doc(anonymous,'tenantSubmissions','test'),submission));
+  await assertFails(getDoc(doc(anonymous,'tenantSubmissions','test')));
+  await assertFails(getDoc(doc(outsider,'tenantSubmissions','test')));
+  await assertSucceeds(getDocs(query(collection(owner,'tenantSubmissions'),where('ownerUid','==','owner'))));
+  await assertFails(setDoc(doc(anonymous,'tenantSubmissions','forged'),{...submission,ownerUid:'other-owner'}));
+  await assertSucceeds(deleteDoc(doc(owner,'tenantPortals',token)));
+  await assertFails(setDoc(doc(anonymous,'tenantSubmissions','revoked'),submission));
+  console.log('34 Firestore permission checks passed. Synthetic emulator data only.');
 } finally { await env.cleanup(); }

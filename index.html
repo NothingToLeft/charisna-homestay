@@ -1896,6 +1896,10 @@
 
                 <!-- ==================== TAB 9: PENGATURAN & BACKUP ==================== -->
                 <section id="tab-pengaturan" class="tab-content fade-in max-w-3xl space-y-6">
+                    <section class="bg-white rounded-2xl border p-5 space-y-3">
+                        <h2 class="font-bold text-lg">Layanan Penghuni</h2>
+                        <div id="strategicActions" class="flex flex-wrap gap-2"></div>
+                    </section>
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"><h3 class="font-bold text-slate-800">Akun &amp; Layanan</h3><p id="account-sync-status" class="text-xs text-slate-500 break-words" role="status">Cloud: menunggu login</p><div id="settings-account-actions" class="flex flex-wrap gap-2"></div><div class="md:hidden flex flex-wrap gap-2 mt-4" aria-label="Menu lainnya">
 <button onclick="switchTab('reminders')" class="rounded-lg bg-slate-100 p-3 text-sm">WhatsApp</button>
 <button onclick="switchTab('pengeluaran')" class="rounded-lg bg-slate-100 p-3 text-sm">Pengeluaran</button>
@@ -2709,11 +2713,22 @@
                 </div>
                 <div>
                     <label class="block font-semibold text-slate-700 mb-1">Isi Pesan Pengumuman</label>
+                    <label class="block mb-2">Template
+                        <select id="broadcastTemplate" class="w-full rounded-xl border p-2" onchange="applyAnnouncementTemplate(this)">
+                            <option value="">Pilih template</option>
+                            <option value="Tata tertib">Tata tertib</option>
+                            <option value="Jadwal kebersihan">Jadwal kebersihan</option>
+                            <option value="Gangguan layanan">Gangguan layanan</option>
+                        </select>
+                    </label>
                     <textarea id="broadcastMessage" rows="4" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500" placeholder="Tulis pengumuman kos di sini..."></textarea>
                 </div>
             </div>
             <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button onclick="closeModal('broadcastModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+                <button onclick="preparePropertyBroadcast()" class="rounded-xl border px-3 py-2">Siapkan draf per properti</button>
+                <button onclick="saveAnnouncement()" class="rounded-xl border px-3 py-2">Simpan arsip</button>
+                <button onclick="showAnnouncementArchive()" class="rounded-xl border px-3 py-2">Lihat arsip</button>
                 <button onclick="sendBroadcastWa()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5">
                     <i class="fa-brands fa-whatsapp"></i> Kirim ke WhatsApp
                 </button>
@@ -2933,6 +2948,7 @@
             result.settings = { ...defaultData.settings, ...(result.settings || {}) };
             result.meta = { ...(defaultData.meta || {}), ...(result.meta || {}) };
             result.auditLogs = Array.isArray(result.auditLogs) ? result.auditLogs : [];
+            result.announcements = Array.isArray(result.announcements) ? result.announcements : [];
             if (detectRealData(result)) result.meta.exampleData = false;
             return result;
         }
@@ -4228,6 +4244,17 @@
                     checkoutDate: new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(new Date()),
                     deposit, deduction, refund: deposit - deduction, note: noteInput.value.trim()
                 };
+                const portalToken = appData.privateIntegrations?.portalTokens?.[tenant.id];
+                if (portalToken) {
+                    try { await window.charisnaPortal.revoke(portalToken); }
+                    catch (error) {
+                        submit.disabled = false;
+                        modal.querySelector('[type="button"]').disabled = false;
+                        showToast('Check-out tertunda. Cabut tautan portal dahulu: ' + error.message, 'danger');
+                        return;
+                    }
+                    delete appData.privateIntegrations.portalTokens[tenant.id];
+                }
                 appData.tenantHistory ||= [];
                 appData.tenantHistory.push(record);
                 appData.tenants = appData.tenants.filter(t => t.id !== tenantId);
@@ -4275,7 +4302,19 @@
             const close = document.createElement('button');
             close.className = 'px-3 py-2 bg-slate-100 rounded-lg mb-3'; close.textContent = 'Tutup';
             close.onclick = () => modal.close();
-            modal.append(heading, close);
+            const search = document.createElement('input');
+            search.type = 'search';
+            search.placeholder = 'Cari nama atau nomor unit';
+            search.setAttribute('aria-label', search.placeholder);
+            search.className = 'block w-full rounded-lg border p-2 mb-3';
+            const results = document.createElement('div');
+            search.oninput = () => {
+                const term = search.value.trim().toLocaleLowerCase('id-ID');
+                for (const row of results.querySelectorAll('[data-history-search]')) {
+                    row.hidden = !row.dataset.historySearch.includes(term);
+                }
+            };
+            modal.append(heading, close, search, results);
             const history = [...(appData.tenantHistory || [])].reverse();
             if (!history.length) {
                 const empty = document.createElement('p'); empty.textContent = 'Belum ada riwayat check-out.'; modal.append(empty);
@@ -4283,6 +4322,7 @@
             for (const item of history) {
                 const row = document.createElement('div');
                 row.className = 'border-b py-2 text-sm';
+                row.dataset.historySearch = `${item.name} ${item.roomNumber}`.toLocaleLowerCase('id-ID');
                 row.textContent = `${item.name} • Unit ${item.roomNumber} • ${item.entryDate} → ${item.checkoutDate} • Deposit ${formatRupiah(item.deposit)}`;
                 if (Number.isSafeInteger(item.refund)) {
                     const details = document.createElement('p');
@@ -4293,7 +4333,7 @@
                     download.onclick = () => downloadDepositSettlement(item);
                     row.append(details, download);
                 }
-                modal.append(row);
+                results.append(row);
             }
             modal.showModal();
         }
@@ -4574,6 +4614,17 @@
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
+            const receipt = document.getElementById('printableReceipt');
+            if (receipt && /^data:image\/(png|jpeg);base64,/.test(appData.settings.qrisImage || '')) {
+                const qr = document.createElement('img');
+                qr.src = appData.settings.qrisImage;
+                qr.alt = 'QRIS merchant';
+                qr.style.cssText = 'display:block;width:240px;max-width:100%;margin:16px auto';
+                const info = document.createElement('p');
+                info.textContent = 'Masukkan nominal sesuai tagihan. Pembayaran diperiksa pengelola.';
+                receipt.append(qr, info);
+            }
+
         }
 
         function openBillModal() {
@@ -4842,15 +4893,36 @@
             saveData();
         }
 
-        function advanceComplaintState(id, nextState) {
+        async function advanceComplaintState(id, nextState) {
             const item = appData.complaints.find(c => c.id === id);
-            if (item) {
+            if (!item || item.status === nextState || !['IN_PROGRESS', 'RESOLVED'].includes(nextState)) return;
             const before = structuredClone(item);
+            if (nextState === 'RESOLVED' && !item.expenseId) {
+                const input = prompt('Biaya perbaikan dalam rupiah. Masukkan 0 jika tidak ada biaya.', '0');
+                if (input === null) return;
+                const amount = Number(input.trim());
+                if (!/^\d+$/.test(input.trim()) || !Number.isSafeInteger(amount)) {
+                    showToast('Masukkan biaya dalam rupiah bulat.', 'warning');
+                    return;
+                }
+                if (amount > 0) {
+                    const room = appData.rooms.find(r => r.number === item.roomNumber);
+                    const expense = {
+                        id: 'EXP-' + crypto.randomUUID(),
+                        date: new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(new Date()),
+                        category: 'Perbaikan',
+                        title: 'Perbaikan: ' + item.title,
+                        amount,
+                        complaintId: id
+                    };
+                    if (room?.propertyId) expense.propertyId = room.propertyId;
+                    appData.expenses.unshift(expense);
+                    item.expenseId = expense.id;
+                }
+            }
             item.status = nextState;
             window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Keluhan', entityId: id, summary: `Ubah status tiket ke ${nextState}`, before, after: { ...item } });
-            }
-            showToast(`Status tiket diubah ke ${nextState}!`);
-            saveData();
+            if (await saveData()) showToast('Status tiket tersimpan.');
         }
 
         function deleteComplaint(id) {
@@ -5720,6 +5792,99 @@
             }
         }
 
+        function applyAnnouncementTemplate(select) {
+            const templates = {
+                'Tata tertib': 'Mohon perhatikan aturan tamu, parkir, dan jam tenang berikut:',
+                'Jadwal kebersihan': 'Pembersihan area bersama dijadwalkan pada tanggal dan jam berikut:',
+                'Gangguan layanan': 'Layanan air atau listrik akan terganggu pada jadwal berikut:'
+            };
+            const field = document.getElementById('broadcastMessage');
+            if (select.value && (!field.value.trim() || confirm('Ganti isi pesan dengan template?'))) {
+                field.value = templates[select.value] || '';
+            }
+            select.value = '';
+        }
+
+        async function saveAnnouncement() {
+            const message = document.getElementById('broadcastMessage').value.trim();
+            if (!message || message.length > 2000) {
+                showToast('Isi pengumuman antara 1 dan 2.000 karakter.', 'warning');
+                return;
+            }
+            appData.announcements ||= [];
+            appData.announcements.unshift({ message, propertyId: currentPropertyFilter, createdAt: new Date().toISOString() });
+            if (await saveData()) showToast('Pengumuman tersimpan di arsip.');
+        }
+
+        function showAnnouncementArchive() {
+            const modal = document.createElement('dialog');
+            modal.className = 'rounded-2xl p-5 w-[min(94vw,540px)] max-h-[85vh] overflow-auto space-y-3';
+            const title = document.createElement('h2');
+            title.className = 'text-lg font-bold';
+            title.textContent = 'Arsip Pengumuman';
+            const close = document.createElement('button');
+            close.textContent = 'Tutup';
+            close.onclick = () => modal.close();
+            modal.append(title, close);
+            for (const entry of (appData.announcements || [])) {
+                if (currentPropertyFilter !== 'ALL' && !['ALL', currentPropertyFilter].includes(entry.propertyId)) continue;
+                const button = document.createElement('button');
+                button.className = 'block w-full rounded-xl border p-3 text-left whitespace-pre-wrap';
+                button.textContent = entry.message;
+                button.onclick = () => {
+                    document.getElementById('broadcastMessage').value = entry.message;
+                    modal.close();
+                };
+                modal.append(button);
+            }
+            if (modal.children.length === 2) modal.append('Belum ada pengumuman pada cakupan ini.');
+            modal.addEventListener('close', () => modal.remove(), { once: true });
+            document.body.append(modal);
+            modal.showModal();
+        }
+
+        function preparePropertyBroadcast() {
+            const message = document.getElementById('broadcastMessage').value.trim();
+            if (!message || message.length > 2000) {
+                showToast('Isi pengumuman antara 1 dan 2.000 karakter.', 'warning');
+                return;
+            }
+            const rooms = new Set(getScopedRooms().map(room => room.number));
+            const roomCounts = new Map();
+            for (const room of appData.rooms) {
+                roomCounts.set(room.number, (roomCounts.get(room.number) || 0) + 1);
+            }
+            const recipients = new Map();
+            for (const tenant of appData.tenants) {
+                if (!rooms.has(tenant.roomNumber) || roomCounts.get(tenant.roomNumber) !== 1) continue;
+                const phone = cleanWaNumber(tenant.phone);
+                if (/^62[0-9]{8,13}$/.test(phone)) recipients.set(phone, tenant.name);
+            }
+            const dialog = document.createElement('dialog');
+            dialog.className = 'rounded-2xl p-5 w-[min(94vw,540px)] max-h-[85vh] overflow-auto space-y-3';
+            const title = document.createElement('h2');
+            title.className = 'text-lg font-bold';
+            title.textContent = `Draf WhatsApp · ${recipients.size} penerima`;
+            const info = document.createElement('p');
+            info.textContent = 'Buka dan kirim tiap draf dari WhatsApp. Nomor unit ganda dan nomor telepon tidak valid dilewati.';
+            const close = document.createElement('button');
+            close.textContent = 'Tutup';
+            close.onclick = () => dialog.close();
+            dialog.append(title, info, close);
+            for (const [phone, name] of recipients) {
+                const link = document.createElement('a');
+                link.className = 'block rounded-xl border p-3';
+                link.textContent = `Buka draf untuk ${name}`;
+                link.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                dialog.append(link);
+            }
+            dialog.addEventListener('close', () => dialog.remove(), { once: true });
+            document.body.append(dialog);
+            dialog.showModal();
+        }
+
         function sendBroadcastWa() {
             const phone = cleanWaNumber(document.getElementById('broadcastTarget').value);
             const msgBody = document.getElementById('broadcastMessage').value;
@@ -5751,6 +5916,7 @@
             e.preventDefault();
             const before = structuredClone(appData.settings);
             const nextSettings = {
+                ...appData.settings,
                 kostName: document.getElementById('settingKostName').value.trim(),
                 ownerName: document.getElementById('settingOwnerName').value.trim(),
                 ownerPhone: document.getElementById('settingOwnerPhone').value.trim(),
@@ -5826,5 +5992,6 @@
 
 <script>setTimeout(() => { if (!window.CHARISNA_AUTH_READY) document.getElementById("auth-error").textContent = "Login memerlukan internet untuk memuat Firebase."; }, 12000);</script>
     <script src="./feature-modules.js"></script>
-    <script type="module" src="./cloud-sync.js?v=20261122b"></script>
+    <script type="module" src="./cloud-sync.js?v=20261122-suite"></script>
+<script src="./strategic-suite.js?v=20261122"></script>
 </body></html>

@@ -92,3 +92,20 @@ Data perangkat kini memakai brankas terenkripsi. Saat pertama membuka sebagai ow
 APK release memakai GitHub Actions secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`. Jangan mengganti keystore untuk pembaruan berikutnya. Pengguna APK debug harus mencadangkan data sebelum pindah ke APK release; tanda tangannya berbeda. Windows installer/portable belum menggunakan sertifikat Authenticode.
 
 Lihat [panduan rilis](docs/RELEASE.md). © Charisna.
+
+
+## Layanan penghuni dan operasional
+
+Buka Pengaturan → Layanan Penghuni untuk serah terima kamar dengan foto dan paraf, catatan internal penghuni, katalog publik, QRIS merchant, portal penghuni, serta ekspor ringkasan bulanan. Tautan portal acak berlaku 30 hari dan dapat dicabut owner. Check-out mencabut tautan terkait. Publikasikan ulang portal setelah pembaruan tagihan agar penghuni melihat snapshot terbaru. Portal menampilkan maksimum 60 tagihan yang cocok dengan identitas penghuni dan kamar unik.
+
+Penghuni dapat mengirim keluhan dan foto bukti bayar. Owner memeriksa kiriman melalui tombol Portal Penghuni. Keluhan dapat dibuat menjadi tiket. Penyelesaian tiket dengan biaya membuat pengeluaran kas terkait. Pembayaran tetap perlu diverifikasi owner.
+
+QRIS memakai gambar resmi merchant yang diunggah owner. Nominal dibaca dari tagihan dan dimasukkan penghuni pada aplikasi pembayaran. Kode dinamis dari penyedia pembayaran belum terhubung. Batas gambar QRIS 500 KB dan foto kiriman portal 140 KB.
+
+Katalog menerbitkan hanya kamar kosong yang dipilih owner. Pembaruan dan penarikan dilakukan dengan menerbitkan ulang pilihan, termasuk pilihan kosong. Foto pemasaran opsional maksimum 140 KB per unit. Katalog tetap berupa snapshot sampai diperbarui owner.
+
+Pengumuman mendukung template, arsip, dan draf WhatsApp berdasarkan properti. Owner mengirim setiap draf melalui WhatsApp. Ringkasan SuperApp yang tertunda dicoba lagi tiap menit saat aplikasi terbuka dan saat koneksi kembali. MoniFlow tersedia melalui ekspor JSON bulanan dengan pendapatan, pengeluaran, laba, dan okupansi. Endpoint penerimaan langsung MoniFlow belum dikonfigurasi. Pengeluaran tanpa properti ditampilkan terpisah dalam ekspor agar tidak salah dialokasikan.
+
+Catatan kejadian penghuni merupakan catatan internal yang dapat dicari dan dihapus owner. Simpan fakta dan tindak lanjut secara proporsional.
+
+Validasi paket mencakup pemeriksaan sintaks, build, tes unit, 34 pemeriksaan Firestore emulator, serta uji browser sintetis untuk simpan catatan dan paraf serah terima. Belum dilakukan transaksi pembayaran nyata atau pengiriman pesan WhatsApp otomatis. Modul web baru perlu build APK berikutnya agar tersedia dalam APK terpasang.
