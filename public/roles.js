@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, inMemoryPersistence, setPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, signOut } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 
@@ -251,17 +251,35 @@ export function renderCleanerPortal({ db, account, ownerUid, name, onLogout }) {
           element('p', `Tenggat: ${formatDate(item.dueDate)}${priority} • ${item.status || 'TODO'}`, 'text-xs text-emerald-800 font-semibold mt-2'),
           element('p', item.instructions || 'Tidak ada instruksi tambahan.', 'text-sm mt-3 whitespace-pre-wrap'));
         const checklist = Array.isArray(item.checklist) ? item.checklist : [];
-        const checked = Array.isArray(item.checkedItems) ? item.checkedItems : [];
+        let savingChecklist = false;
+        let checked = Array.isArray(item.checkedItems) ? item.checkedItems : [];
         if (checklist.length) {
           const checklistBox = element('div', '', 'space-y-2 mt-4');
-          checklistBox.append(element('h3', `Checklist ${checked.length}/${checklist.length}`, 'text-sm font-bold'));
+          const checklistCount = element('h3', `Checklist ${checked.length}/${checklist.length}`, 'text-sm font-bold');          checklistBox.append(checklistCount);
           for (const step of checklist) {
             const label = element('label', '', 'flex items-start gap-2 text-sm');
             const checkbox = element('input'); checkbox.type = 'checkbox'; checkbox.checked = checked.includes(step); checkbox.disabled = item.status === 'DONE';
             checkbox.onchange = async () => {
-              const next = checkbox.checked ? [...new Set([...checked, step])] : checked.filter((entry) => entry !== step);
-              try { await updateDoc(task.ref, { checkedItems: next, updatedAt: new Date().toISOString() }); await refresh(); }
-              catch (error) { status.textContent = `Gagal menyimpan checklist: ${error.message}`; checkbox.checked = !checkbox.checked; }
+              if (savingChecklist) {
+                checkbox.checked = checked.includes(step);
+                return;
+              }
+              const selected = checkbox.checked;
+              savingChecklist = true;
+              try {
+                await updateDoc(task.ref, {
+                  checkedItems: selected ? arrayUnion(step) : arrayRemove(step),
+                  updatedAt: new Date().toISOString()
+                });
+                checked = selected ? [...new Set([...checked, step])] : checked.filter((entry) => entry !== step);
+                checklistCount.textContent = `Checklist ${checked.length}/${checklist.length}`;
+                status.textContent = 'Checklist tersimpan.';
+              } catch (error) {
+                checkbox.checked = checked.includes(step);
+                status.textContent = `Gagal menyimpan checklist: ${error.message}`;
+              } finally {
+                savingChecklist = false;
+              }
             };
             label.append(checkbox, element('span', step)); checklistBox.append(label);
           }
@@ -294,6 +312,7 @@ export function renderCleanerPortal({ db, account, ownerUid, name, onLogout }) {
         note.placeholder = 'Catatan pekerjaan atau kendala'; note.maxLength = 1000; note.value = item.note || '';
         const buttons = element('div', '', 'flex flex-wrap gap-2 mt-3');
         async function changeStatus(nextStatus) {
+          if (savingChecklist) return;
           try {
             if (nextStatus === 'DONE' && checklist.length && checked.length !== checklist.length) throw Error('Centang seluruh checklist sebelum selesai.');
             const now = new Date().toISOString();
