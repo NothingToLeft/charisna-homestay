@@ -1988,8 +1988,15 @@
                         <div class="space-y-3 text-xs">
                             <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="font-extrabold text-slate-800">v1.0.5</span>
+                                    <span class="font-extrabold text-slate-800">Audit keamanan 2026-11-21</span>
                                     <span class="text-[10px] text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded">Terbaru</span>
+                                </div>
+                                <p class="text-slate-600">• Global search, Online/Offline, audit log + undo privat, ekspor CSV/print aman, template WhatsApp, timeline kamar, tema gelap, reminder, inventaris, stok, maintenance, kontrak, tagihan bertahap, dan meter.<br>• Upload Drive memakai folder otomatis, validasi signature MIME, batas ukuran, ACL private, replacement lock, dan hapus lampiran terotorisasi.<br>• Perbaikan XSS dinamis, formula injection CSV, timeline lintas properti/rentang tanggal, audit mutation, serta validasi meter.</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-extrabold text-slate-800">v1.0.5</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold">Sebelumnya</span>
                                 </div>
                                 <p class="text-slate-600">• Brankas lokal terenkripsi, backup aman, dan draft rilis Windows/APK.<br>• Rebranding penuh menjadi <b>CHARISNA KOST</b>.<br>• Enhanced WhatsApp Driver outbox log &amp; KTP vault compression.</p>
                             </div>
@@ -3044,12 +3051,16 @@
             if (id) {
                 const property = appData.properties.find(item => item.id === id);
                 if (!property) return;
+                const before = structuredClone(property);
                 property.name = name;
                 property.address = address;
+                window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Properti', entityId: id, summary: `Perbarui properti ${name}`, before, after: { ...property } });
             } else {
                 const newId = 'PROP-' + Date.now();
-                appData.properties.push({ id: newId, name, address });
+                const property = { id: newId, name, address };
+                appData.properties.push(property);
                 currentPropertyFilter = newId;
+                window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Properti', entityId: newId, summary: `Tambah properti ${name}`, after: property });
             }
             closeModal('propertyModal');
             showToast(`Properti "${name}" tersimpan.`);
@@ -3164,6 +3175,7 @@
             appData.properties = appData.properties.filter(item => item.id !== id);
             delete appData.floors?.[id];
             if (currentPropertyFilter === id) currentPropertyFilter = 'ALL';
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Properti', entityId: id, summary: `Hapus properti ${property.name}`, before: structuredClone(property), after: null });
             saveData(); openPropertyManager();
         }
 
@@ -3373,7 +3385,7 @@
             renderPluginsAndLogs();
             populateSettingsForm();
             window.CharisnaFeatureModules?.renderDashboardReminders();
-            window.CharisnaFeatureModules?.renderRoomTimeline();
+            window.CharisnaFeatureModules?.renderRoomTimeline(document.getElementById('roomTimelineContainer')?.dataset.month);
             window.CharisnaFeatureModules?.renderAuditLogs();
         }
 
@@ -4014,18 +4026,6 @@
             e.preventDefault();
             const id = document.getElementById('tenantFormId').value;
             const pendingTenantId = id || 'T' + Date.now();
-            if (tempUploadedKtpData?.pendingFile) {
-                if (!window.CharisnaFeatureModules?.uploadAttachmentToDrive) { showToast('Modul unggah Drive belum siap.', 'warning'); return; }
-                const result = await window.CharisnaFeatureModules.uploadAttachmentToDrive({
-                    file: tempUploadedKtpData.pendingFile,
-                    fileName: tempUploadedKtpData.pendingFile.name,
-                    category: 'ktp',
-                    entityId: pendingTenantId,
-                    assetName: appData.settings.kostName
-                });
-                if (!result) return;
-                tempUploadedKtpData = { fileId: result.fileId, url: result.url, path: result.path, name: tempUploadedKtpData.pendingFile.name };
-            }
             const name = document.getElementById('tenantFormName').value.trim();
             const nik = document.getElementById('tenantFormNik').value.trim();
             const roomNumber = document.getElementById('tenantFormRoom').value;
@@ -4037,18 +4037,36 @@
             const deposit = Number(document.getElementById('tenantFormDeposit').value || 0);
             const entryDate = document.getElementById('tenantFormDate').value;
             const endDate = document.getElementById('tenantFormEndDate').value;
+            if (!name || !/^\d{16}$/.test(nik) || !roomNumber || !entryDate || !Number.isFinite(deposit) || deposit < 0) {
+                showToast('Lengkapi data penghuni dan pastikan NIK 16 digit.', 'warning');
+                return;
+            }
             if (endDate && endDate < entryDate) return showToast('Akhir kontrak harus setelah tanggal masuk.', 'warning');
+            let uploadedKtpData = null;
+            if (tempUploadedKtpData?.pendingFile) {
+                if (!window.CharisnaFeatureModules?.uploadAttachmentToDrive) { showToast('Modul unggah Drive belum siap.', 'warning'); return; }
+                const result = await window.CharisnaFeatureModules.uploadAttachmentToDrive({
+                    file: tempUploadedKtpData.pendingFile,
+                    fileName: tempUploadedKtpData.pendingFile.name,
+                    category: 'ktp',
+                    entityId: pendingTenantId,
+                    assetName: appData.settings.kostName
+                });
+                if (!result) return;
+                uploadedKtpData = { fileId: result.fileId, url: result.url, path: result.path, name: tempUploadedKtpData.pendingFile.name };
+            }
 
-            if (id) {
-                const idx = appData.tenants.findIndex(t => t.id === id);
-                if (idx > -1) {
-                    const beforeTenant = structuredClone(appData.tenants[idx]);
-                    const oldRoomNumber = appData.tenants[idx].roomNumber;
-                    appData.tenants[idx] = {
+        if (id) {
+            const idx = appData.tenants.findIndex(t => t.id === id);
+            if (idx > -1) {
+                const beforeTenant = structuredClone(appData.tenants[idx]);
+                const oldRoomNumber = appData.tenants[idx].roomNumber;
+                const ktpImage = uploadedKtpData || (id ? appData.tenants[idx].ktpImage : null);
+                appData.tenants[idx] = {
                         ...appData.tenants[idx],
                         name, nik, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate, endDate,
-                        ktpVerified: Boolean(nik.length >= 8 || tempUploadedKtpData?.url || appData.tenants[idx].ktpVerified),
-                        ktpImage: tempUploadedKtpData?.url ? tempUploadedKtpData : appData.tenants[idx].ktpImage
+                        ktpVerified: Boolean(nik.length >= 8 || ktpImage || appData.tenants[idx].ktpVerified),
+                        ktpImage: ktpImage || null
                     };
                     if (oldRoomNumber !== roomNumber) {
                         const remainingOld = appData.tenants.filter(t => t.roomNumber === oldRoomNumber).length;
@@ -4066,8 +4084,8 @@
                 const newTenant = {
                     id: newTenantId,
                     name, nik, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate, endDate,
-                    ktpVerified: Boolean(tempUploadedKtpData?.url || nik.length >= 10),
-                    ktpImage: tempUploadedKtpData?.url ? tempUploadedKtpData : null
+                    ktpVerified: Boolean(uploadedKtpData || nik.length >= 10),
+                    ktpImage: uploadedKtpData || null
                 };
                 appData.tenants.push(newTenant);
                 window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Penghuni', entityId: newTenantId, summary: `Check-in penghuni ${name}`, after: newTenant });
@@ -4105,6 +4123,7 @@
         function checkoutTenant(tenantId) {
             const tenant = appData.tenants.find(t => t.id === tenantId);
             if (!tenant || !confirm(`Check-out ${tenant.name}? Riwayat sewa disimpan.`)) return;
+            const beforeTenant = structuredClone(tenant);
             appData.tenantHistory ||= [];
             appData.tenantHistory.push({
                 id: tenant.id, name: tenant.name, roomNumber: tenant.roomNumber,
@@ -4113,6 +4132,7 @@
                 deposit: tenant.deposit || 0
             });
             appData.tenants = appData.tenants.filter(t => t.id !== tenantId);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Penghuni', entityId: tenantId, summary: `Check-out penghuni ${tenant.name}`, before: beforeTenant });
             const remainingInRoom = appData.tenants.filter(t => t.roomNumber === tenant.roomNumber).length;
             const room = appData.rooms.find(r => r.number === tenant.roomNumber);
             if (room && remainingInRoom === 0) room.status = 'KOSONG';
@@ -4328,9 +4348,11 @@
         function markBillPaid(billId) {
             const bill = appData.bills.find(b => b.id === billId);
             if (!bill) return;
+            const before = structuredClone(bill);
             bill.status = 'LUNAS';
             bill.proofUploaded = true;
             bill.paidDate = new Date().toISOString().slice(0, 10);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Tagihan', entityId: bill.id, summary: `Tandai invoice ${bill.id} lunas`, before, after: bill });
             showToast(`Tagihan Unit ${bill.roomNumber} (${bill.tenantName}) LUNAS!`);
             saveData();
         }
@@ -4472,9 +4494,7 @@
 
             const baseAmount = Number(document.getElementById('billFormBase').value || 0);
             const electricAmount = Number(document.getElementById('billFormElectric').value || 0);
-            const otherAmount = Number(document.getElementById('billFormOther').value || 0);
-
-            appData.bills.unshift({
+            const newBill = {
                 id: generateRecordId('INV'),
                 tenantName: tenant.name,
                 phone: tenant.phone,
@@ -4489,7 +4509,9 @@
                 paidDate: null,
                 proofUploaded: false,
                 proofImage: null
-            });
+            };
+            appData.bills.unshift(newBill);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Tagihan', entityId: newBill.id, summary: `Terbitkan invoice ${newBill.id}`, after: newBill });
 
             closeModal('billModal');
             showToast(`Invoice baru untuk ${tenant.name} berhasil diterbitkan!`);
@@ -4503,6 +4525,7 @@
             const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
             const periodName = `${nextMonth} ${year}`;
 
+            const beforeBills = structuredClone(appData.bills);
             let createdCount = 0;
             appData.tenants.forEach(t => {
                 const exists = appData.bills.some(b => b.roomNumber === t.roomNumber && b.period === periodName);
@@ -4530,6 +4553,7 @@
             });
 
             if (createdCount > 0) {
+                window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Tagihan', entityId: periodName, summary: `Terbitkan ${createdCount} invoice periode ${periodName}`, before: { bills: beforeBills }, after: { bills: appData.bills } });
                 showToast(`${createdCount} Invoice periode ${periodName} berhasil dibuat otomatis!`);
                 saveData();
             } else {
@@ -4593,7 +4617,10 @@
         }
 
         function deleteExpense(id) {
+            const before = structuredClone(appData.expenses || []);
             appData.expenses = appData.expenses.filter(x => x.id !== id);
+            const removed = before.find(x => x.id === id);
+            if (removed) window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Pengeluaran', entityId: id, summary: `Hapus pengeluaran ${removed.title}`, before: removed });
             saveData();
         }
 
@@ -4679,7 +4706,7 @@
                 date: new Date().toISOString().slice(0, 10)
             };
             appData.complaints.unshift(newComplaint);
-            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Keluhan', entityId: newComplaint.id, summary: `Buat tiket ${newComplaint.title}`, after: newComplaint });
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Keluhan', entityId: newComplaint.id, summary: `Buat tiket ${newComplaint.title}`, after: { ...newComplaint } });
             closeModal('complaintModal');
             showToast('Tiket perbaikan dibuat!');
             saveData();
@@ -4688,16 +4715,19 @@
         function advanceComplaintState(id, nextState) {
             const item = appData.complaints.find(c => c.id === id);
             if (item) {
-                const before = structuredClone(item);
-                item.status = nextState;
-                window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Keluhan', entityId: id, summary: `Ubah status tiket ke ${nextState}`, before, after: item });
+            const before = structuredClone(item);
+            item.status = nextState;
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Keluhan', entityId: id, summary: `Ubah status tiket ke ${nextState}`, before, after: { ...item } });
             }
             showToast(`Status tiket diubah ke ${nextState}!`);
             saveData();
         }
 
         function deleteComplaint(id) {
+            const before = structuredClone(appData.complaints || []);
+            const removed = before.find(c => c.id === id);
             appData.complaints = appData.complaints.filter(c => c.id !== id);
+            if (removed) window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Keluhan', entityId: id, summary: `Hapus tiket ${removed.title}`, before: removed });
             saveData();
         }
 
@@ -4807,7 +4837,7 @@
         function addInventaris() {
             const item = document.getElementById('invFormItem').value.trim();
             if (!item) { showToast('Nama barang wajib diisi.', 'warning'); return; }
-            appData.inventaris.unshift({
+            const record = {
                 id: 'INV-' + Date.now(),
                 propertyId: document.getElementById('invFormProperty').value,
                 roomRef: document.getElementById('invFormRoom').value.trim() || 'Umum',
@@ -4816,17 +4846,21 @@
                 qty: Number(document.getElementById('invFormQty').value) || 1,
                 condition: document.getElementById('invFormCondition').value,
                 notes: document.getElementById('invFormNotes').value.trim()
-            });
+            };
+            appData.inventaris.unshift(record);
             document.getElementById('invFormItem').value = '';
             document.getElementById('invFormRoom').value = '';
             document.getElementById('invFormNotes').value = '';
             showToast('Aset inventaris ditambahkan.');
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Inventaris', entityId: record.id, summary: `Tambah aset inventaris ${item}`, after: { ...record } });
             saveData();
         }
 
         function deleteInventaris(id) {
             if (!confirm('Hapus catatan ini? Simpan cadangan jika masih diperlukan.')) return;
+            const before = structuredClone(appData.inventaris.find(x => x.id === id));
             appData.inventaris = appData.inventaris.filter(x => x.id !== id);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Inventaris', entityId: id, summary: `Hapus aset inventaris ${id}`, before, after: null });
             saveData();
         }
 
@@ -4857,22 +4891,26 @@
         function addStok() {
             const name = document.getElementById('stkFormName').value.trim();
             if (!name) { showToast('Nama barang wajib diisi.', 'warning'); return; }
-            appData.stok.unshift({
+            const record = {
                 id: 'STK-' + Date.now(),
                 name,
                 unit: document.getElementById('stkFormUnit').value.trim() || 'pcs',
                 qty: Number(document.getElementById('stkFormQty').value) || 0,
                 minStock: Number(document.getElementById('stkFormMin').value) || 0,
                 location: document.getElementById('stkFormLoc').value.trim() || 'Gudang'
-            });
+            };
+            appData.stok.unshift(record);
             ['stkFormName', 'stkFormUnit', 'stkFormLoc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             showToast('Barang stok ditambahkan.');
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Stok', entityId: record.id, summary: `Tambah stok ${name}`, after: { ...record } });
             saveData();
         }
 
         function deleteStok(id) {
             if (!confirm('Hapus catatan ini? Simpan cadangan jika masih diperlukan.')) return;
+            const before = structuredClone(appData.stok.find(s => s.id === id));
             appData.stok = appData.stok.filter(s => s.id !== id);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Stok', entityId: id, summary: `Hapus stok ${id}`, before, after: null });
             saveData();
         }
 
@@ -4901,6 +4939,7 @@
             if (!Number.isFinite(qty) || qty <= 0) { showToast('Jumlah mutasi harus lebih dari nol.', 'warning'); return; }
             const item = (appData.stok || []).find(s => s.id === itemId);
             if (!item) { showToast('Pilih barang dahulu.', 'warning'); return; }
+            const beforeMutation = structuredClone(item);
             if (type === 'MASUK') { item.qty = Number(item.qty || 0) + qty; }
             else if (type === 'KELUAR') {
                 const after = Number(item.qty || 0) - qty;
@@ -4923,6 +4962,7 @@
                 document.getElementById('mutFormNote').value = '';
                 document.getElementById('mutFormTo').value = '';
                 showToast('Barang dipindahkan.');
+                window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Stok', entityId: itemId, summary: `Pindah stok ${item.name}`, before: beforeMutation, after: { ...item } });
                 saveData();
                 return;
             }
@@ -4939,6 +4979,7 @@
             document.getElementById('mutFormNote').value = '';
             document.getElementById('mutFormTo').value = '';
             showToast('Mutasi barang dicatat.');
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Stok', entityId: itemId, summary: `${type} stok ${item.name}`, before: beforeMutation, after: { ...item } });
             saveData();
         }
 
@@ -4964,7 +5005,7 @@
         function addPerawatan() {
             const asset = document.getElementById('pwtFormAsset').value.trim();
             if (!asset) { showToast('Nama aset wajib diisi.', 'warning'); return; }
-            appData.perawatan.unshift({
+            const record = {
                 id: 'PWT-' + Date.now(),
                 asset,
                 propertyId: document.getElementById('pwtFormProperty').value,
@@ -4972,15 +5013,19 @@
                 nextDate: document.getElementById('pwtFormNext').value || '',
                 lastDate: '',
                 notes: ''
-            });
+            };
+            appData.perawatan.unshift(record);
             document.getElementById('pwtFormAsset').value = '';
             showToast('Jadwal perawatan ditambahkan.');
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Perawatan', entityId: record.id, summary: `Tambah jadwal perawatan ${asset}`, after: { ...record } });
             saveData();
         }
 
         function deletePerawatan(id) {
             if (!confirm('Hapus catatan ini? Simpan cadangan jika masih diperlukan.')) return;
+            const before = appData.perawatan.find(p => p.id === id);
             appData.perawatan = appData.perawatan.filter(p => p.id !== id);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Perawatan', entityId: id, summary: `Hapus jadwal perawatan ${id}`, before });
             saveData();
         }
 
@@ -5026,7 +5071,7 @@
                 if (!result) return;
                 photo = { fileId: result.fileId, url: result.url, path: result.path, name: repairPhotoData.name };
             }
-            appData.perbaikan.unshift({
+            const record = {
                 id: recordId,
                 date: document.getElementById('prbFormDate').value || new Date().toISOString().slice(0, 10),
                 asset: asset || 'Fasilitas Umum',
@@ -5035,18 +5080,22 @@
                 photo,
                 status: document.getElementById('prbFormStatus').value,
                 propertyId: document.getElementById('prbFormProperty')?.value || document.getElementById('pwtFormProperty')?.value || ''
-            });
+            };
+            appData.perbaikan.unshift(record);
             repairPhotoData = '';
             const inp = document.getElementById('prbFormPhoto'); if (inp) inp.value = '';
             const lbl = document.getElementById('prbPhotoName'); if (lbl) lbl.textContent = '';
             ['prbFormDesc', 'prbFormAsset'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             showToast('Perbaikan dicatat.');
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Perbaikan', entityId: recordId, summary: `Catat perbaikan ${record.asset}`, after: { ...record } });
             saveData();
         }
 
         function deletePerbaikan(id) {
             if (!confirm('Hapus catatan ini? Simpan cadangan jika masih diperlukan.')) return;
+            const before = structuredClone(appData.perbaikan.find(r => r.id === id));
             appData.perbaikan = appData.perbaikan.filter(r => r.id !== id);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Perbaikan', entityId: id, summary: `Hapus perbaikan ${id}`, before, after: null });
             saveData();
         }
 
@@ -5083,7 +5132,7 @@
             const tenant = document.getElementById('ktkFormTenant').value.trim();
             const end = document.getElementById('ktkFormEnd').value;
             if (!tenant) { showToast('Nama penghuni wajib diisi.', 'warning'); return; }
-            appData.kontrak.unshift({
+            const contract = {
                 id: 'KTK-' + Date.now(),
                 tenantName: tenant,
                 roomNumber: document.getElementById('ktkFormRoom').value.trim() || '-',
@@ -5091,15 +5140,19 @@
                 endDate: end || '',
                 remindDays: Number(document.getElementById('ktkFormRemind').value) || 30,
                 notified: false
-            });
+            };
+            appData.kontrak.unshift(contract);
             ['ktkFormTenant', 'ktkFormRoom', 'ktkFormStart'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             showToast('Kontrak sewa ditambahkan.');
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Kontrak', entityId: contract.id, summary: `Tambah kontrak ${tenant}`, after: { ...contract } });
             saveData();
         }
 
         function deleteKontrak(id) {
             if (!confirm('Hapus catatan ini? Simpan cadangan jika masih diperlukan.')) return;
+            const before = structuredClone(appData.kontrak.find(k => k.id === id));
             appData.kontrak = appData.kontrak.filter(k => k.id !== id);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Kontrak', entityId: id, summary: `Hapus kontrak ${id}`, before, after: null });
             saveData();
         }
 
@@ -5164,22 +5217,26 @@
                 const isLast = i === stages;
                 stagesArr.push({ n: i, due: '', amount: isLast ? total - per * (stages - 1) : per, status: 'BELUM' });
             }
-            appData.tagihanBertahap.unshift({
+            const stagedBill = {
                 id: 'TGB-' + Date.now(),
                 tenantName: tenant,
                 phone: document.getElementById('tgbFormPhone').value.trim(),
                 period: document.getElementById('tgbFormPeriod').value.trim() || '-',
                 total,
                 stages: stagesArr
-            });
+            };
+            appData.tagihanBertahap.unshift(stagedBill);
             ['tgbFormTenant', 'tgbFormPhone', 'tgbFormPeriod'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             showToast('Tagihan bertahap dibuat.');
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Tagihan Bertahap', entityId: stagedBill.id, summary: `Buat tagihan bertahap ${tenant}`, after: { ...stagedBill, stages: stagedBill.stages.map(stage => ({ ...stage })) } });
             saveData();
         }
 
         function deleteTagihanBertahap(id) {
             if (!confirm('Hapus tagihan bertahap ini?')) return;
+            const before = structuredClone(appData.tagihanBertahap.find(t => t.id === id));
             appData.tagihanBertahap = appData.tagihanBertahap.filter(t => t.id !== id);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Tagihan Bertahap', entityId: id, summary: `Hapus tagihan bertahap ${id}`, before, after: null });
             saveData();
         }
 
@@ -5187,7 +5244,10 @@
             const t = (appData.tagihanBertahap || []).find(x => x.id === id);
             if (!t) return;
             const st = (t.stages || []).find(s => s.n === stageN);
-            if (st) st.status = 'LUNAS';
+            if (!st) return;
+            const before = structuredClone(st);
+            st.status = 'LUNAS';
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Tagihan Bertahap', entityId: id, summary: `Tandai tahap ${stageN} lunas`, before: { id, stage: before }, after: { id, stage: { ...st } } });
             showToast('Tahap ditandai lunas.');
             saveData();
         }
@@ -5231,7 +5291,8 @@
             const prev = (appData.meter || []).filter(m => m.type === type && m.ref === ref).sort((a, b) => b.date.localeCompare(a.date))[0];
             const usage = prev ? Math.max(0, reading - Number(prev.reading)) : 0;
             const rate = Number(document.getElementById('mtrFormRate').value) || (type === 'LISTRIK' ? Number(appData.settings.kwhRate || 1600) : 7500);
-            appData.meter.unshift({
+            if (type === 'LISTRIK' && reading < Number(prev?.reading || 0)) return showToast('Meter baru tidak boleh lebih kecil dari meter sebelumnya.', 'warning');
+            const record = {
                 id: 'MTR-' + Date.now(),
                 type,
                 ref,
@@ -5240,16 +5301,20 @@
                 usage,
                 rate,
                 cost: usage * rate
-            });
+            };
+            appData.meter.unshift(record);
             document.getElementById('mtrFormReading').value = '';
             if (prev) document.getElementById('mtrFormRate').value = rate;
             showToast('Catatan meter disimpan.');
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Meter', entityId: record.id, summary: `Tambah catatan meter ${record.type} ${record.ref}`, after: { ...record } });
             saveData();
         }
 
         function deleteMeter(id) {
             if (!confirm('Hapus catatan ini? Simpan cadangan jika masih diperlukan.')) return;
+            const before = structuredClone(appData.meter.find(m => m.id === id));
             appData.meter = appData.meter.filter(m => m.id !== id);
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Meter', entityId: id, summary: `Hapus catatan meter ${id}`, before, after: null });
             saveData();
         }
 
@@ -5554,7 +5619,8 @@
 
         function saveSettings(e) {
             e.preventDefault();
-            appData.settings = {
+            const before = structuredClone(appData.settings);
+            const nextSettings = {
                 kostName: document.getElementById('settingKostName').value.trim(),
                 ownerName: document.getElementById('settingOwnerName').value.trim(),
                 ownerPhone: document.getElementById('settingOwnerPhone').value.trim(),
@@ -5563,6 +5629,8 @@
                 kostAddress: document.getElementById('settingKostAddress').value.trim(),
                 driveScriptUrl: document.getElementById('settingDriveScriptUrl').value.trim()
             };
+            appData.settings = nextSettings;
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Pengaturan', entityId: 'settings', summary: 'Perbarui pengaturan aplikasi', before, after: { ...nextSettings } });
             showToast('Profil kos berhasil disimpan!');
             saveData();
         }
@@ -5628,5 +5696,5 @@
 
 <script>setTimeout(() => { if (!window.CHARISNA_AUTH_READY) document.getElementById("auth-error").textContent = "Login memerlukan internet untuk memuat Firebase."; }, 12000);</script>
     <script src="./feature-modules.js"></script>
-<script type="module" src="./cloud-sync.js?v=20261109"></script>
+    <script type="module" src="./cloud-sync.js?v=20261109"></script>
 </body></html>

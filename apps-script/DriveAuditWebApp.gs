@@ -21,12 +21,22 @@ var ROOT_FOLDER_NAME = 'Rekap Bulanan';
 
 function doPost(e) {
   try {
-    if (!e || !e.postData || e.postData.contents.length > 6000000) throw new Error('Payload tidak valid atau terlalu besar');
+    if (!e || !e.postData || e.postData.contents.length > 12000000) throw new Error('Payload tidak valid atau terlalu besar');
     var payload = JSON.parse(e.postData.contents);
     requireAuditOwner(payload.idToken);
 
+    if (payload.action === 'deleteAttachment') {
+      var attachmentId = String(payload.fileId || '').trim();
+      if (!/^[A-Za-z0-9_-]{5,200}$/.test(attachmentId)) throw new Error('ID lampiran tidak valid');
+      var attachment = DriveApp.getFileById(attachmentId);
+      if (!isFileUnderCharisnaRoot(attachment, charisnaRoot())) throw new Error('Lampiran berada di luar ruang CHARISNA KOST');
+      attachment.setTrashed(true);
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, fileId: attachmentId })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (payload.action === 'uploadAttachment') {
       if (payload.base64 && payload.base64.length > 11000000) throw new Error('Payload lampiran terlalu besar');
+      if (payload.pngBase64 && payload.pngBase64.length > 11000000) throw new Error('Payload PNG terlalu besar');
       var assetName = String(payload.assetName || 'Gabungan Semua Properti').trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 100);
       if (!assetName || assetName === '.' || assetName === '..') assetName = 'Gabungan Semua Properti';
       var year = String(payload.year || new Date().getFullYear());
@@ -43,6 +53,8 @@ function doPost(e) {
       var b64 = payload.base64 ? (payload.base64.split(',')[1] || payload.base64) : '';
       if (!b64) throw new Error('Berkas gambar/lampiran kosong');
       var bytes = Utilities.base64Decode(b64);
+      if (!bytes || !bytes.length) throw new Error('Berkas gambar/lampiran kosong');
+      if (!hasAttachmentSignature(bytes, mimeType)) throw new Error('Isi berkas tidak sesuai MIME type');
       if (bytes.length > 8 * 1024 * 1024) throw new Error('Ukuran berkas melebihi batas 8MB');
 
       var root = charisnaRoot();
@@ -54,9 +66,8 @@ function doPost(e) {
       folder = getOrCreateFolder(folder, category);
       if (entityId) folder = getOrCreateFolder(folder, entityId);
 
-      var ext = mimeType === 'application/pdf' ? '.pdf' : mimeType === 'image/png' ? '.png' : mimeType === 'image/webp' ? '.webp' : '.jpg';
-      var fileName = String(payload.fileName || ('file-' + Date.now())).trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 100);
-      if (!fileName.toLowerCase().endsWith(ext)) fileName += ext;
+      var ext = attachmentExtension(mimeType);
+      var fileName = normalizeAttachmentFileName(payload.fileName || ('file-' + Date.now()), ext);
 
       var blob = Utilities.newBlob(bytes, mimeType, fileName);
       var file = replaceBinaryFileInFolder(folder, fileName, blob);
@@ -137,7 +148,9 @@ function doPost(e) {
     // 2) PNG kartu audit
     if (payload.pngBase64) {
       var b64 = payload.pngBase64.split(',')[1] || payload.pngBase64;
-      var blob = Utilities.newBlob(Utilities.base64Decode(b64), 'image/png', 'Audit-' + monthKey + '.png');
+      var pngBytes = Utilities.base64Decode(b64);
+      if (!pngBytes || !pngBytes.length || pngBytes.length > 8 * 1024 * 1024 || !hasAttachmentSignature(pngBytes, 'image/png')) throw new Error('PNG audit tidak valid atau terlalu besar');
+      var blob = Utilities.newBlob(pngBytes, 'image/png', 'Audit-' + monthKey + '.png');
       replaceFileInFolder(folder, 'Audit-' + monthKey + '.png', blob);
     }
 
@@ -224,23 +237,71 @@ function migrateFilesInto(src, dst) {
   }
 }
 
-function replaceFileInFolder(folder, name, blob) {
-  var existing = folder.getFilesByName(name);
-  var replaced = false;
-  while (existing.hasNext()) {
-    var file = existing.next();
-    if (replaced) { file.setTrashed(true); continue; } // duplikat lama dari versi sebelumnya
-    file.setContent(blob);
-    replaced = true;
+function hasAttachmentSignature(bytes, mimeType) {
+  if (mimeType === 'application/pdf') return bytes.length >= 5 && String.fromCharCode.apply(null, bytes.slice(0, 5)) === '%PDF-';
+  if (mimeType === 'image/png') return bytes.length >= 8 && bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71 && bytes[4] === 13 && bytes[5] === 10 && bytes[6] === 26 && bytes[7] === 10;
+  if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') return bytes.length >= 3 && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
+  if (mimeType === 'image/webp') return bytes.length >= 12 && String.fromCharCode.apply(null, bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode.apply(null, bytes.slice(8, 12)) === 'WEBP';
+  return false;
+}
+
+function attachmentExtension(mimeType) {
+  return mimeType === 'application/pdf' ? '.pdf' : mimeType === 'image/png' ? '.png' : mimeType === 'image/webp' ? '.webp' : '.jpg';
+}
+
+function normalizeAttachmentFileName(value, ext) {
+  var name = String(value || 'file-' + Date.now()).trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 100);
+  var lower = name.toLowerCase();
+  var known = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
+  known.forEach(function (suffix) { if (lower.endsWith(suffix)) name = name.slice(0, -suffix.length); });
+  return (name || 'file-' + Date.now()) + ext;
+}
+
+function isFileUnderCharisnaRoot(file, root) {
+  var parents = file.getParents();
+  while (parents.hasNext()) {
+    var parent = parents.next();
+    if (parent.getId() === root.getId()) return true;
+    if (isFolderUnderRoot(parent, root)) return true;
   }
-  if (!replaced) folder.createFile(blob);
-  return folder.getFileByName(name);
+  return false;
+}
+
+function isFolderUnderRoot(folder, root) {
+  var current = folder;
+  while (current.getParents().hasNext()) {
+    current = current.getParents().next();
+    if (current.getId() === root.getId()) return true;
+  }
+  return false;
+}
+
+function setPrivateFileAccess(file) {
+  try {
+    file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+  } catch (sharingError) {
+    console.error('ACL private gagal: ' + sharingError);
+  }
+}
+
+function replaceFileInFolder(folder, name, blob) {
+  return replaceBinaryFileInFolder(folder, name, blob);
 }
 
 function replaceBinaryFileInFolder(folder, name, blob) {
-  var existing = folder.getFilesByName(name);
-  while (existing.hasNext()) existing.next().setTrashed(true);
-  return folder.createFile(blob);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var existing = [];
+    var files = folder.getFilesByName(name);
+    while (files.hasNext()) existing.push(files.next());
+    var created = folder.createFile(blob);
+    setPrivateFileAccess(created);
+    existing.forEach(function (file) { file.setTrashed(true); });
+    return created;
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function getOrCreateFolder(parent, name) {
