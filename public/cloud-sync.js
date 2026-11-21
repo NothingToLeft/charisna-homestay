@@ -106,6 +106,7 @@ const showLogin = () => {
 };
 async function handleAccount(account, revision = ++authRevision) {
   user = account; verifiedRole = null;
+  window.CHARISNA_CURRENT_USER = account;
   const activeUid = sessionStorage.getItem(ACTIVE_UID_KEY);
   if (!account) {
     if (activeUid) { sessionStorage.removeItem(ACTIVE_UID_KEY); location.reload(); return; }
@@ -118,6 +119,7 @@ async function handleAccount(account, revision = ++authRevision) {
   }
   if (revision !== authRevision || auth.currentUser?.uid !== account.uid) return;
   verifiedRole = resolved.role;
+  window.CHARISNA_ROLE = verifiedRole;
   superAppSection.hidden=resolved.role!=='OWNER';
   if (resolved.role === 'PENDING') {
     sessionStorage.removeItem(ACTIVE_UID_KEY);
