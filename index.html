@@ -356,6 +356,11 @@
                         </div>
                     </div>
 
+                    <section class="bg-white border rounded-2xl p-5 space-y-3" aria-labelledby="occupancyForecastTitle">
+                        <h2 id="occupancyForecastTitle" class="text-lg font-bold">Proyeksi Okupansi</h2>
+                        <p class="text-sm text-slate-600">Asumsi sewa berakhir sesuai jadwal dan belum ada penyewa pengganti. Tarif tercantum menunjukkan potensi sewa bulanan yang perlu diganti.</p>
+                        <div id="occupancyForecast" class="grid gap-3 sm:grid-cols-2"></div>
+                    </section>
                     <div id="dashboardRemindersWidget" class="mt-6"></div>
                     <div id="roomTimelineContainer" class="mt-6"></div>
 
@@ -3390,6 +3395,41 @@
         }
 
         // ==================== 1. DASHBOARD ====================
+        function renderOccupancyForecast(rooms, occupiedRooms) {
+            const roomCounts = new Map();
+            for (const room of appData.rooms) {
+                roomCounts.set(room.number, (roomCounts.get(room.number) || 0) + 1);
+            }
+            const leasesByRoom = new Map();
+            for (const tenant of appData.tenants) {
+                if (!leasesByRoom.has(tenant.roomNumber)) leasesByRoom.set(tenant.roomNumber, []);
+                leasesByRoom.get(tenant.roomNumber).push(tenant);
+            }
+            const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(new Date());
+            const container = document.getElementById('occupancyForecast');
+            container.replaceChildren();
+            for (const days of [30, 60]) {
+                const cutoff = new Date(Date.parse(today) + days * 86400000).toISOString().slice(0, 10);
+                const expiring = rooms.filter(room => {
+                    if (room.status !== 'TERISI' || roomCounts.get(room.number) !== 1) return false;
+                    const leases = leasesByRoom.get(room.number) || [];
+                    return leases.length > 0 && leases.every(lease =>
+                        /^\d{4}-\d{2}-\d{2}$/.test(lease.endDate || '') &&
+                        lease.endDate >= today && lease.endDate <= cutoff);
+                });
+                const rent = expiring.reduce((sum, room) => sum + (Number(room.price) || 0), 0);
+                const occupancy = rooms.length ? Math.round((occupiedRooms - expiring.length) * 100 / rooms.length) : 0;
+                const row = document.createElement('p');
+                row.className = 'rounded-xl bg-slate-50 p-4 text-sm';
+                row.textContent = `${days} hari · ${expiring.length} unit berpotensi kosong · okupansi ${occupancy}% · ${formatRupiah(rent)}/bulan`;
+                container.append(row);
+            }
+            const note = document.createElement('p');
+            note.className = 'text-xs text-slate-600 sm:col-span-2';
+            note.textContent = 'Perhitungan mengecualikan nomor unit ganda, sewa yang sudah lewat, dan kontrak tanpa tanggal akhir.';
+            container.append(note);
+        }
+
         function renderDashboard() {
             const scopedRooms = getScopedRooms();
             const scopedNumbers = getScopedRoomNumbers();
@@ -3399,6 +3439,7 @@
             const totalRooms = scopedRooms.length;
             const occupiedRooms = scopedRooms.filter(r => r.status === 'TERISI').length;
             const emptyRooms = scopedRooms.filter(r => r.status === 'KOSONG').length;
+            renderOccupancyForecast(scopedRooms, occupiedRooms);
             const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
 
             const paidBills = scopedBills.filter(b => b.status === 'LUNAS');
