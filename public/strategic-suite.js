@@ -166,6 +166,13 @@
       selected.push({ room, checkbox });
     }
     modal.append(make('p', 'Pilih kamar yang boleh dipublikasikan. File katalog dapat diunggah ke hosting atau dibagikan.'));
+    modal.append(button('Terbitkan pilihan / perbarui tautan', async () => {
+      const rooms = selected.filter(item => item.checkbox.checked).map(({room}) => ({
+        number:room.number,type:room.type || '',facilities:room.facilities || '',price:Number(room.price) || 0
+      }));
+      const url = await window.charisnaPortal.catalog(rooms);
+      const link = field(modal, 'Tautan katalog publik'); link.value = url; link.readOnly = true;
+    }));
     modal.append(button('Unduh katalog HTML', () => {
       const page = document.implementation.createHTMLDocument(appData.settings.kostName);
       const viewport = page.createElement('meta'); viewport.name = 'viewport'; viewport.content = 'width=device-width, initial-scale=1';
@@ -232,7 +239,7 @@
         appData.privateIntegrations.portalTokens[tenant.id] = token;
         if (!await saveData()) throw Error('Tautan belum disimpan.');
       }
-      const bills = appData.bills.filter(bill => bill.roomNumber === tenant.roomNumber && (!bill.tenantName || bill.tenantName === tenant.name));
+      const bills = appData.bills.filter(bill => bill.roomNumber === tenant.roomNumber && (bill.tenantId === tenant.id || bill.tenantName === tenant.name));
       await window.charisnaPortal.publish(token, {
         name: tenant.name, room: tenant.roomNumber, endDate: tenant.endDate || '',
         bills: bills.map(bill => ({ id: bill.id, amount: bill.amount, status: bill.status, paidDate: bill.paidDate || '' }))

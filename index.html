@@ -4244,6 +4244,17 @@
                     checkoutDate: new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(new Date()),
                     deposit, deduction, refund: deposit - deduction, note: noteInput.value.trim()
                 };
+                const portalToken = appData.privateIntegrations?.portalTokens?.[tenant.id];
+                if (portalToken) {
+                    try { await window.charisnaPortal.revoke(portalToken); }
+                    catch (error) {
+                        submit.disabled = false;
+                        modal.querySelector('[type="button"]').disabled = false;
+                        showToast('Check-out tertunda. Cabut tautan portal dahulu: ' + error.message, 'danger');
+                        return;
+                    }
+                    delete appData.privateIntegrations.portalTokens[tenant.id];
+                }
                 appData.tenantHistory ||= [];
                 appData.tenantHistory.push(record);
                 appData.tenants = appData.tenants.filter(t => t.id !== tenantId);
