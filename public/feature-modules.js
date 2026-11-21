@@ -34,8 +34,31 @@
         return nik.slice(0, 4) + '****' + nik.slice(-4);
     }
 
-    function escapeInlineJsArg(value) {
-        return escapeHtml(JSON.stringify(String(value ?? ''))).replace(/`/g, '&#96;');
+    function initGeneratedActionBindings() {
+        document.addEventListener('click', function (event) {
+            const control = event.target.closest('[data-feature-action]');
+            if (!control) return;
+            const action = control.dataset.featureAction;
+            if (action === 'close-search') closeGlobalSearch();
+            if (action === 'navigate') navigateToItem(control.dataset.tab, control.dataset.id);
+            if (action === 'undo') undoAuditLog(control.dataset.id);
+            if (action === 'reminder') {
+                const bill = (window.charisnaData?.snapshot()?.bills || []).find(item => item.id === control.dataset.id);
+                if (bill) sendWaMessage(bill.phone, 'REMINDER', {
+                    tenantName: bill.tenantName,
+                    roomNumber: bill.roomNumber,
+                    period: bill.period,
+                    amount: Number(bill.amount || 0),
+                    dueDate: bill.dueDate
+                });
+            }
+        });
+        document.addEventListener('input', function (event) {
+            if (event.target.matches('[data-feature-action="search-input"]')) renderGlobalSearchResults(event.target.value);
+        });
+        document.addEventListener('change', function (event) {
+            if (event.target.matches('[data-feature-action="timeline-month"]')) renderRoomTimeline(event.target.value);
+        });
     }
 
     // Helper: Sanitize objects before writing to audit log
@@ -57,6 +80,18 @@
             }
         }
         return clone;
+    }
+
+    const undoSnapshots = new Map();
+    const MAX_UNDO_SNAPSHOTS = 500;
+
+    function privateUndoSnapshot(value) {
+        if (!value || typeof value !== 'object') return null;
+        try { return structuredClone(value); } catch { return null; }
+    }
+
+    function currentEntityRevision(value) {
+        try { return JSON.stringify(value); } catch { return ''; }
     }
 
         // ==================== 1. GLOBAL QUICK SEARCH ====================
@@ -103,10 +138,9 @@
             <div class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[80vh]">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
                     <i class="fa-solid fa-magnifying-glass text-slate-400 text-lg"></i>
-                    <input id="globalSearchInput" type="text" placeholder="Cari kamar, penghuni, invoice, pengeluaran, inventaris... (Ctrl+K)"
-                        class="w-full bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-100 focus:outline-none"
-                        oninput="window.CharisnaFeatureModules.renderGlobalSearchResults(this.value)">
-                    <button onclick="window.CharisnaFeatureModules.closeGlobalSearch()" class="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-lg">ESC</button>
+                    <input id="globalSearchInput" data-feature-action="search-input" type="text" placeholder="Cari kamar, penghuni, invoice, pengeluaran, inventaris... (Ctrl+K)"
+                    class="w-full bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-100 focus:outline-none">
+                    <button data-feature-action="close-search" class="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-lg">ESC</button>
                 </div>
                 <div id="globalSearchResults" class="p-4 overflow-y-auto space-y-4 flex-1 text-xs">
                     <p class="text-slate-400 text-center py-6">Ketik minimal 1 karakter untuk mencari di seluruh sistem.</p>
@@ -144,7 +178,7 @@
         if (rooms.length > 0) {
             html += `<div class="space-y-1"><h4 class="font-bold uppercase text-[10px] tracking-wider text-slate-400">Unit Kamar (${rooms.length})</h4><div class="space-y-1">`;
             rooms.forEach(r => {
-                html += `<div onclick="window.CharisnaFeatureModules.navigateToItem('kamar', ${escapeInlineJsArg(r.number)})" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
+                html += `<div data-feature-action="navigate" data-tab="kamar" data-id="${escapeHtml(r.number)}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
                     <div>
                         <span class="font-bold text-slate-800 dark:text-slate-200">Unit ${escapeHtml(r.number)}</span>
                         <span class="text-[10px] text-slate-500 ml-2">${escapeHtml(r.type)} - Rp ${Number(r.price || 0).toLocaleString('id-ID')}</span>
@@ -158,7 +192,7 @@
         if (tenants.length > 0) {
             html += `<div class="space-y-1"><h4 class="font-bold uppercase text-[10px] tracking-wider text-slate-400">Penghuni (${tenants.length})</h4><div class="space-y-1">`;
             tenants.forEach(t => {
-                html += `<div onclick="window.CharisnaFeatureModules.navigateToItem('penghuni', ${escapeInlineJsArg(t.id)})" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
+                html += `<div data-feature-action="navigate" data-tab="penghuni" data-id="${escapeHtml(t.id)}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
                     <div>
                         <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHtml(t.name)}</span>
                         <span class="text-[10px] text-slate-500 ml-2">Unit ${escapeHtml(t.roomNumber)} • NIK: ${escapeHtml(maskNik(t.nik))}</span>
@@ -172,7 +206,7 @@
         if (bills.length > 0) {
             html += `<div class="space-y-1"><h4 class="font-bold uppercase text-[10px] tracking-wider text-slate-400">Tagihan & Kwitansi (${bills.length})</h4><div class="space-y-1">`;
             bills.forEach(b => {
-                html += `<div onclick="window.CharisnaFeatureModules.navigateToItem('tagihan', ${escapeInlineJsArg(b.id)})" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
+                html += `<div data-feature-action="navigate" data-tab="tagihan" data-id="${escapeHtml(b.id)}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
                     <div>
                         <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHtml(b.id)} - ${escapeHtml(b.tenantName)}</span>
                         <span class="text-[10px] text-slate-500 ml-2">Unit ${escapeHtml(b.roomNumber)} • ${escapeHtml(b.period)}</span>
@@ -186,7 +220,7 @@
         if (expenses.length > 0) {
             html += `<div class="space-y-1"><h4 class="font-bold uppercase text-[10px] tracking-wider text-slate-400">Pengeluaran (${expenses.length})</h4><div class="space-y-1">`;
             expenses.forEach(x => {
-                html += `<div onclick="window.CharisnaFeatureModules.navigateToItem('pengeluaran', ${escapeInlineJsArg(x.id)})" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
+                html += `<div data-feature-action="navigate" data-tab="pengeluaran" data-id="${escapeHtml(x.id)}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
                     <div>
                         <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHtml(x.title)}</span>
                         <span class="text-[10px] text-slate-500 ml-2">${escapeHtml(x.category)} • ${escapeHtml(x.date)}</span>
@@ -200,7 +234,7 @@
         if (inventaris.length > 0) {
             html += `<div class="space-y-1"><h4 class="font-bold uppercase text-[10px] tracking-wider text-slate-400">Inventaris (${inventaris.length})</h4><div class="space-y-1">`;
             inventaris.forEach(i => {
-                html += `<div onclick="window.CharisnaFeatureModules.navigateToItem('operasional', ${escapeInlineJsArg(i.id)})" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
+                html += `<div data-feature-action="navigate" data-tab="operasional" data-id="${escapeHtml(i.id)}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer flex items-center justify-between transition">
                     <div>
                         <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHtml(i.item)}</span>
                         <span class="text-[10px] text-slate-500 ml-2">${escapeHtml(i.roomRef)} • ${escapeHtml(i.category)}</span>
@@ -288,6 +322,14 @@
             after: params.after ? sanitizeForAudit(params.after) : null
         };
 
+        const undoSnapshot = params.before ? privateUndoSnapshot(params.before) : null;
+        if (undoSnapshot) {
+            undoSnapshots.set(logEntry.id, {
+                value: undoSnapshot,
+                revision: currentEntityRevision(params.after || null)
+            });
+            while (undoSnapshots.size > MAX_UNDO_SNAPSHOTS) undoSnapshots.delete(undoSnapshots.keys().next().value);
+        }
         data.auditLogs.unshift(logEntry);
         if (data.auditLogs.length > 500) data.auditLogs = data.auditLogs.slice(0, 500);
 
@@ -322,7 +364,7 @@
         let html = '';
         filtered.slice(0, 100).forEach(l => {
             const timeStr = new Date(l.timestamp).toLocaleString('id-ID');
-            const canUndo = Boolean(l.before && (l.action === 'UBAH' || l.action === 'HAPUS'));
+            const canUndo = Boolean(undoSnapshots.has(l.id) && (l.action === 'UBAH' || l.action === 'HAPUS'));
 
             let actionBadge = 'bg-blue-100 text-blue-700';
             if (l.action === 'TAMBAH') actionBadge = 'bg-emerald-100 text-emerald-700';
@@ -336,7 +378,7 @@
                 <td class="px-4 py-3 font-bold text-slate-800 dark:text-slate-200">${escapeHtml(l.entity)} <span class="text-[10px] text-slate-400 font-mono">(${escapeHtml(l.entityId)})</span></td>
                 <td class="px-4 py-3 text-slate-600 dark:text-slate-300 max-w-xs truncate">${escapeHtml(l.summary)}</td>
                 <td class="px-4 py-3 text-right">
-                    ${canUndo ? `<button onclick="window.CharisnaFeatureModules.undoAuditLog('${escapeHtml(l.id)}')" class="px-2 py-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[10px] border border-amber-200">Batalkan / Undo</button>` : '<span class="text-slate-300 text-[10px]">-</span>'}
+                    ${canUndo ? `<div data-feature-action="undo" data-id="${escapeHtml(l.id)}" class="px-2 py-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[10px] border border-amber-200 cursor-pointer">Batalkan / Undo</div>` : '<span class="text-slate-300 text-[10px]">-</span>'}
                 </td>
             </tr>`;
         });
@@ -346,8 +388,10 @@
     async function undoAuditLog(logId) {
         const data = window.charisnaData?.snapshot() || {};
         const logs = data.auditLogs || [];
-        const target = logs.find(l => l.id === logId);
-        if (!target || !target.before) {
+            const target = logs.find(l => l.id === logId);
+            const snapshot = undoSnapshots.get(logId);
+            const before = snapshot?.value;
+            if (!target || !snapshot || !before) {
             if (typeof window.showToast === 'function') window.showToast('Tindakan ini tidak dapat dibatalkan otomatis.', 'warning');
             return;
         }
@@ -355,7 +399,25 @@
         if (!confirm(`Kembalikan data ${target.entity} (${target.entityId}) ke versi sebelum ${target.action}?`)) return;
 
         const entity = target.entity;
-        const before = target.before;
+        const currentEntity = entity === 'Kamar'
+            ? (data.rooms || []).find(r => r.id === target.entityId || r.number === target.entityId)
+            : entity === 'Penghuni'
+                ? (data.tenants || []).find(t => t.id === target.entityId)
+                : entity === 'Tagihan'
+                    ? (data.bills || []).find(b => b.id === target.entityId)
+                    : entity === 'Pengeluaran'
+                        ? (data.expenses || []).find(e => e.id === target.entityId)
+                        : entity === 'Inventaris'
+                            ? (data.inventaris || []).find(i => i.id === target.entityId)
+                            : entity === 'Perbaikan'
+                                ? (data.perbaikan || []).find(p => p.id === target.entityId)
+                                : entity === 'Keluhan'
+                                    ? (data.complaints || []).find(c => c.id === target.entityId)
+                                    : null;
+        if (snapshot.revision && currentEntityRevision(currentEntity) !== snapshot.revision) {
+            if (typeof window.showToast === 'function') window.showToast('Undo ditolak: data sudah berubah. Buat pembalikan baru dari kondisi terbaru.', 'warning');
+            return;
+        }
         let restored = false;
 
         if (entity === 'Kamar') {
@@ -516,25 +578,40 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
             const result = await response.json();
-            if (!result.ok) {
-                throw new Error(result.error || 'Gagal mengunggah berkas');
+            if (!result.ok) throw new Error(result.error || 'Gagal mengunggah berkas');
+            if (params.category === 'ktp' || params.category === 'bukti-pembayaran' || params.category === 'perbaikan') {
+                recordAuditLog({
+                    action: 'UNGGAH_DOKUMEN',
+                    entity: params.category === 'ktp' ? 'Penghuni' : params.category === 'perbaikan' ? 'Perbaikan' : 'Tagihan',
+                    entityId: String(params.entityId || ''),
+                    summary: `Unggah lampiran ${params.category} (${params.fileName || params.file.name}) ke Google Drive`
+                });
             }
-
-            recordAuditLog({
-                action: 'UNGGAH_DOKUMEN',
-                entity: params.category === 'ktp' ? 'Penghuni' : 'Tagihan',
-                entityId: String(params.entityId || ''),
-                summary: `Unggah lampiran ${params.category} (${params.fileName || params.file.name}) ke Google Drive`
-            });
-
             return result; // { ok: true, fileId, url, path }
         } catch (error) {
             if (typeof window.showToast === 'function') {
                 window.showToast('Unggah lampiran ke Drive gagal: ' + error.message, 'danger');
             }
             return null;
+        }
+    }
+
+    async function deleteAttachmentFromDrive(fileId, data = window.charisnaData?.snapshot() || {}) {
+        if (!fileId || typeof window.charisnaAuditToken !== 'function') return false;
+        const scriptUrl = data.settings?.driveScriptUrl;
+        if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(scriptUrl || ''))) return false;
+        try {
+            const idToken = await window.charisnaAuditToken();
+            const response = await fetch(scriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'deleteAttachment', idToken, fileId })
+            });
+            const result = await response.json();
+            return Boolean(result.ok);
+        } catch {
+            return false;
         }
     }
 
@@ -614,8 +691,9 @@
 
         rows.forEach(r => {
             const line = headers.map(h => {
-                const val = String(r[h] ?? '').replace(/"/g, '""');
-                return `"${val}"`;
+                const raw = String(r[h] ?? '');
+                const val = /^[\s]*[=+\-@]/.test(raw) ? '\t' + raw : raw;
+                return `"${val.replace(/"/g, '""')}"`;
             }).join(',');
             csvContent += line + '\n';
         });
@@ -633,8 +711,15 @@
         }
     }
 
-    function printReportSection(title, htmlContent) {
+    function printReportSection(title, sections) {
         const printWindow = window.open('', '_blank', 'width=800,height=600');
+        if (!printWindow) return;
+        const content = Array.isArray(sections) ? sections.map(section => {
+            const heading = escapeHtml(section?.heading || '');
+            const rows = Array.isArray(section?.rows) ? section.rows : [];
+            const tableRows = rows.map(row => `<tr>${(Array.isArray(row) ? row : [row]).map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('');
+            return `<h3>${heading}</h3><table><tbody>${tableRows}</tbody></table>`;
+        }).join('') : '';
         printWindow.document.write(`
             <!DOCTYPE html>
             <html>
@@ -642,7 +727,7 @@
                 <title>${escapeHtml(title)}</title>
                 <style>
                     body { font-family: sans-serif; padding: 20px; color: #1e293b; }
-                    h2 { border-bottom: 2px solid #059669; padding-bottom: 8px; color: #047857; }
+                    h2, h3 { border-bottom: 2px solid #059669; padding-bottom: 8px; color: #047857; }
                     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
                     th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; font-size: 12px; }
                     th { background-color: #f1f5f9; font-weight: bold; }
@@ -651,8 +736,8 @@
             </head>
             <body>
                 <h2>CHARISNA KOST - ${escapeHtml(title)}</h2>
-                <p style="font-size:12px; color:#64748b;">Tanggal Cetak: ${new Date().toLocaleString('id-ID')}</p>
-                <div>${htmlContent}</div>
+                <p style="font-size:12px; color:#64748b;">Tanggal Cetak: ${escapeHtml(new Date().toLocaleString('id-ID'))}</p>
+                <div>${content}</div>
                 <div class="footer">CHARISNA KOST Enterprise Management System</div>
                 <script>window.onload = function() { window.print(); window.close(); };</script>
             </body>
@@ -738,8 +823,10 @@
         const rooms = data.rooms || [];
         const tenants = data.tenants || [];
         const complaints = data.complaints || [];
+        const repairs = data.perbaikan || [];
 
-        const targetMonth = monthKey || new Date().toISOString().slice(0, 7);
+        const targetMonth = monthKey || container.dataset.month || new Date().toISOString().slice(0, 7);
+        container.dataset.month = targetMonth;
         const [yearStr, monthStr] = targetMonth.split('-');
         const year = parseInt(yearStr, 10);
         const month = parseInt(monthStr, 10);
@@ -750,7 +837,7 @@
                 <div class="flex items-center justify-between">
                     <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Visual Kalender Unit Kamar (${targetMonth})</h3>
                     <div class="flex items-center gap-2">
-                        <input type="month" value="${targetMonth}" onchange="window.CharisnaFeatureModules.renderRoomTimeline(this.value)"
+                        <input type="month" data-feature-action="timeline-month" value="${escapeHtml(targetMonth)}"
                             class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200">
                     </div>
                 </div>
@@ -766,8 +853,21 @@
         `;
 
         rooms.forEach(r => {
-            const tenantInRoom = tenants.find(t => t.roomNumber === r.number);
-            const isRepaired = r.status === 'PERBAIKAN' || complaints.some(c => c.roomNumber === r.number && c.status !== 'RESOLVED' && c.status !== 'SELESAI');
+            const tenantInRoom = tenants.find(t => t.roomNumber === r.number && (!r.propertyId || !t.propertyId || t.propertyId === r.propertyId));
+            const overlaps = (start, end) => {
+                const rangeStart = start || end;
+                const rangeEnd = end || start;
+                if (!rangeStart && !rangeEnd) return false;
+                const startDate = new Date((rangeStart || targetMonth + '-01') + 'T00:00:00');
+                const endDate = new Date((rangeEnd || rangeStart || targetMonth + '-01') + 'T23:59:59');
+                const monthStart = new Date(year, month - 1, 1);
+                const monthEnd = new Date(year, month, 0, 23, 59, 59);
+                return startDate <= monthEnd && endDate >= monthStart;
+            };
+            const tenantActive = tenantInRoom && overlaps(tenantInRoom.entryDate, tenantInRoom.endDate || new Date().toISOString().slice(0, 10));
+            const repairActive = repairs.some(p => (p.roomNumber === r.number || p.roomRef === r.number || p.propertyId === r.propertyId) && p.status !== 'SELESAI' && overlaps(p.startDate || p.date, p.endDate || p.date));
+            const complaintActive = complaints.some(c => c.roomNumber === r.number && (!r.propertyId || !c.propertyId || c.propertyId === r.propertyId) && c.status !== 'RESOLVED' && c.status !== 'SELESAI' && overlaps(c.date, c.resolvedDate || c.date));
+            const isRepaired = r.status === 'PERBAIKAN' || repairActive || complaintActive;
 
             html += `<tr><td class="p-2 border border-slate-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">Unit ${escapeHtml(r.number)}</td>`;
 
@@ -882,7 +982,7 @@
                     <span class="font-bold text-rose-800 dark:text-rose-200">TERLAMBAT: ${escapeHtml(b.tenantName)} (Unit ${escapeHtml(b.roomNumber)})</span>
                     <p class="text-[10px] text-rose-600 dark:text-rose-400">Rp ${Number(b.amount).toLocaleString('id-ID')} • Jatuh Tempo: ${escapeHtml(b.dueDate)}</p>
                 </div>
-                <button onclick="window.CharisnaFeatureModules.sendWaMessage(${escapeInlineJsArg(b.phone)}, 'REMINDER', { tenantName: ${escapeInlineJsArg(b.tenantName)}, roomNumber: ${escapeInlineJsArg(b.roomNumber)}, period: ${escapeInlineJsArg(b.period)}, amount: ${Number(b.amount || 0)}, dueDate: ${escapeInlineJsArg(b.dueDate)} })"
+                <button data-feature-action="reminder" data-id="${escapeHtml(b.id)}"
                     class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px]">
                     <i class="fa-brands fa-whatsapp"></i> WA Remind
                 </button>
@@ -895,7 +995,7 @@
                     <span class="font-bold text-amber-800 dark:text-amber-200">Jatuh Tempo Segera: ${escapeHtml(b.tenantName)} (Unit ${escapeHtml(b.roomNumber)})</span>
                     <p class="text-[10px] text-amber-600 dark:text-amber-400">Rp ${Number(b.amount).toLocaleString('id-ID')} • Due: ${escapeHtml(b.dueDate)}</p>
                 </div>
-                <button onclick="window.CharisnaFeatureModules.sendWaMessage(${escapeInlineJsArg(b.phone)}, 'REMINDER', { tenantName: ${escapeInlineJsArg(b.tenantName)}, roomNumber: ${escapeInlineJsArg(b.roomNumber)}, period: ${escapeInlineJsArg(b.period)}, amount: ${Number(b.amount || 0)}, dueDate: ${escapeInlineJsArg(b.dueDate)} })"
+                <button data-feature-action="reminder" data-id="${escapeHtml(b.id)}"
                     class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px]">
                     <i class="fa-brands fa-whatsapp"></i> WA Remind
                 </button>
@@ -952,6 +1052,7 @@
 
     // Initialize module & hooks
     function initModule() {
+        initGeneratedActionBindings();
         initGlobalSearch();
         initNetworkStatus();
         initTheme();
@@ -976,6 +1077,7 @@
         undoAuditLog,
         compressImageInMemory,
         uploadAttachmentToDrive,
+        deleteAttachmentFromDrive,
         exportTableToCsv,
         printReportSection,
         buildWaMessage,

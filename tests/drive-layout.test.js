@@ -12,7 +12,7 @@ class Folder {
   getFolders() { return iterator([...this.folders]); }
   getFiles() { return iterator([...this.files]); }
   getFilesByName(name) { return iterator(this.files.filter(f=>f.name===name)); }
-  getFileByName(name) { return this.files.find(f=>f.name===name)||null; }
+  getFileByName() { throw new Error('getFileByName must not hide replacement bugs'); }
   createFolder(name) { return new Folder(name,this); }
   createFile(blob) {
     const f = new File(typeof blob === 'string' ? blob : (blob && blob.getName ? blob.getName() : 'file'), this);
@@ -36,7 +36,10 @@ class File {
 }
 function setup() {
   const drive=new Folder('My Drive');const root=drive.createFolder('CHARISNA KOST');
-  const api={ DriveApp:{ getRootFolder:()=>drive } };
+  const api={
+    DriveApp:{ getRootFolder:()=>drive },
+    LockService:{ getScriptLock:()=>({ waitLock:()=>{}, releaseLock:()=>{} }) }
+  };
   runInNewContext(readFileSync('apps-script/DriveAuditWebApp.gs','utf8'),api);
   const at=(names)=>names.reduce((p,n)=>api.getOrCreateFolder(p,n),root);
   return {root,api,at};
@@ -112,7 +115,7 @@ describe('actual Apps Script Drive migration',()=>{
           entityId: '101',
           fileName: 'ktp-dimas.jpg',
           mimeType: 'image/jpeg',
-          base64: 'SGVsbG8gV29ybGQ='
+          base64: ' /9j/4AAQSkZJRgABAQAAAQABAAD/2w=='
         })
       }
     });
