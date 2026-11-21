@@ -24,6 +24,52 @@ function doPost(e) {
     if (!e || !e.postData || e.postData.contents.length > 6000000) throw new Error('Payload tidak valid atau terlalu besar');
     var payload = JSON.parse(e.postData.contents);
     requireAuditOwner(payload.idToken);
+
+    if (payload.action === 'uploadAttachment') {
+      if (payload.base64 && payload.base64.length > 11000000) throw new Error('Payload lampiran terlalu besar');
+      var assetName = String(payload.assetName || 'Gabungan Semua Properti').trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 100);
+      if (!assetName || assetName === '.' || assetName === '..') assetName = 'Gabungan Semua Properti';
+      var year = String(payload.year || new Date().getFullYear());
+      if (!/^20\d{2}$/.test(year)) throw new Error('Tahun lampiran tidak valid');
+      var monthKey = String(payload.monthKey || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0')));
+      if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(monthKey) || monthKey.slice(0, 4) !== year) throw new Error('Bulan lampiran tidak valid');
+      var category = String(payload.category || 'lampiran').trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 50) || 'lampiran';
+      var entityId = String(payload.entityId || payload.entityName || '').trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 50);
+
+      var allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'application/pdf'];
+      var mimeType = String(payload.mimeType || 'image/jpeg').toLowerCase();
+      if (allowedMimes.indexOf(mimeType) === -1) throw new Error('MIME type tidak didukung: ' + mimeType);
+
+      var b64 = payload.base64 ? (payload.base64.split(',')[1] || payload.base64) : '';
+      if (!b64) throw new Error('Berkas gambar/lampiran kosong');
+      var bytes = Utilities.base64Decode(b64);
+      if (bytes.length > 8 * 1024 * 1024) throw new Error('Ukuran berkas melebihi batas 8MB');
+
+      var root = charisnaRoot();
+      try { migrateLegacyLayout(root); } catch (migErr) { console.error('Migrasi layout lama gagal: ' + migErr); }
+
+      var folder = getOrCreateFolder(root, assetName);
+      if (year) folder = getOrCreateFolder(folder, year);
+      if (monthKey) folder = getOrCreateFolder(folder, monthKey);
+      folder = getOrCreateFolder(folder, category);
+      if (entityId) folder = getOrCreateFolder(folder, entityId);
+
+      var ext = mimeType === 'application/pdf' ? '.pdf' : mimeType === 'image/png' ? '.png' : mimeType === 'image/webp' ? '.webp' : '.jpg';
+      var fileName = String(payload.fileName || ('file-' + Date.now())).trim().replace(/[\\/:*?"<>|\r\n]/g, '-').slice(0, 100);
+      if (!fileName.toLowerCase().endsWith(ext)) fileName += ext;
+
+      var blob = Utilities.newBlob(bytes, mimeType, fileName);
+      var file = replaceBinaryFileInFolder(folder, fileName, blob);
+
+      var folderPath = getFolderPath(folder);
+      return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
+        fileId: file.getId(),
+        url: file.getUrl(),
+        path: folderPath + '/' + file.getName()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(payload.monthKey || '') || String(payload.year) !== payload.monthKey.slice(0, 4)) throw new Error('Bulan rekap tidak valid');
     var root = charisnaRoot();
     try { migrateLegacyLayout(root); } catch (migErr) { console.error('Migrasi layout lama gagal: ' + migErr); }
@@ -191,10 +237,27 @@ function replaceFileInFolder(folder, name, blob) {
   return folder.getFileByName(name);
 }
 
+function replaceBinaryFileInFolder(folder, name, blob) {
+  var existing = folder.getFilesByName(name);
+  while (existing.hasNext()) existing.next().setTrashed(true);
+  return folder.createFile(blob);
+}
+
 function getOrCreateFolder(parent, name) {
   var it = parent.getFoldersByName(name);
   if (it.hasNext()) return it.next();
   return parent.createFolder(name);
+}
+
+function getFolderPath(folder) {
+  var parts = [folder.getName()];
+  var curr = folder;
+  while (curr.getParents().hasNext()) {
+    curr = curr.getParents().next();
+    parts.unshift(curr.getName());
+    if (curr.getName() === 'CHARISNA KOST' || curr.getName() === 'My Drive') break;
+  }
+  return parts.join('/');
 }
 
 function doGet() {
