@@ -366,13 +366,13 @@ async function reconcileAtStartup() {
       } else setBadge('ok', '☁ Sinkron');
       return;
     }
-    if (cloudStamp > localStamp + 2000) {
-      await downloadCloudData({ interactive: false });
-    } else if (localStamp > cloudStamp + 2000) {
-      await performUpload({ interactive: false });
-    } else {
-      setBadge('ok', '☁ Sinkron');
-    }
+    if (cloudStamp > localStamp) {
+          await downloadCloudData({ interactive: false });
+        } else if (localStamp > cloudStamp) {
+          await performUpload({ interactive: false });
+        } else {
+          setBadge('ok', '☁ Sinkron');
+        }
   } catch (checkError) {
     setBadge('off', '○ Cloud tidak terjangkau');
   }
