@@ -4163,22 +4163,102 @@
 
         function checkoutTenant(tenantId) {
             const tenant = appData.tenants.find(t => t.id === tenantId);
-            if (!tenant || !confirm(`Check-out ${tenant.name}? Riwayat sewa disimpan.`)) return;
-            const beforeTenant = structuredClone(tenant);
-            appData.tenantHistory ||= [];
-            appData.tenantHistory.push({
-                id: tenant.id, name: tenant.name, roomNumber: tenant.roomNumber,
-                entryDate: tenant.entryDate, endDate: tenant.endDate || '',
-                checkoutDate: new Date().toISOString().slice(0, 10),
-                deposit: tenant.deposit || 0
-            });
-            appData.tenants = appData.tenants.filter(t => t.id !== tenantId);
-            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Penghuni', entityId: tenantId, summary: `Check-out penghuni ${tenant.name}`, before: beforeTenant });
-            const remainingInRoom = appData.tenants.filter(t => t.roomNumber === tenant.roomNumber).length;
-            const room = appData.rooms.find(r => r.number === tenant.roomNumber);
-            if (room && remainingInRoom === 0) room.status = 'KOSONG';
-            showToast(`${tenant.name} telah Check-Out.`, 'warning');
-            saveData();
+            if (!tenant) return;
+            const rooms = appData.rooms.filter(room => room.number === tenant.roomNumber);
+            if (rooms.length !== 1) {
+                showToast('Pastikan nomor kamar unik dan unit masih terdaftar sebelum check-out.', 'danger');
+                return;
+            }
+            const deposit = Number(tenant.deposit || 0);
+            if (!Number.isSafeInteger(deposit) || deposit < 0) {
+                showToast('Perbaiki nominal deposit penghuni sebelum check-out.', 'danger');
+                return;
+            }
+            const modal = document.createElement('dialog');
+            modal.className = 'rounded-2xl p-5 w-[min(94vw,520px)] max-h-[85vh] overflow-auto shadow-2xl';
+            modal.innerHTML = `
+                <form class="space-y-4">
+                    <h2 class="text-lg font-bold">Penyelesaian Check-Out</h2>
+                    <p class="checkout-tenant text-sm"></p>
+                    <fieldset class="grid gap-2">
+                        <legend class="font-semibold">Pemeriksaan kamar</legend>
+                        <label><input type="checkbox" required> Kunci diperiksa</label>
+                        <label><input type="checkbox" required> Kebersihan diperiksa</label>
+                        <label><input type="checkbox" required> Kondisi aset diperiksa</label>
+                    </fieldset>
+                    <label class="block">Potongan deposit (Rp)
+                        <input name="deduction" type="number" min="0" max="${deposit}" step="1" value="0" required class="block w-full rounded-lg border p-2">
+                    </label>
+                    <label class="block">Alasan potongan atau catatan
+                        <textarea name="note" maxlength="1000" class="block w-full rounded-lg border p-2"></textarea>
+                    </label>
+                    <output class="block font-semibold" aria-live="polite"></output>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="rounded-lg border px-4 py-2">Batal</button>
+                        <button type="submit" class="rounded-lg bg-emerald-700 px-4 py-2 text-white">Simpan Check-Out</button>
+                    </div>
+                </form>`;
+            const form = modal.querySelector('form');
+            const deductionInput = form.elements.deduction;
+            const noteInput = form.elements.note;
+            const submit = form.querySelector('[type="submit"]');
+            modal.querySelector('.checkout-tenant').textContent = `${tenant.name} · Unit ${tenant.roomNumber} · Deposit ${formatRupiah(deposit)}`;
+            function updateRefund() {
+                const deduction = deductionInput.valueAsNumber;
+                noteInput.required = deduction > 0;
+                noteInput.setCustomValidity(deduction > 0 && !noteInput.value.trim() ? 'Isi alasan potongan.' : '');
+                form.querySelector('output').textContent = deductionInput.validity.valid
+                    ? `Rencana pengembalian ${formatRupiah(deposit - deduction)}` : 'Masukkan potongan yang valid.';
+            }
+            form.oninput = updateRefund;
+            modal.querySelector('[type="button"]').onclick = () => modal.close();
+            modal.addEventListener('close', () => modal.remove(), { once: true });
+            modal.addEventListener('cancel', event => { if (submit.disabled) event.preventDefault(); });
+            form.onsubmit = async event => {
+                event.preventDefault();
+                if (submit.disabled) return;
+                updateRefund();
+                if (!form.reportValidity() || !appData.tenants.includes(tenant)) return;
+                submit.disabled = true;
+                modal.querySelector('[type="button"]').disabled = true;
+                const deduction = deductionInput.valueAsNumber;
+                const record = {
+                    id: tenant.id, name: tenant.name, roomNumber: tenant.roomNumber,
+                    entryDate: tenant.entryDate, endDate: tenant.endDate || '',
+                    checkoutDate: new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(new Date()),
+                    deposit, deduction, refund: deposit - deduction, note: noteInput.value.trim()
+                };
+                appData.tenantHistory ||= [];
+                appData.tenantHistory.push(record);
+                appData.tenants = appData.tenants.filter(t => t.id !== tenantId);
+                if (!appData.tenants.some(t => t.roomNumber === tenant.roomNumber)) rooms[0].status = 'KOSONG';
+                window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Penghuni', entityId: tenantId, summary: `Check-out penghuni ${tenant.name}`, before: structuredClone(tenant) });
+                const saved = await saveData();
+                modal.close();
+                if (saved) showTenantHistory();
+            };
+            updateRefund();
+            document.body.append(modal);
+            modal.showModal();
+        }
+
+        function downloadDepositSettlement(item) {
+            const lines = [
+                'CHARISNA KOST', 'Lembar penyelesaian deposit',
+                `Penghuni: ${item.name}`, `Unit: ${item.roomNumber}`,
+                `Tanggal check-out: ${item.checkoutDate}`,
+                `Deposit: ${formatRupiah(item.deposit)}`,
+                `Potongan: ${formatRupiah(item.deduction)}`,
+                `Rencana pengembalian: ${formatRupiah(item.refund)}`,
+                `Catatan: ${item.note || '-'}`,
+                'Status transfer tidak tercatat pada lembar ini.'
+            ];
+            const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'penyelesaian-deposit.txt';
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         function showTenantHistory() {
@@ -4204,6 +4284,15 @@
                 const row = document.createElement('div');
                 row.className = 'border-b py-2 text-sm';
                 row.textContent = `${item.name} • Unit ${item.roomNumber} • ${item.entryDate} → ${item.checkoutDate} • Deposit ${formatRupiah(item.deposit)}`;
+                if (Number.isSafeInteger(item.refund)) {
+                    const details = document.createElement('p');
+                    details.textContent = `Potongan ${formatRupiah(item.deduction)} · Pengembalian ${formatRupiah(item.refund)}${item.note ? ' · ' + item.note : ''}`;
+                    const download = document.createElement('button');
+                    download.className = 'mt-2 rounded-lg border px-3 py-2';
+                    download.textContent = 'Unduh lembar deposit';
+                    download.onclick = () => downloadDepositSettlement(item);
+                    row.append(details, download);
+                }
                 modal.append(row);
             }
             modal.showModal();
