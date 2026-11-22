@@ -1,6 +1,6 @@
 /* CHARISNA's emerald marks the primary action; connection color always has a text label. */
 dialog.wa-settings {
-  --wa-ink:#1e293b; --wa-muted:#475569; --wa-border:#cbd5e1;
+  --wa-ink:#1e293b; --wa-muted:#475569; --wa-border:#cbd5e1; --wa-control-border:#8190a3;
   --wa-brand:#047857; --wa-brand-hover:#065f46; --wa-paper:#fff; --wa-soft:#f8fafc;
   box-sizing:border-box; width:min(640px,calc(100vw - 32px)); max-width:640px;
   max-height:calc(100dvh - 32px); margin:auto; padding:0; overflow:auto;
@@ -33,17 +33,17 @@ dialog.wa-settings {
 .wa-settings__form {display:grid;gap:8px;min-width:0;}
 .wa-settings label {font-size:14px;font-weight:650;}
 .wa-settings__input {display:flex;gap:8px;align-items:stretch;min-width:0;}
-.wa-settings input {flex:1;width:100%;min-width:0;min-height:48px;border:1px solid #94a3b8;border-radius:9px;background:var(--wa-paper);padding:12px;color:var(--wa-ink);font:inherit;font-size:16px;}
+.wa-settings input {flex:1;width:100%;min-width:0;min-height:48px;border:1px solid var(--wa-control-border);border-radius:9px;background:var(--wa-paper);padding:12px;color:var(--wa-ink);font:inherit;font-size:16px;}
 .wa-settings input::placeholder {color:#64748b;opacity:1;}
 .wa-settings input[aria-invalid="true"] {border:2px solid #b91c1c;}
-.wa-settings__input button {border:1px solid var(--wa-border);background:var(--wa-soft);color:var(--wa-ink);}
+.wa-settings__input button {border:1px solid var(--wa-control-border);background:var(--wa-soft);color:var(--wa-ink);}
 .wa-settings__input button:hover {background:#e2e8f0;}
 .wa-settings .wa-settings__hint {margin:0;font-size:13px;}
 .wa-settings .wa-settings__error {margin:0;font-size:14px;color:#991b1b;}
 .wa-settings__actions {display:flex;flex-wrap:wrap;gap:12px;padding-top:12px;}
 .wa-settings .wa-settings__primary {border:1px solid var(--wa-brand);background:var(--wa-brand);color:#fff;}
 .wa-settings__primary:hover:not(:disabled) {background:var(--wa-brand-hover);}
-.wa-settings .wa-settings__secondary {display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--wa-border);background:var(--wa-paper);color:var(--wa-ink);text-decoration:none;}
+.wa-settings .wa-settings__secondary {display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--wa-control-border);background:var(--wa-paper);color:var(--wa-ink);text-decoration:none;}
 .wa-settings__secondary:hover:not(:disabled) {background:#f1f5f9;}
 .wa-settings__queue {display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding-top:24px;border-top:1px solid #e2e8f0;}
 .wa-settings__queue h3 {grid-column:1;}
