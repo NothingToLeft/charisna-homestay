@@ -8,11 +8,11 @@ const data=(price=1,time='2026-11-01T00:00:00.000Z')=>({rooms:[{id:'A',price}],t
 function setup(local,cloud){
  const state={local:structuredClone(local),cloud:structuredClone(cloud),writes:0,scheduled:[],events:{},saved:[]};
  const storage={getItem:key=>storage[key]||null,setItem:(key,value)=>{storage[key]=value;},removeItem:key=>{delete storage[key];}};
- const node=()=>({dataset:{},append(){},addEventListener(){},querySelector:()=>node()});
+ const node=()=>({dataset:{},append(){},addEventListener(){},setAttribute(){},querySelector:()=>node(),querySelectorAll:()=>[]});
  const window={addEventListener:(event,handler)=>{state.events[event]=handler;},charisnaData:{snapshot:()=>structuredClone(state.local),validate:value=>structuredClone(value),hydrate:value=>{state.local=structuredClone(value);}},charisnaVault:{flush:async()=>{},backup:async()=>({encrypted:'test-envelope'}),save:async value=>{state.saved.push(structuredClone(value));}}};
  const snapshot=()=>({exists:()=>Boolean(state.cloud),data:()=>structuredClone(state.cloud),metadata:{hasPendingWrites:false}});
  const context={window,document:{getElementById:()=>node(),createElement:()=>node(),addEventListener(){}},localStorage:storage,navigator:{onLine:true},crypto:{randomUUID:()=>String(Math.random())},structuredClone,syncContent,sameSyncData,mergeSyncData,
-  user:{uid:'owner'},verifiedRole:'OWNER',auth:{currentUser:{uid:'owner'}},cloudDoc:()=>({}),db:{},message:vi.fn(),confirm:vi.fn(()=>true),signOut:async()=>{},panel:node(),getDocFromServer:async()=>snapshot(),onSnapshot:(_ref,callback)=>{state.listener=callback;return()=>{state.stopped=true;};},
+  user:{uid:'owner'},verifiedRole:'OWNER',auth:{currentUser:{uid:'owner'}},cloudDoc:()=>({}),db:{},message:vi.fn(),confirm:vi.fn(()=>true),signOut:async()=>{},panel:node(),status:node(),openCloudPanel:vi.fn(),getDocFromServer:async()=>snapshot(),onSnapshot:(_ref,callback)=>{state.listener=callback;return()=>{state.stopped=true;};},
   runTransaction:async(_db,callback)=>callback({get:async()=>{if(state.beforeRead){const fn=state.beforeRead;state.beforeRead=null;fn();}return snapshot();},set:(_ref,value)=>{state.cloud=structuredClone(value);state.writes++;if(state.afterWrite)state.afterWrite();}}),
   setTimeout:fn=>{state.scheduled.push(fn);return state.scheduled.length;},clearTimeout(){},setInterval(){}};
  vm.runInNewContext(engineSource+';globalThis.engine={performUpload,downloadCloudData,reconcileAtStartup,startAutoSync,stopAutoSync,syncState};',context);

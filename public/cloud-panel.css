@@ -1,0 +1,65 @@
+.charisna-ui dialog.cloud-panel {
+  width:min(600px,calc(100vw - 32px));max-width:600px;max-height:calc(100dvh - 32px);
+  margin:auto;padding:0;color:var(--ck-ink);background:var(--ck-paper);border:1px solid var(--ck-line);
+  border-radius:18px;overflow:auto;overscroll-behavior:contain;
+}
+.cloud-panel__header {display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:26px;border-bottom:1px solid var(--ck-line);}
+.cloud-panel__header > div {min-width:0;}
+.cloud-panel h2 {margin:0;font-size:23px!important;font-weight:750;line-height:1.3;}
+.cloud-panel h3 {margin:0;font-size:15px!important;font-weight:700;line-height:1.4;}
+.cloud-panel p {margin:6px 0 0;color:var(--ck-muted);font-size:14px;line-height:1.65;overflow-wrap:anywhere;}
+.cloud-panel button {min-height:44px;padding:10px 14px;border-radius:9px;font:inherit;font-size:13px;font-weight:650;cursor:pointer;}
+.cloud-panel button:disabled {opacity:.55;cursor:not-allowed;}
+.cloud-panel button:active:not(:disabled) {filter:brightness(.94);}
+.cloud-panel .cloud-panel__close {flex:none;margin:-4px -8px 0 0;border:0;background:transparent;color:var(--ck-muted);}
+.cloud-panel__close:hover {background:var(--ck-soft);}
+.cloud-panel__body {display:grid;gap:24px;padding:24px 26px;}
+.cloud-panel__state {padding:18px;border-left:4px solid var(--ck-control);border-radius:0 10px 10px 0;background:var(--ck-soft);}
+.cloud-panel__state[data-state="ok"] {border-color:#047857;background:#ecfdf5;}
+.cloud-panel__state[data-state="ok"] h3 {color:#065f46;}
+.cloud-panel__state[data-state="busy"] {border-color:#0369a1;background:#f0f9ff;}
+.cloud-panel__state[data-state="error"] {border-color:#be123c;background:#fff1f2;}
+.cloud-panel #cloud-last-sync {font-size:12px;margin-top:12px;}
+.cloud-panel__message:empty {display:none;}
+.cloud-panel .cloud-panel__message {margin:0;color:var(--ck-ink);font-size:13px;}
+.cloud-panel__account {display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:24px;border-bottom:1px solid var(--ck-line);}
+.cloud-panel__account > div {min-width:0;}
+.cloud-panel .cloud-panel__secondary {background:var(--ck-paper);border:1px solid var(--ck-control);color:var(--ck-ink);}
+.cloud-panel .cloud-panel__secondary:hover {background:var(--ck-soft);}
+.cloud-panel .cloud-panel__primary {background:#047857;border:1px solid #047857;color:#fff;}
+.cloud-panel .cloud-panel__primary:hover {background:#065f46;}
+.cloud-panel #cloud-logout {flex:none;color:#b42332;}
+.cloud-panel #cloud-integrations:has(> [hidden]) {display:none;}
+.cloud-panel details {font-size:14px;}
+.cloud-panel summary {min-height:44px;padding:11px 0;font-weight:650;cursor:pointer;}
+.cloud-panel details p {font-size:13px;}
+.cloud-panel__integration > p {margin-bottom:12px;}
+.cloud-panel__integration details {border-top:1px solid var(--ck-line);}
+.cloud-panel a {display:inline-flex;align-items:center;min-height:44px;color:var(--ck-brand-strong);text-decoration:underline;text-underline-offset:3px;}
+.cloud-panel label {display:block;font-size:13px;font-weight:650;margin-top:16px;}
+.cloud-panel input {display:block;width:100%;min-height:48px;padding:12px;margin:8px 0 12px;border:1px solid var(--ck-control);border-radius:9px;background:var(--ck-paper);}
+.cloud-panel__actions {display:flex;flex-wrap:wrap;gap:12px;margin:16px 0;}
+.cloud-panel__advanced {border-top:1px solid var(--ck-line);padding-top:12px;}
+.cloud-panel .cloud-panel__footer {margin:0;padding:18px 26px calc(18px + env(safe-area-inset-bottom));border-top:1px solid var(--ck-line);background:var(--ck-soft);color:var(--ck-muted);font-size:12px;line-height:1.65;}
+.charisna-ui .cloud-indicator {display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:110px;padding:8px 12px;border:1px solid var(--ck-line);border-radius:9px;background:var(--ck-soft);color:var(--ck-muted);font-size:12px;font-weight:650;line-height:1.2;white-space:nowrap;}
+.cloud-indicator::before {content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;}
+.charisna-ui .cloud-indicator[data-state="ok"] {color:#065f46;background:#ecfdf5;border-color:#abd4bb;}
+.charisna-ui .cloud-indicator[data-state="busy"] {color:#075985;background:#f0f9ff;border-color:#a8c7da;}
+.charisna-ui .cloud-indicator[data-state="error"] {color:#9f1239;background:#fff1f2;border-color:#d99eac;}
+.charisna-ui #network-online-badge {display:none;}
+.dark .cloud-panel__state[data-state="ok"] {background:#174832;}
+.dark .cloud-panel__state[data-state="ok"] h3 {color:#a2edc3;}
+.dark .cloud-panel__state[data-state="busy"] {background:#193c50;}
+.dark .cloud-panel__state[data-state="error"] {background:#4c2028;}
+.dark .cloud-panel #cloud-logout {color:#fda4af;}
+.dark .charisna-ui .cloud-indicator[data-state="ok"] {background:#174832;color:#a2edc3;}
+.dark .charisna-ui .cloud-indicator[data-state="busy"] {background:#193c50;color:#bae6fd;}
+.dark .charisna-ui .cloud-indicator[data-state="error"] {background:#4c2028;color:#fda4af;}
+@media(max-width:480px){
+  .charisna-ui dialog.cloud-panel {width:calc(100vw - 24px);max-height:calc(100dvh - 24px);border-radius:16px;}
+  .cloud-panel__header {padding:22px 20px;gap:12px;}
+  .cloud-panel__body {padding:20px;gap:20px;}
+  .cloud-panel__account {align-items:flex-start;flex-wrap:wrap;}
+  .cloud-panel .cloud-panel__footer {padding:16px 20px calc(16px + env(safe-area-inset-bottom));}
+  .cloud-panel__actions {flex-direction:column;}
+}

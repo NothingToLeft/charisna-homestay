@@ -36,26 +36,35 @@ const status = document.getElementById('account-sync-status');
 status.textContent = 'Cloud: menunggu login';
 
 const panel = document.createElement('dialog');
-panel.style.cssText = 'border:0;border-radius:12px;padding:20px;max-width:420px;width:90%;box-shadow:0 10px 40px #0005;font:14px sans-serif';
-panel.innerHTML = `<h2 style="font-weight:bold;font-size:18px">Cloud CHARISNA KOST</h2><p>Perubahan tersimpan otomatis ke cloud. Data terbaru dari perangkat lain masuk otomatis selama akun owner dan brankas terbuka.</p><p id="cloud-message" role="status" style="min-height:20px"></p><div style="display:flex;flex-wrap:wrap;gap:6px"><button id="cloud-upload">Sinkronkan sekarang</button><button id="cloud-download">Unduh cloud</button><button id="cloud-logout">Keluar akun</button><button id="cloud-close">Tutup</button></div>`;
+panel.className='cloud-panel';
+panel.setAttribute('aria-labelledby','cloud-panel-title');
+panel.innerHTML = `<header class="cloud-panel__header"><div><h2 id="cloud-panel-title">Cloud & akun</h2><p>Data antarperangkat, tersimpan otomatis.</p></div><button id="cloud-close" type="button" class="cloud-panel__close">Tutup</button></header><div class="cloud-panel__body"><section class="cloud-panel__state" data-state="off" aria-live="polite" aria-atomic="true"><h3 id="cloud-state-title">Menunggu akun owner</h3><p id="cloud-state-note">Masuk dan buka brankas untuk memulai sinkronisasi.</p><p id="cloud-last-sync"></p></section><p id="cloud-message" role="status" class="cloud-panel__message"></p><section class="cloud-panel__account"><div><h3>Akun terhubung</h3><p id="cloud-account">Belum masuk</p></div><button id="cloud-logout" type="button" class="cloud-panel__secondary">Keluar akun</button></section><section id="cloud-integrations"></section><details class="cloud-panel__advanced"><summary>Pemulihan & tindakan lanjutan</summary><p>Tidak diperlukan untuk pemakaian biasa. Perubahan dikirim dan diterima otomatis saat aplikasi aktif.</p><div class="cloud-panel__actions"><button id="cloud-upload" type="button" class="cloud-panel__secondary">Coba sinkronkan ulang</button><button id="cloud-download" type="button" class="cloud-panel__secondary">Pulihkan dari cloud</button></div><p>Salinan terenkripsi disimpan sebelum data cloud diterapkan.</p></details></div><footer class="cloud-panel__footer">Aktif selama aplikasi dan brankas terbuka. Data offline tetap tersimpan di perangkat dan disinkronkan saat tersambung kembali.</footer>`;
 document.body.append(panel);
-for (const button of panel.querySelectorAll('button')) button.style.cssText = 'padding:8px;background:#059669;color:white;border-radius:6px';
 const openButton = document.createElement('button');
 openButton.textContent = 'Cloud & Akun';
 openButton.style.cssText = 'background:#047857;color:white;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600';
-openButton.onclick = () => panel.showModal();
+let cloudPanelOpener=null;
+function openCloudPanel(){cloudPanelOpener=document.activeElement;refreshSuperAppStatus();panel.showModal();}
+openButton.onclick = openCloudPanel;
 document.getElementById('settings-account-actions').append(openButton);
 panel.querySelector('#cloud-close').onclick = () => panel.close();
+panel.addEventListener('close',()=>{if(cloudPanelOpener?.isConnected)cloudPanelOpener.focus();});
 const message = (text) => { panel.querySelector('#cloud-message').textContent = text; status.textContent = `Cloud: ${text}`; };
 const superAppSection=document.createElement('section');
 superAppSection.hidden=true;
-superAppSection.innerHTML='<hr style="margin:18px 0"><h3 style="font-weight:bold;font-size:16px">CHARISNA SuperApp</h3><p>Ringkasan lokal per properti: kamar terisi, pembayaran bulan ini, dan tagihan belum lunas. Data bawaan boleh dikirim dan akan ditandai sebagai contoh.</p><p><a href="https://zen.charisna-superapp.workers.dev/kost" target="_blank" rel="noopener noreferrer">Buka SuperApp dan buat kode penghubung</a></p><label for="kost-superapp-code">Kode penghubung</label><input id="kost-superapp-code" maxlength="24" autocomplete="off" style="display:block;width:100%;padding:8px;border:1px solid #bbb;border-radius:6px"><button id="kost-superapp-connect" type="button">Hubungkan dan kirim ringkasan</button><p id="kost-superapp-status" role="status"></p>';
-panel.append(superAppSection);
-superAppSection.querySelector('button').style.cssText='padding:8px;background:#059669;color:white;border-radius:6px;margin-top:8px';
+superAppSection.className='cloud-panel__integration';
+superAppSection.innerHTML='<h3>CHARISNA SuperApp</h3><p id="superapp-delivery-status">Belum terhubung.</p><details id="superapp-pairing"><summary>Atur koneksi SuperApp</summary><p>Cukup hubungkan sekali. Setelah itu, ringkasan hunian dan keuangan dikirim otomatis.</p><p><a href="https://zen.charisna-superapp.workers.dev/kost" target="_blank" rel="noopener noreferrer">Buka SuperApp untuk membuat kode</a></p><label for="kost-superapp-code">Kode penghubung</label><input id="kost-superapp-code" maxlength="24" autocomplete="off"><button id="kost-superapp-connect" type="button" class="cloud-panel__primary">Hubungkan SuperApp</button><p id="kost-superapp-status" role="status"></p></details>';
+panel.querySelector('#cloud-integrations').append(superAppSection);
 const superAppCode=superAppSection.querySelector('#kost-superapp-code');
 const superAppStatus=superAppSection.querySelector('#kost-superapp-status');
 const superAppKey=()=>`charisna-kost:superapp:v1:${user?.uid||''}`;
 const savedSuperAppKey=()=>window.charisnaVault ? window.charisnaData.snapshot().privateIntegrations?.superAppKey : null;
+function refreshSuperAppStatus(){
+  const connected=Boolean(savedSuperAppKey());
+  let delivery=null;
+  try{delivery=JSON.parse(localStorage.getItem('charisna-superapp-delivery:'+user?.uid) || 'null');}catch{}
+  superAppSection.querySelector('#superapp-delivery-status').textContent=!connected?'Belum terhubung. Hubungkan sekali untuk mengaktifkan pengiriman otomatis.':delivery?.status==='SENT'?'Terhubung. Ringkasan terakhir berhasil dikirim.':delivery?.status==='PENDING'?'Terhubung. Ringkasan menunggu pengiriman dan akan dicoba otomatis.':'Koneksi tersimpan. Ringkasan dikirim otomatis saat data berubah.';
+}
 async function saveSuperAppKey(key) {
   const data=window.charisnaData.snapshot();
   data.privateIntegrations={...data.privateIntegrations,superAppKey:key};
@@ -71,6 +80,7 @@ let lastSuperAppPayload='',lastSuperAppAt=0,superAppTimer=0;
 async function recordSuperAppDelivery(state) {
   if (!user) return;
   localStorage.setItem('charisna-superapp-delivery:' + user.uid, JSON.stringify(state));
+  refreshSuperAppStatus();
 }
 async function sendSuperApp(code=''){
   if(!user||verifiedRole!=='OWNER'||auth.currentUser?.uid!==user.uid)throw Error('Masuk sebagai Owner dahulu.');
@@ -102,7 +112,7 @@ superAppSection.querySelector('#kost-superapp-connect').onclick=async()=>{
   const code=superAppCode.value.trim().toUpperCase();
   if(!/^[A-Z2-9]{24}$/.test(code)){superAppStatus.textContent='Kode harus 24 karakter.';return;}
   button.disabled=true;superAppStatus.textContent='Mengirim ringkasan…';
-  try{await sendSuperApp(code);superAppCode.value='';superAppStatus.textContent='Terhubung. Ringkasan setiap properti terkirim, termasuk label data contoh bila masih ada.';}
+  try{await sendSuperApp(code);superAppCode.value='';superAppStatus.textContent='Terhubung. Ringkasan berikutnya dikirim otomatis.';refreshSuperAppStatus();superAppSection.querySelector('#superapp-pairing').open=false;}
   catch(error){superAppStatus.textContent=error.message||'Koneksi gagal.';}
   finally{button.disabled=false;}
 };
@@ -156,7 +166,8 @@ async function handleAccount(account, revision = ++authRevision) {
   if (revision !== authRevision || auth.currentUser?.uid !== account.uid) { location.reload(); return; }
   gate.hidden = true;
   document.body.classList.remove('auth-locked', 'cleaner-mode');
-  message(`Masuk: ${account.email}`);
+  panel.querySelector('#cloud-account').textContent=account.email;
+  message('');
   setupOwnerManager({ db, account, firebaseConfig, onMessage: message });
   const legacySyncKey=localStorage.getItem(superAppKey());
   if(legacySyncKey){
@@ -221,16 +232,28 @@ const deviceId = (() => {
   return id;
 })();
 let stopCloudListener = null;
+let reconcilingEpoch = null;
 let syncEpoch = 0;
 const syncState = { syncing:false, uploadTimer:0, paused:false, network:navigator.onLine, initialized:false, base:null, cloudVersion:null, lastLocal:null };
 const localMeta = () => window.charisnaData?.snapshot()?.meta || {};
 const syncBadge = () => document.getElementById('sync-status-badge');
 const setBadge = (kind, text) => {
   const badge = syncBadge();
-  if (!badge) return;
-  const styles = {ok:'bg-emerald-100 text-emerald-700',busy:'bg-sky-100 text-sky-700',off:'bg-slate-100 text-slate-500',error:'bg-rose-100 text-rose-700'};
-  badge.className = 'inline-flex max-w-[200px] sm:max-w-none px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer ' + (styles[kind] || styles.off);
-  badge.textContent = text; badge.dataset.state = kind; badge.title = text;
+  const label={ok:'Tersinkron',busy:'Menyimpan…',off:navigator.onLine?'Menunggu akun':'Offline',error:'Perlu perhatian'}[kind] || 'Cloud';
+  if(badge){
+    badge.className='cloud-indicator';badge.dataset.state=kind;
+    if(badge.textContent!==label)badge.textContent=label;
+    badge.title=text.replace(/^[☁⟳⚠○]\s*/,'')+'. Buka status Cloud & akun.';
+    badge.setAttribute('aria-label',label+'. Buka status Cloud dan akun');
+  }
+  const state=panel.querySelector('.cloud-panel__state');state.dataset.state=kind;
+  panel.querySelector('#cloud-state-title').textContent={ok:'Semua perubahan tersinkron',busy:'Perubahan sedang disinkronkan',off:navigator.onLine?'Menunggu koneksi akun':'Offline · data tetap tersimpan',error:'Sinkronisasi perlu perhatian'}[kind] || label;
+  panel.querySelector('#cloud-state-note').textContent={ok:'Perubahan dikirim dan diterima otomatis. Tidak perlu menekan tombol sinkron.',busy:'Perubahan yang sudah disimpan di perangkat akan dikirim otomatis. Anda dapat tetap bekerja.',off:'Saat koneksi kembali, aplikasi akan mencoba sinkronisasi otomatis.',error:'Aplikasi akan mencoba lagi otomatis. Periksa koneksi dan rincian pesan di bawah.'}[kind] || '';
+  if(kind==='ok'){
+    panel.querySelector('#cloud-last-sync').textContent='Terakhir tersinkron: '+new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
+    panel.querySelector('#cloud-message').textContent='';
+  }
+  status.textContent='Cloud: '+label;
 };
 const currentOwner = (uid, epoch) => user?.uid === uid && auth.currentUser?.uid === uid && verifiedRole === 'OWNER' && window.charisnaVault && syncEpoch === epoch;
 const cloudVersion = cloud => cloud ? JSON.stringify([cloud.revision || '', cloud.updatedAt || '', syncContent(cloud.data)]) : null;
@@ -246,13 +269,21 @@ function stopAutoSync() {
   syncEpoch++;
   stopCloudListener?.(); stopCloudListener = null;
   clearTimeout(syncState.uploadTimer);
+  syncState.syncing=false;
   syncState.initialized = false; syncState.base = null; syncState.cloudVersion = null; syncState.lastLocal = null;
 }
-function queueSync(delay = SYNC_DEBOUNCE_MS) {
+function queueSync(delay = SYNC_DEBOUNCE_MS, announce = true) {
   if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault || syncState.paused) return;
   clearTimeout(syncState.uploadTimer);
   if (!navigator.onLine) { setBadge('off','○ Offline · perubahan tersimpan di perangkat'); return; }
+  if(announce && hasUnsyncedChanges())setBadge('busy','Perubahan tersimpan di perangkat; menunggu sinkronisasi otomatis');
   syncState.uploadTimer = setTimeout(() => { void reconcileAtStartup(); }, delay);
+}
+async function readCloudFromServer(ref){
+  let timer;
+  try{
+    return await Promise.race([getDocFromServer(ref),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Cloud belum merespons. Data perangkat tetap tersimpan; sinkronisasi akan dicoba lagi.')),20000);})]);
+  }finally{clearTimeout(timer);}
 }
 async function applyCloud(cloud, localStart, uid, epoch) {
   if (!currentOwner(uid, epoch)) return false;
@@ -284,7 +315,8 @@ async function performUpload({interactive = false} = {}) {
     if (!currentOwner(uid, epoch)) return false;
     const local = window.charisnaData.snapshot();
     if (interactive && !confirm('Sinkronkan perubahan perangkat ini ke cloud?')) return false;
-    const observed = await getDocFromServer(ref);
+    setBadge('busy','Menyimpan perubahan ke cloud secara otomatis');
+    const observed = await readCloudFromServer(ref);
     if (!currentOwner(uid, epoch)) return false;
     const cloud = observed.exists() ? observed.data() : null;
     if (cloud) window.charisnaData.validate(cloud.data);
@@ -314,7 +346,7 @@ async function performUpload({interactive = false} = {}) {
     if (error.message === 'SYNC_RETRY') queueSync(250);
     else if (currentOwner(uid, epoch)) { setBadge('error','⚠ Sinkron tertunda · akan dicoba ulang'); message('Sinkronisasi tertunda: ' + error.message); }
     return false;
-  } finally { syncState.syncing = false; if (currentOwner(uid, epoch) && hasUnsyncedChanges()) queueSync(3000); }
+  } finally { if(syncEpoch===epoch)syncState.syncing = false; if (currentOwner(uid, epoch) && hasUnsyncedChanges()) queueSync(3000,false); }
 }
 async function downloadCloudData({interactive = false} = {}) {
   if (syncState.syncing || !window.charisnaVault) { queueSync(); return false; }
@@ -323,28 +355,31 @@ async function downloadCloudData({interactive = false} = {}) {
   try {
     await window.charisnaVault.flush();
     const local = window.charisnaData.snapshot();
-    const snapshot = await getDocFromServer(cloudDoc());
+    const snapshot = await readCloudFromServer(cloudDoc());
     if (!snapshot.exists()) return false;
     const cloud = snapshot.data();
     window.charisnaData.validate(cloud.data);
     if (interactive && !confirm('Ambil data cloud terbaru? Salinan perangkat disimpan terenkripsi.')) return false;
     if (!currentOwner(uid, epoch)) return false;
     if (!sameSyncData(syncContent(local),syncContent(cloud.data))) await rememberSyncBackup(local);
+    setBadge('busy','Menerima perubahan dari cloud');
     return await applyCloud(cloud,local,uid,epoch);
   } catch (error) {
     if (currentOwner(uid, epoch)) { setBadge('error','⚠ Sinkron tertunda · akan dicoba ulang'); message('Gagal mengambil cloud: ' + error.message); }
     return false;
-  } finally { syncState.syncing = false; }
+  } finally { if(syncEpoch===epoch)syncState.syncing = false; }
 }
 async function reconcileAtStartup() {
   if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault || syncState.paused) return;
-  if (syncState.syncing) { queueSync(); return; }
+  if (syncState.syncing || reconcilingEpoch===syncEpoch) { queueSync(); return; }
   if (!navigator.onLine) { setBadge('off','○ Offline · perubahan tersimpan di perangkat'); return; }
   const uid = user.uid, epoch = syncEpoch;
+  reconcilingEpoch=epoch;
   try {
-    setBadge('busy','⟳ Menyinkronkan…');
+    const needsFeedback=!syncState.initialized || hasUnsyncedChanges();
+    if(needsFeedback)setBadge('busy','Memulai sinkronisasi otomatis');
     await window.charisnaVault.flush();
-    const snapshot = await getDocFromServer(cloudDoc());
+    const snapshot = await readCloudFromServer(cloudDoc());
     if (!currentOwner(uid, epoch)) return;
     if (!snapshot.exists()) { await performUpload(); return; }
     const cloud = snapshot.data();
@@ -352,7 +387,7 @@ async function reconcileAtStartup() {
     window.charisnaData.validate(cloud.data);
     if (sameSyncData(syncContent(local),syncContent(cloud.data))) {
       syncState.initialized = true; syncState.base = syncContent(cloud.data); syncState.lastLocal = syncContent(local); syncState.cloudVersion = cloudVersion(cloud);
-      setBadge('ok','☁ Sinkron otomatis'); return;
+      if(needsFeedback || syncBadge()?.dataset.state!=='ok')setBadge('ok','Sinkron otomatis aktif'); return;
     }
     if (syncState.initialized && syncState.base) {
       if (hasUnsyncedChanges()) await performUpload(); else await downloadCloudData();
@@ -362,7 +397,8 @@ async function reconcileAtStartup() {
       if (localStamp > remoteStamp) await performUpload(); else await downloadCloudData();
     }
     syncState.initialized = true;
-  } catch (error) { if (currentOwner(uid, epoch)) { setBadge('error','⚠ Sinkron tertunda · akan dicoba ulang'); message(error.message); } }
+  } catch (error) { if (currentOwner(uid, epoch)) { setBadge('error','Sinkron tertunda; akan dicoba ulang'); message(error.message); queueSync(5000,false); } }
+  finally{if(reconcilingEpoch===epoch)reconcilingEpoch=null;}
 }
 function startAutoSync() {
   stopAutoSync();
@@ -380,9 +416,13 @@ window.addEventListener('online',flushPendingUpload);
 window.addEventListener('offline',()=>setBadge('off','○ Offline · perubahan tersimpan di perangkat'));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)queueSync(0);});
 setInterval(()=>queueSync(0),30000);
-syncBadge()?.addEventListener('click',()=>panel.showModal());
-panel.querySelector('#cloud-upload').onclick=()=>performUpload({interactive:true});
-panel.querySelector('#cloud-download').onclick=()=>downloadCloudData({interactive:true});
+syncBadge()?.addEventListener('click',openCloudPanel);
+for(const [id,action] of [['cloud-upload',performUpload],['cloud-download',downloadCloudData]]){
+  panel.querySelector('#'+id).onclick=async()=>{
+    const buttons=[...panel.querySelectorAll('.cloud-panel__advanced button')];buttons.forEach(button=>button.disabled=true);
+    try{await action({interactive:true});}finally{buttons.forEach(button=>button.disabled=false);}
+  };
+}
 async function logoutOwner() {
   try { await window.charisnaVault?.flush(); if (hasUnsyncedChanges()) await reconcileAtStartup(); await signOut(auth); }
   catch { message('Penyimpanan belum selesai. Ekspor cadangan sebelum keluar.'); }

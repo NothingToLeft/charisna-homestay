@@ -140,3 +140,7 @@ Pendamping WhatsApp harus berjalan selama pengiriman. Mode normal `Jalankan-What
 ### Sewa harian dan bahasa tamu
 
 Kamar mendukung bulanan, harian, atau keduanya dengan harga per malam terpisah. Check-in harian menghitung malam sampai sebelum tanggal check-out; invoice bulanan otomatis melewati tamu harian. Kuitansi dan WhatsApp mendukung Indonesia, English, atau dua bahasa, dengan pilihan per penghuni dan pratinjau kuitansi. Identitas paspor tersedia untuk tamu asing. Panduan, batas pendamping WhatsApp, dan kompatibilitas native ada di [docs/daily-rental.md](docs/daily-rental.md).
+
+### Sinkronisasi cloud otomatis
+
+Setelah owner masuk dan brankas terbuka, setiap perubahan yang disimpan dikirim otomatis. Pembaruan dari perangkat lain diterima otomatis. Status Cloud tidak menampilkan proses sinkron saat pemeriksaan berkala menemukan data yang sama. Bacaan server yang tidak merespons memiliki batas waktu dan dicoba ulang otomatis; data offline tetap tersimpan lokal. Dialog Cloud menampilkan status dan waktu sinkron terakhir, sementara pemulihan manual tersedia di menu lanjutan. Lihat [docs/automatic-sync.md](docs/automatic-sync.md).
