@@ -58,5 +58,11 @@ try {
   await assertFails(setDoc(doc(anonymous,'tenantSubmissions','forged'),{...submission,ownerUid:'other-owner'}));
   await assertSucceeds(deleteDoc(doc(owner,'tenantPortals',token)));
   await assertFails(setDoc(doc(anonymous,'tenantSubmissions','revoked'),submission));
-  console.log('34 Firestore permission checks passed. Synthetic emulator data only.');
+  await assertSucceeds(setDoc(doc(owner,'moneyFeeds',token),{ownerUid:'owner',month:'2026-11',properties:[],expiresAt:new Date(Date.now()+86400000)}));
+  await assertSucceeds(getDoc(doc(anonymous,'moneyFeeds',token)));
+  await assertFails(getDocs(collection(anonymous,'moneyFeeds')));
+  await assertFails(setDoc(doc(outsider,'moneyFeeds',token),{ownerUid:'other-owner',properties:[],expiresAt:new Date(Date.now()+86400000)}));
+  await assertSucceeds(deleteDoc(doc(owner,'moneyFeeds',token)));
+  await assertFails(getDoc(doc(anonymous,'moneyFeeds',token)));
+  console.log('40 Firestore permission checks passed. Synthetic emulator data only.');
 } finally { await env.cleanup(); }

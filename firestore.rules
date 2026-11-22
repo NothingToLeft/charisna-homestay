@@ -38,6 +38,13 @@ service cloud.firestore {
               && request.resource.data.get('checkedItems', []).hasAll(resource.data.get('checklist', []))))
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt', 'note', 'updatedAt', 'checkedItems']));
     }
+    match /moneyFeeds/{token} {
+      allow get: if resource.data.expiresAt > request.time;
+      allow list: if false;
+      allow create: if owner() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if owner() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if owner() && resource.data.ownerUid == request.auth.uid;
+    }
     match /publicCatalogs/{ownerUid} {
       allow get: if true;
       allow list: if false;

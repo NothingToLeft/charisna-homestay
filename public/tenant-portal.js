@@ -27,6 +27,18 @@ try {
   }
   const print = document.createElement('button'); print.textContent = 'Cetak ringkasan dan riwayat pembayaran';
   print.onclick = () => window.print(); content.append(print);
+  if (snapshot.qrisPayload) for (const bill of snapshot.bills || []) {
+    if (bill.status === 'LUNAS') continue;
+    const pay=document.createElement('button'); pay.textContent='QRIS '+bill.id+' · Rp '+Number(bill.amount).toLocaleString('id-ID');
+    pay.onclick=()=> {
+      try {
+        let qr=document.getElementById('amount-qris');
+        if (!qr) {qr=document.createElement('img');qr.id='amount-qris';qr.alt='QRIS sesuai nominal tagihan';content.append(qr);}
+        qr.src=window.CharisnaQRIS.image(snapshot.qrisPayload,Number(bill.amount));
+        status.textContent='Periksa nama merchant dan nominal pada aplikasi pembayaran sebelum membayar.';
+      } catch(error) {status.textContent=error.message;}
+    }; content.append(pay);
+  }
   const form = document.createElement('form');
   const kind = document.createElement('select');
   kind.setAttribute('aria-label', 'Jenis kiriman');
