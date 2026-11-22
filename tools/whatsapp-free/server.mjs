@@ -15,7 +15,8 @@ const jobs=fs.existsSync(jobsPath)?JSON.parse(fs.readFileSync(jobsPath,'utf8')):
 for(const job of Object.values(jobs))if(job.status==='SENDING')job.status='UNCERTAIN';
 const persist=()=>{fs.writeFileSync(jobsPath+'.tmp',JSON.stringify(jobs));fs.renameSync(jobsPath+'.tmp',jobsPath);};
 let ready=false,qrImage='',busy=false;
-const client=new wa.Client({authStrategy:new wa.LocalAuth({dataPath:path.join(dir,'session')}),puppeteer:{headless:true}});
+const chrome=process.env.CHARISNA_CHROME_PATH || path.join(process.env.ProgramFiles || 'C:\\Program Files','Google','Chrome','Application','chrome.exe');
+const client=new wa.Client({authStrategy:new wa.LocalAuth({dataPath:path.join(dir,'session')}),puppeteer:{headless:true,executablePath:chrome}});
 client.on('qr',async qr=>{qrImage=await QRCode.toDataURL(qr);});
 client.on('ready',()=>{ready=true;qrImage='';console.log('WhatsApp terhubung.');});
 client.on('disconnected',()=>{ready=false;});
