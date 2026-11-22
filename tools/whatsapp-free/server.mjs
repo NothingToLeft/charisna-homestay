@@ -16,7 +16,7 @@ for(const job of Object.values(jobs))if(job.status==='SENDING')job.status='UNCER
 const persist=()=>{fs.writeFileSync(jobsPath+'.tmp',JSON.stringify(jobs));fs.renameSync(jobsPath+'.tmp',jobsPath);};
 let ready=false,qrImage='',busy=false;
 const chrome=process.env.CHARISNA_CHROME_PATH || path.join(process.env.ProgramFiles || 'C:\\Program Files','Google','Chrome','Application','chrome.exe');
-const client=new wa.Client({authStrategy:new wa.LocalAuth({dataPath:path.join(dir,'session')}),puppeteer:{headless:true,executablePath:chrome}});
+const client=new wa.Client({authStrategy:new wa.LocalAuth({dataPath:path.join(dir,'session')}),webVersionCache:{type:'local',path:path.join(dir,'web-cache')},puppeteer:{headless:true,executablePath:chrome}});
 client.on('qr',async qr=>{qrImage=await QRCode.toDataURL(qr);});
 client.on('ready',()=>{ready=true;qrImage='';console.log('WhatsApp terhubung.');});
 client.on('disconnected',()=>{ready=false;});
@@ -51,6 +51,17 @@ const server=http.createServer(async(req,res)=>{
  }
  if(!authorized(req)){res.writeHead(401);res.end();return;}
  res.setHeader('Content-Type','application/json');
+ if(req.url==='/self-test'&&req.method==='POST'){
+  const id='self-test-'+new Date().toISOString().slice(0,10);
+  if(!ready){res.writeHead(409);res.end(JSON.stringify({error:'WhatsApp belum siap.'}));return;}
+  if(jobs[id]){res.end(JSON.stringify(jobs[id]));return;}
+  jobs[id]={status:'SENDING',sent:0,total:1};persist();
+  try{
+   await client.sendMessage(client.info.wid._serialized,'Uji koneksi CHARISNA KOST. Pesan ini dikirim ke akun sendiri untuk memeriksa pendamping WhatsApp.');
+   jobs[id]={status:'DONE',sent:1,total:1};persist();res.end(JSON.stringify(jobs[id]));
+  }catch{jobs[id].status='UNCERTAIN';persist();res.writeHead(500);res.end(JSON.stringify(jobs[id]));}
+  return;
+ }
  if(req.url==='/health'&&req.method==='GET'){res.end(JSON.stringify({ready,busy}));return;}
  if(req.url?.startsWith('/jobs/')&&req.method==='GET'){const id=req.url.slice(6);res.end(JSON.stringify(jobs[id]||{status:'UNKNOWN'}));return;}
  if(req.url!=='/send'||req.method!=='POST'){res.writeHead(404);res.end('{}');return;}
@@ -68,3 +79,6 @@ const server=http.createServer(async(req,res)=>{
 });
 server.listen(8772,'127.0.0.1',()=>console.log('Buka http://127.0.0.1:8772 untuk memasangkan WhatsApp.'));
 client.initialize().catch(()=>console.log('WhatsApp gagal dimulai. Periksa koneksi dan jalankan ulang.'));
+
+async function shutdown(){server.close();await client.destroy().catch(()=>{});process.exit(0);}
+process.on('SIGINT',()=>void shutdown());process.on('SIGTERM',()=>void shutdown());

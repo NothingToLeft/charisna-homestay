@@ -116,3 +116,10 @@ Validasi paket mencakup pemeriksaan sintaks, build, tes unit, 34 pemeriksaan Fir
 - WhatsApp gratis memakai pendamping Windows `tools/whatsapp-free/Jalankan-WhatsApp.cmd`. Scan QR WhatsApp Web pada PC, lalu simpan kode lokal ke Pengaturan KOST → WhatsApp gratis. Pengumuman memiliki tombol Kirim otomatis via PC. Periksa cakupan properti dan isi pesan pada konfirmasi sebelum mengirim. Status UNCERTAIN memerlukan pemeriksaan manual agar pesan tidak dikirim ganda.
 - Pendamping memakai whatsapp-web.js dan sesi WhatsApp Web, bukan layanan resmi Meta Cloud API. Perubahan WhatsApp Web dapat mengganggu kompatibilitas. Sesi dan kode lokal berada di profil Windows di luar repo. PC harus menyala. Pengiriman tetap mengikuti batas dan kebijakan WhatsApp.
 - Uji perangkat fisik ditunda karena HP owner sedang dipakai. Pembayaran nyata dan pengiriman WhatsApp memerlukan konfirmasi akun/session owner; jangan menganggap tes unit sebagai bukti transaksi nyata.
+
+### Bukti uji integrasi v1.0.6
+- QR bernominal berhasil dibuat dan dipindai ulang melalui pengujian bitmap sintetis; merchant dan checksum dipertahankan.
+- Pendamping WhatsApp berhasil dipasangkan dan mengirim satu pesan uji ke akun sendiri. Endpoint menolak akses tanpa kode dan nomor penerima tidak valid. Audit dependency pendamping menunjukkan nol advisory pada saat pemeriksaan.
+- Portal produksi menerima foto bukti bayar sintetis melalui browser. Uji ini memeriksa transport unggah, bukan transaksi bank.
+- Konektor Money diuji terhadap feed Firestore langsung dengan data sintetis. Ringkasan bersifat tampilan bisnis terpisah agar transaksi ledger tidak tercatat ganda.
+- HP Infinix Note 40 Pro Plus 5G belum tersambung; owner menyampaikan perangkat sedang dipakai. Pengujian fisik tetap tertunda.
