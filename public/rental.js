@@ -13,6 +13,7 @@
     reminder:['Pengingat pembayaran sewa','Rental payment reminder']
   };
   const language=value=>['id','en','both'].includes(value)?value:'id';
+  const nightWord=(count,lang='id')=>language(lang)==='en'?(count===1?'night':'nights'):language(lang)==='both'?'malam / '+(count===1?'night':'nights'):'malam';
   const text=(key,lang='id')=>{const pair=labels[key];if(!pair)throw Error('Label tidak tersedia.');return language(lang)==='both'?pair.join(' / '):pair[language(lang)==='en'?1:0];};
   function money(value,lang='id'){
     if(!Number.isSafeInteger(Number(value)) || Number(value)<0)throw Error('Nominal harus berupa Rupiah bulat dan tidak negatif.');
@@ -43,7 +44,7 @@
     return mode(room)==='DAILY'?daily:mode(room)==='BOTH'?monthly+' · '+daily:monthly;
   }
   function period(bill,lang='id'){
-    if(bill.rentalMode==='DAILY')return `${bill.stayStart} – ${bill.stayEnd} (${bill.nights} ${text('nights',lang)})`;
+    if(bill.rentalMode==='DAILY')return `${bill.stayStart} – ${bill.stayEnd} (${bill.nights} ${nightWord(bill.nights,lang)})`;
     if(language(lang)==='id')return bill.period || '-';
     const id=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const en=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -59,7 +60,8 @@
   function singleMessage(type,data,lang){
     const bill=data.bill || data;const settings=data.settings || {};const paid=type==='RECEIPT'&&bill.status==='LUNAS';
     if(type==='BOOKING_WELCOME'){
-      const interval=bill.leaseInterval==='Harian'?(lang==='en'?'Nightly':'Harian'):lang==='en'?String(bill.leaseInterval || 'Monthly').replace('Bulanan','Monthly').replace('Tahunan','Yearly'):bill.leaseInterval || 'Bulanan';
+      const plans={Harian:'Nightly',Bulanan:'Monthly','3 Bulanan':'Every 3 months','6 Bulanan':'Every 6 months',Tahunan:'Yearly'};
+      const interval=lang==='en'?(plans[bill.leaseInterval] || 'Monthly'):bill.leaseInterval || 'Bulanan';
       return lang==='en'?`Welcome to ${settings.kostName || 'CHARISNA KOST'}!\n\nHello ${bill.tenantName},\nRoom: ${bill.roomNumber}\nCheck-in: ${bill.entryDate || '-'}\nCheck-out / lease end: ${bill.endDate || '-'}\nRental plan: ${interval}\nDeposit: ${money(Number(bill.deposit || 0),lang)}\n\nPlease contact management for house rules and Wi-Fi details. We hope you enjoy your stay.`:`Selamat datang di ${settings.kostName || 'CHARISNA KOST'}!\n\nHalo ${bill.tenantName},\nUnit: ${bill.roomNumber}\nTanggal masuk: ${bill.entryDate || '-'}\nCheck-out / akhir sewa: ${bill.endDate || '-'}\nMode sewa: ${interval}\nDeposit: ${money(Number(bill.deposit || 0),lang)}\n\nSilakan hubungi pengelola untuk tata tertib dan informasi Wi-Fi. Semoga nyaman tinggal bersama kami.`;
     }
     const title=type==='REMINDER'?text('reminder',lang):text(paid?'receipt':'invoice',lang);
@@ -68,7 +70,7 @@
     const lines=[`*${title}*`,settings.kostName || 'CHARISNA KOST','',hello,`No: ${bill.id || '-'}`,`${text('room',lang)}: ${bill.roomNumber}`,`${text('period',lang)}: ${period(bill,lang)}`];
     if(settings.kostAddress)lines.splice(2,0,settings.kostAddress);
     if(settings.ownerPhone)lines.splice(2,0,(lang==='en'?'Phone: ':'Telp. ')+settings.ownerPhone);
-    if(bill.rentalMode==='DAILY')lines.push(`${bill.nights} ${text('nights',lang)} × ${money(bill.nightlyRate,lang)}`);
+    if(bill.rentalMode==='DAILY')lines.push(`${bill.nights} ${nightWord(bill.nights,lang)} × ${money(bill.nightlyRate,lang)}`);
     lines.push(`${text('rent',lang)}: ${money(amounts.base,lang)}`);
     if(amounts.electric)lines.push(`${text('electric',lang)}: ${money(amounts.electric,lang)}`);
     if(amounts.other)lines.push(`${text('other',lang)}: ${money(amounts.other,lang)}`);
@@ -85,5 +87,5 @@
     lang=language(lang);
     return lang==='both'?singleMessage(type,data,'id')+'\n\n──────────\n\n'+singleMessage(type,data,'en'):singleMessage(type,data,lang);
   }
-  root.CharisnaRental={language,text,money,nights,mode,supports,quote,rateLabel,period,charges,message};
+  root.CharisnaRental={language,nightWord,text,money,nights,mode,supports,quote,rateLabel,period,charges,message};
 })(globalThis);

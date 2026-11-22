@@ -4643,7 +4643,7 @@
             document.getElementById('recDateLabel').textContent=CharisnaRental.text(paid?'paidDate':'dueDate',language);
             document.getElementById('recTotalLabel').textContent=CharisnaRental.text(paid?'totalPaid':'totalDue',language);
             document.querySelector('#printableReceipt [data-receipt-label="from"]').textContent=CharisnaRental.text(paid?'from':'guest',language);
-            document.getElementById('recStaySummary').textContent=bill.rentalMode==='DAILY'?bill.nights+' '+CharisnaRental.text('nights',language)+' × '+CharisnaRental.money(bill.nightlyRate,language):'';
+            document.getElementById('recStaySummary').textContent=bill.rentalMode==='DAILY'?bill.nights+' '+CharisnaRental.nightWord(bill.nights,language)+' × '+CharisnaRental.money(bill.nightlyRate,language):'';
             document.getElementById('recElectricRow').classList.toggle('hidden',!amounts.electric);
             document.getElementById('recElectric').textContent=CharisnaRental.money(amounts.electric,language);
 

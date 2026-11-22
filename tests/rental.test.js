@@ -18,6 +18,7 @@ describe('rental pricing compatibility',()=>{
  it('shows both rates and labels daily-only rooms per night',()=>{expect(api.rateLabel(room)).toContain('250.000 / malam');expect(api.rateLabel({...room,rentalMode:'DAILY'},'en')).toBe('IDR 250,000 / night');});
 });
 describe('localized payment documents',()=>{
+ it('uses singular night for a one-night stay',()=>{expect(api.nightWord(1,'en')).toBe('night');expect(api.period({...daily,nights:1},'en')).toContain('(1 night)');});
  it('welcomes a daily guest in English without assuming a payment',()=>{const text=api.message('BOOKING_WELCOME',{tenantName:'Example',roomNumber:'A',leaseInterval:'Harian',entryDate:'2026-11-22',endDate:'2026-11-25',deposit:500000},'en');expect(text).toContain('Rental plan: Nightly');expect(text).toContain('Check-out / lease end: 2026-11-25');expect(text).not.toContain('Total paid');});
  it('separates rent, electricity and other charges',()=>expect(api.charges(daily)).toEqual({base:750000,electric:50000,other:25000}));
  it('supports legacy bills without a stored base amount',()=>expect(api.charges({amount:1000,electricAmount:100,otherAmount:50}).base).toBe(850));
