@@ -123,3 +123,10 @@ Validasi paket mencakup pemeriksaan sintaks, build, tes unit, 34 pemeriksaan Fir
 - Portal produksi menerima foto bukti bayar sintetis melalui browser. Uji ini memeriksa transport unggah, bukan transaksi bank.
 - Konektor Money diuji terhadap feed Firestore langsung dengan data sintetis. Ringkasan bersifat tampilan bisnis terpisah agar transaksi ledger tidak tercatat ganda.
 - HP Infinix Note 40 Pro Plus 5G belum tersambung; owner menyampaikan perangkat sedang dipakai. Pengujian fisik tetap tertunda.
+
+## Sinkronisasi cloud otomatis
+Setelah owner masuk dan membuka brankas, perubahan yang disimpan antre ke cloud sekitar 1,5 detik. Listener Firestore mengambil perubahan perangkat lain otomatis; koneksi online dan pemeriksaan berkala mengulang sinkronisasi yang tertunda. Aplikasi tertutup melanjutkan antrean dari data lokal saat dibuka kembali.
+
+Dalam sesi yang sama, perubahan independen pada record ber-ID digabung. Jika kolom yang sama diubah bersamaan, nilai lokal dipakai dengan salinan konflik tersimpan. Pada koneksi awal tanpa baseline sesi, snapshot dengan waktu simpan terbaru dipakai dan salinan yang akan diganti disimpan terenkripsi. Perangkat lama tetap memakai format snapshot yang sama, tetapi sebaiknya memperbarui aplikasi agar ikut memakai proteksi transaksi baru.
+
+Pengaturan → Cadangan sinkronisasi menyediakan tiga salinan terenkripsi terbaru per akun untuk diunduh dan dipulihkan melalui impor backup. Tidak ada password tersimpan dalam salinan. Jika ruang perangkat tidak cukup membuat salinan, penggantian ditunda. Tombol Cloud tetap tersedia untuk pemeriksaan dan pemulihan.
