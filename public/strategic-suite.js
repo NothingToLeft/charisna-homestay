@@ -342,22 +342,104 @@
 
   const waEndpoint='http://127.0.0.1:8772';
   function whatsappSettings() {
-    const modal=dialog('WhatsApp gratis melalui PC');
-    modal.append(make('p','Jalankan tools/whatsapp-free/Jalankan-WhatsApp.cmd pada PC lalu scan QR dengan WhatsApp. Pendamping memakai WhatsApp Web dan memerlukan PC tetap menyala.'));
-    const token=field(modal,'Kode penghubung dari halaman pendamping','password');
-    modal.append(button('Simpan dan cek koneksi',async()=>{
-      if(!/^[a-f0-9]{64}$/.test(token.value.trim()))throw Error('Kode penghubung tidak valid.');
-      const response=await fetch(waEndpoint+'/health',{headers:{Authorization:'Bearer '+token.value.trim()},signal:AbortSignal.timeout(10000)});
-      if(!response.ok)throw Error('Kode ditolak pendamping.');
-      const health=await response.json();if(health.error)throw Error(health.error);appData.privateIntegrations ||= {};appData.privateIntegrations.whatsappToken=token.value.trim();
-      if(await saveData()){token.value='';showToast(health.ready?'WhatsApp terhubung.':'Kode tersimpan. Scan QR WhatsApp di PC.');}
-    }),button('Cek antrean terakhir',async()=>{
+    const opener=document.activeElement;
+    const modal=dialog('Koneksi WhatsApp');
+    modal.className='wa-settings';
+    modal.setAttribute('aria-labelledby','wa-settings-title');
+    modal.setAttribute('aria-describedby','wa-settings-description');
+    const header=make('header');header.className='wa-settings__header';
+    const heading=make('div');
+    const title=make('h2','Koneksi WhatsApp');title.id='wa-settings-title';
+    const description=make('p','Hubungkan WhatsApp untuk mengirim pengumuman ke penghuni.');
+    description.id='wa-settings-description';
+    heading.append(title,description);
+    const close=make('button','Tutup');close.type='button';close.className='wa-settings__close';
+    close.onclick=()=>modal.close();header.append(heading,close);
+    modal.replaceChildren(header);
+    modal.addEventListener('close',()=>opener?.isConnected && opener.focus(),{once:true});
+    const body=make('div');body.className='wa-settings__body';modal.append(body);
+    const status=make('section');status.className='wa-settings__status';status.dataset.state='idle';
+    status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.setAttribute('aria-atomic','true');
+    const statusTitle=make('h3','Belum terhubung');
+    const statusText=make('p','Jalankan pendamping di perangkat ini, lalu masukkan kode penghubung.');
+    status.append(statusTitle,statusText);body.append(status);
+    const setStatus=(state,title,text)=>{status.dataset.state=state;statusTitle.textContent=title;statusText.textContent=text;};
+    const form=make('form');form.className='wa-settings__form';body.append(form);
+    const label=make('label','Kode penghubung');label.htmlFor='wa-connection-code';
+    const inputRow=make('div');inputRow.className='wa-settings__input';
+    const token=make('input');token.type='password';token.id='wa-connection-code';token.autocomplete='off';
+    token.spellcheck=false;token.maxLength=64;token.setAttribute('aria-describedby','wa-code-help wa-code-error');
+    const hasSavedToken=()=>Boolean(appData.privateIntegrations?.whatsappToken);
+    token.placeholder=hasSavedToken()?'Kode sudah tersimpan':'Tempel kode dari halaman pendamping';
+    const reveal=make('button','Lihat');reveal.type='button';reveal.setAttribute('aria-label','Tampilkan kode penghubung');
+    reveal.disabled=true;
+    reveal.setAttribute('aria-pressed','false');
+    reveal.onclick=()=>{const visible=token.type==='password';token.type=visible?'text':'password';reveal.textContent=visible?'Sembunyikan':'Lihat';reveal.setAttribute('aria-pressed',String(visible));reveal.setAttribute('aria-label',visible?'Sembunyikan kode penghubung':'Tampilkan kode penghubung');};
+    inputRow.append(token,reveal);
+    const help=make('p','Salin kode dari halaman pendamping. Kode ini bukan PIN atau kata sandi WhatsApp.');help.id='wa-code-help';help.className='wa-settings__hint';
+    const error=make('p');error.id='wa-code-error';error.className='wa-settings__error';error.setAttribute('role','alert');error.hidden=true;
+    token.oninput=()=>{token.removeAttribute('aria-invalid');error.hidden=true;reveal.disabled=!token.value;};
+    const actions=make('div');actions.className='wa-settings__actions';
+    const save=make('button','Simpan & cek koneksi');save.type='submit';save.className='wa-settings__primary';
+    const open=make('a','Buka pendamping');open.href=waEndpoint;open.target='_blank';open.rel='noopener noreferrer';open.className='wa-settings__secondary';
+    actions.append(save,open);form.append(label,inputRow,help,error,actions);
+    let checking=false;
+    async function checkConnection(persist) {
+      if(checking)return;
+      const value=token.value.trim() || appData.privateIntegrations?.whatsappToken || '';
+      if(!/^[a-f0-9]{64}$/.test(value)){
+        token.setAttribute('aria-invalid','true');error.textContent='Tempel kode penghubung lengkap dari halaman pendamping.';error.hidden=false;token.focus();return;
+      }
+      checking=true;save.disabled=true;save.textContent='Memeriksa koneksi…';
+      error.hidden=true;token.removeAttribute('aria-invalid');
+      setStatus('checking','Memeriksa koneksi','Menghubungi pendamping WhatsApp di perangkat ini.');
+      try {
+        const response=await fetch(waEndpoint+'/health',{headers:{Authorization:'Bearer '+value},signal:AbortSignal.timeout(10000)});
+        if(!response.ok)throw Error(response.status===401?'Kode penghubung ditolak. Salin ulang kode dari halaman pendamping.':'Pendamping belum dapat dihubungi. Buka pendamping dan periksa statusnya.');
+        const health=await response.json();if(health.error)throw Error(health.error);
+        if(persist && token.value.trim()){
+          appData.privateIntegrations ||= {};
+          const previous=appData.privateIntegrations.whatsappToken;
+          appData.privateIntegrations.whatsappToken=value;
+          let saved=false;
+          try {saved=await saveData();} finally {
+            if(!saved){if(previous===undefined)delete appData.privateIntegrations.whatsappToken;else appData.privateIntegrations.whatsappToken=previous;}
+          }
+          if(!saved)throw Error('Kode belum tersimpan. Coba simpan kembali.');
+          token.value='';token.type='password';reveal.disabled=true;reveal.textContent='Lihat';reveal.setAttribute('aria-pressed','false');reveal.setAttribute('aria-label','Tampilkan kode penghubung');token.placeholder='Kode sudah tersimpan';
+        }
+        setStatus(health.ready?'connected':'pending',health.ready?'WhatsApp terhubung':'Menunggu WhatsApp siap',health.ready?'Siap mengirim. Buat pesan melalui Pengumuman dan periksa penerima sebelum mengirim.':'Buka pendamping untuk melihat progres atau scan QR jika diminta.');
+      } catch(failure){
+        const message=['TypeError','TimeoutError','AbortError'].includes(failure.name)?'Pendamping tidak terjangkau. Jalankan pendamping di laptop / PC ini, lalu coba lagi. Jika browser meminta akses jaringan lokal, izinkan untuk aplikasi ini.':failure.message;
+        setStatus('error','Koneksi belum berhasil',message);
+      } finally {checking=false;save.disabled=false;save.textContent='Simpan & cek koneksi';}
+    }
+    form.onsubmit=event=>{event.preventDefault();void checkConnection(true);};
+    const queue=make('section');queue.className='wa-settings__queue';
+    const queueTitle=make('h3','Pengiriman terakhir');
+    const queueText=make('p','Periksa progres sebelum mengirim ulang pesan.');queueText.setAttribute('role','status');
+    const checkQueue=button('Cek pengiriman',async()=>{
       const integration=appData.privateIntegrations;
-      if(!integration?.whatsappJob)throw Error('Belum ada antrean.');
-      const response=await fetch(waEndpoint+'/jobs/'+integration.whatsappJob,{headers:{Authorization:'Bearer '+integration.whatsappToken},signal:AbortSignal.timeout(10000)});
-      if(!response.ok)throw Error('Pendamping tidak tersedia.');
-      const state=await response.json();modal.append(make('p',state.status+' · '+(state.sent||0)+'/'+(state.total||0)+' pesan. Jika UNCERTAIN, periksa WhatsApp sebelum mengirim ulang.'));
-    }));
+      if(!integration?.whatsappJob){queueText.textContent='Belum ada pengiriman dari aplikasi ini.';return;}
+      checkQueue.textContent='Memeriksa…';queueText.textContent='Memeriksa progres pengiriman…';
+      try {
+        const response=await fetch(waEndpoint+'/jobs/'+integration.whatsappJob,{headers:{Authorization:'Bearer '+integration.whatsappToken},signal:AbortSignal.timeout(10000)});
+        if(!response.ok)throw Error('Pendamping tidak tersedia. Periksa koneksi di atas.');
+        const state=await response.json();
+        const labels={DONE:'Selesai',SENDING:'Sedang dikirim',UNCERTAIN:'Perlu diperiksa',UNKNOWN:'Tidak ditemukan'};
+        queueText.textContent=(labels[state.status] || 'Perlu diperiksa')+' · '+(state.sent||0)+' dari '+(state.total||0)+' pesan.'+(state.status==='UNCERTAIN'?' Periksa WhatsApp sebelum mengirim ulang agar pesan tidak ganda.':'');
+      } catch {queueText.textContent='Progres belum dapat diperiksa. Pastikan pendamping masih berjalan di perangkat ini.';}
+      finally {checkQueue.textContent='Cek pengiriman';}
+    });
+    checkQueue.type='button';checkQueue.className='wa-settings__secondary';queue.append(queueTitle,queueText,checkQueue);body.append(queue);
+    const setup=make('details');setup.className='wa-settings__setup';setup.append(make('summary','Menyiapkan laptop / PC baru'));
+    const steps=make('ol');
+    for(const text of ['Unduh pendamping, ekstrak ZIP, lalu jalankan Jalankan-WhatsApp.cmd.','Buka pendamping pada perangkat yang sama. Tautkan WhatsApp melalui QR jika diminta.','Salin kode penghubung ke kolom di atas, lalu simpan.'])steps.append(make('li',text));
+    const download=make('a','Unduh pendamping Windows');download.href='https://github.com/NothingToLeft/charisna-homestay/releases/download/v1.0.6/CHARISNA-WhatsApp-PC-v1.0.6-fix2.zip';download.target='_blank';download.rel='noopener noreferrer';
+    setup.append(steps,download);body.append(setup);
+    const footer=make('p','Pendamping, laptop / PC, dan internet harus tetap aktif. Hindari mode sleep saat mengirim.');footer.className='wa-settings__footer';modal.append(footer);
+    queueMicrotask(()=>{if(modal.open)close.focus();});
+    if(hasSavedToken())void checkConnection(false);
   }
   window.sendFreeWhatsApp=async()=>{
     const token=appData.privateIntegrations?.whatsappToken;
