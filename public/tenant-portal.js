@@ -16,11 +16,21 @@ try {
   const entry = await getDoc(doc(db, 'tenantPortals', token));
   if (!entry.exists()) throw Error('Tautan telah dicabut.');
   const data = entry.data(), snapshot = data.snapshot;
-  content.append(line(snapshot.name + ' · Unit ' + snapshot.room),
+  const summary = document.createElement('section');
+  const heading = document.createElement('h2');heading.textContent='Sewa Anda';
+  summary.append(heading,line(snapshot.name + ' · Unit ' + snapshot.room),
     line('Akhir sewa: ' + (snapshot.endDate || 'Hubungi pengelola')));
+  content.append(summary);
+  const bills = document.createElement('section');
+  const billsTitle=document.createElement('h2');billsTitle.textContent='Tagihan & pembayaran';bills.append(billsTitle);
   for (const bill of snapshot.bills || []) {
-    content.append(line(`${bill.id} · Rp ${Number(bill.amount).toLocaleString('id-ID')} · ${bill.status} ${bill.paidDate}`));
+    const row=document.createElement('article');
+    const title=document.createElement('h3');title.textContent=bill.id;
+    row.append(title,line('Rp '+Number(bill.amount).toLocaleString('id-ID')),
+      line((bill.status==='LUNAS'?'Lunas':bill.status==='BELUM_LUNAS'?'Belum lunas':String(bill.status || '').replaceAll('_',' '))+(bill.paidDate?' · '+bill.paidDate:'')));bills.append(row);
   }
+  if(!(snapshot.bills || []).length)bills.append(line('Belum ada tagihan.'));
+  content.append(bills);
   if (/^data:image\/(png|jpeg);base64,/.test(snapshot.qrisImage || '')) {
     const image = document.createElement('img'); image.src = snapshot.qrisImage;
     image.alt = 'QRIS merchant'; content.append(image, line('Masukkan nominal tagihan. Pengelola memeriksa bukti pembayaran.'));
@@ -50,7 +60,12 @@ try {
   const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/jpeg,image/png,image/webp';
   file.setAttribute('aria-label', 'Foto bukti atau keluhan');
   const send = document.createElement('button'); send.textContent = 'Kirim ke pengelola';
-  form.append(kind, message, file, send); content.append(form);
+  send.type='submit';
+  const formTitle=document.createElement('h2');formTitle.textContent='Bukti bayar & keluhan';form.append(formTitle);
+  for(const [text,control] of [['Jenis kiriman',kind],['Rincian kiriman',message],['Foto bukti atau keluhan',file]]){
+    const label=document.createElement('label');label.textContent=text;label.append(control);form.append(label);
+  }
+  form.append(line('Foto maksimum 140 KB. Gunakan JPEG, PNG, atau WebP.'),send); content.append(form);
   form.onsubmit = async event => {
     event.preventDefault(); send.disabled = true;
     try {

@@ -5,19 +5,27 @@
     return node;
   };
   function dialog(title) {
+    const opener = document.activeElement;
     const node = make('dialog');
-    node.className = 'rounded-2xl p-5 w-[min(94vw,680px)] max-h-[85vh] overflow-auto space-y-3';
+    node.className = 'suite-dialog';
+    const header = make('header');header.className='suite-dialog__header';
+    const heading = make('h2',title);heading.id='suite-title-'+crypto.randomUUID();
+    node.setAttribute('aria-labelledby',heading.id);
     const close = make('button', 'Tutup');
+    close.type='button';close.className='suite-dialog__close';
     close.onclick = () => node.close();
-    node.append(make('h2', title), close);
-    node.addEventListener('close', () => node.remove(), { once: true });
+    header.append(heading,close);node.append(header);
+    node.addEventListener('close', () => {node.remove();if(opener?.isConnected)opener.focus();}, { once: true });
     document.body.append(node);
     node.showModal();
     return node;
   }
   function button(text, action) {
     const node = make('button', text);
-    node.className = 'rounded-xl border px-4 py-2';
+    node.type='button';
+    node.className = 'suite-button';
+    if (/^(Simpan|Buat|Terbitkan|Hubungkan)/.test(text))node.classList.add('suite-button--primary');
+    if (/^(Hapus|Putuskan)/.test(text))node.classList.add('suite-button--danger');
     node.onclick = async () => {
       node.disabled = true;
       try { await action(); } catch (error) { showToast(error.message, 'danger'); }
@@ -27,7 +35,7 @@
   }
   function field(parent, text, type = 'text') {
     const label = make('label', text);
-    label.className = 'block';
+    label.className = 'suite-field';
     const input = make(type === 'textarea' ? 'textarea' : 'input');
     if (type !== 'textarea') input.type = type;
     input.className = 'block w-full rounded-lg border p-2';
@@ -37,6 +45,7 @@
   }
   function chooseTenant(parent) {
     const select = make('select');
+    select.setAttribute('aria-label','Pilih penghuni');
     select.className = 'block w-full rounded-lg border p-2';
     for (const tenant of appData.tenants) {
       const option = make('option', tenant.name + ' · ' + tenant.roomNumber);
@@ -460,5 +469,30 @@
     }catch(error){showToast(error.message+' Periksa antrean terakhir sebelum mencoba lagi.','danger');}
   };
   const actions = document.getElementById('strategicActions');
-  if (actions) actions.append(button('Serah terima kamar', handover), button('Catatan penghuni', records), button('Katalog kamar kosong', catalog), button('QRIS merchant', qrisSettings), button('Portal penghuni', portal), button('Ringkasan bulanan', insights), button('WhatsApp gratis', whatsappSettings));
+  if (actions) {
+    const groups=[
+      ['Penghuni',[
+        ['Serah terima kamar','Kondisi awal, foto, dan paraf digital.',handover],
+        ['Catatan penghuni','Riwayat dan tindak lanjut internal.',records],
+        ['Portal penghuni','Tautan sewa, tagihan, dan bukti bayar.',portal]
+      ]],
+      ['Pemasaran & komunikasi',[
+        ['Katalog kamar kosong','Pilih kamar untuk dibagikan ke calon penyewa.',catalog],
+        ['WhatsApp gratis','Koneksi pendamping dan progres pengiriman.',whatsappSettings]
+      ]],
+      ['Pembayaran & laporan',[
+        ['QRIS merchant','Atur QRIS untuk pembayaran penghuni.',qrisSettings],
+        ['Ringkasan bulanan','Laporan dan koneksi aplikasi keuangan.',insights]
+      ]]
+    ];
+    for(const [title,items] of groups){
+      const group=make('section');group.className='service-group';group.append(make('h3',title));
+      for(const [name,description,action] of items){
+        const entry=button('',action);entry.className='service-action';
+        entry.append(make('strong',name),make('span',description));
+        group.append(entry);
+      }
+      actions.append(group);
+    }
+  }
 })();

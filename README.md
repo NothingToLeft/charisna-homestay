@@ -130,3 +130,9 @@ Setelah owner masuk dan membuka brankas, perubahan yang disimpan antre ke cloud 
 Dalam sesi yang sama, perubahan independen pada record ber-ID digabung. Jika kolom yang sama diubah bersamaan, nilai lokal dipakai dengan salinan konflik tersimpan. Pada koneksi awal tanpa baseline sesi, snapshot dengan waktu simpan terbaru dipakai dan salinan yang akan diganti disimpan terenkripsi. Perangkat lama tetap memakai format snapshot yang sama, tetapi sebaiknya memperbarui aplikasi agar ikut memakai proteksi transaksi baru.
 
 Pengaturan → Cadangan sinkronisasi menyediakan tiga salinan terenkripsi terbaru per akun untuk diunduh dan dipulihkan melalui impor backup. Tidak ada password tersimpan dalam salinan. Jika ruang perangkat tidak cukup membuat salinan, penggantian ditunda. Tombol Cloud tetap tersedia untuk pemeriksaan dan pemulihan.
+
+### Tampilan aplikasi
+
+Tampilan owner, dialog layanan, petugas kebersihan, portal penghuni, dan katalog memakai sistem visual CHARISNA KOST yang konsisten. Layanan dikelompokkan berdasarkan pekerjaan; tema terang/gelap, formulir, tabel, dan kontrol menyesuaikan lebar layar. Panduan dan batas verifikasi tercatat di [DESIGN.md](DESIGN.md). Perubahan web ini belum termasuk build APK/Windows baru.
+
+Pendamping WhatsApp harus berjalan selama pengiriman. Mode normal `Jalankan-WhatsApp.cmd` bekerja tanpa jendela WhatsApp terlihat; mode `Diagnosa-WhatsApp.cmd` menampilkan browser untuk pemeriksaan. Untuk berpindah mode, hentikan pendamping dengan Ctrl+C terlebih dahulu. Laptop harus tetap menyala, tersambung internet, dan tidak sleep.
