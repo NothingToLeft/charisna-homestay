@@ -184,3 +184,20 @@ body.public-page {margin:0 auto;padding:32px 24px 64px;max-width:1040px;}
 .dark .wa-settings__input button:hover,.dark .wa-settings__secondary:hover {background:#355440;}
 .dark .wa-settings .wa-settings__error {color:#fda4af;}
 .dark .wa-settings__setup a {color:#a2edc3;}
+#printableReceipt {background:#fff!important;color:#172f2b;}
+#receiptModal > div {width:min(100%,720px);max-width:720px;}
+#recKostName {font-weight:750;font-size:20px;}
+#recTitle {font-size:18px;line-height:1.4;letter-spacing:0;}
+#printableReceipt :is(.text-slate-800,.text-slate-700,.text-slate-900) {color:#1e293b!important;}
+#printableReceipt :is(.text-slate-600,.text-slate-500,.text-slate-400) {color:#526660!important;}
+#printableReceipt :is(.text-emerald-600,.text-emerald-700) {color:#047857!important;}
+#printableReceipt .bg-emerald-50 {background:#ecfdf5!important;}
+#printableReceipt table {min-width:0!important;width:100%;table-layout:fixed;}
+#printableReceipt td,#printableReceipt th {overflow-wrap:anywhere;}
+#printableReceipt #recAmount {overflow-wrap:anywhere;}
+#billDailyFields label {display:block;font-size:14px;}
+@media(max-width:640px){
+  #printableReceipt > .grid {grid-template-columns:minmax(0,1fr);}
+  #printableReceipt > .flex {flex-wrap:wrap;gap:12px;}
+  #receiptModal > div > .flex {flex-wrap:wrap;justify-content:flex-start;}
+}

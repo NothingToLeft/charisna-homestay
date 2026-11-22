@@ -136,3 +136,7 @@ Pengaturan → Cadangan sinkronisasi menyediakan tiga salinan terenkripsi terbar
 Tampilan owner, dialog layanan, petugas kebersihan, portal penghuni, dan katalog memakai sistem visual CHARISNA KOST yang konsisten. Layanan dikelompokkan berdasarkan pekerjaan; tema terang/gelap, formulir, tabel, dan kontrol menyesuaikan lebar layar. Panduan dan batas verifikasi tercatat di [DESIGN.md](DESIGN.md). Perubahan web ini belum termasuk build APK/Windows baru.
 
 Pendamping WhatsApp harus berjalan selama pengiriman. Mode normal `Jalankan-WhatsApp.cmd` bekerja tanpa jendela WhatsApp terlihat; mode `Diagnosa-WhatsApp.cmd` menampilkan browser untuk pemeriksaan. Untuk berpindah mode, hentikan pendamping dengan Ctrl+C terlebih dahulu. Laptop harus tetap menyala, tersambung internet, dan tidak sleep.
+
+### Sewa harian dan bahasa tamu
+
+Kamar mendukung bulanan, harian, atau keduanya dengan harga per malam terpisah. Check-in harian menghitung malam sampai sebelum tanggal check-out; invoice bulanan otomatis melewati tamu harian. Kuitansi dan WhatsApp mendukung Indonesia, English, atau dua bahasa, dengan pilihan per penghuni dan pratinjau kuitansi. Identitas paspor tersedia untuk tamu asing. Panduan, batas pendamping WhatsApp, dan kompatibilitas native ada di [docs/daily-rental.md](docs/daily-rental.md).

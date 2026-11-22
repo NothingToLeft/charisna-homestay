@@ -629,6 +629,8 @@
                 Tipe: r.type,
                 Kapasitas: r.capacity,
                 Harga: r.price,
+                ModeSewa: window.CharisnaRental?.mode(r) || 'MONTHLY',
+                HargaPerMalam: Number(r.nightlyPrice || 0),
                 Status: r.status,
                 kWh: r.kwh,
                 Fasilitas: r.facilities
@@ -752,6 +754,12 @@
         const settings = data.settings || {};
         const kostName = settings.kostName || 'CHARISNA KOST';
         const bankInfo = settings.bankInfo || 'BCA 8291048291 a/n CHARISNA KOST';
+        if(window.CharisnaRental && ['INVOICE','REMINDER','RECEIPT','BOOKING_WELCOME'].includes(type)){
+            const bill=(data.bills || []).find(item=>item.tenantName===params.tenantName && item.roomNumber===params.roomNumber && item.period===params.period);
+            const tenant=(data.tenants || []).find(item=>item.name===params.tenantName && item.roomNumber===params.roomNumber);
+            const language=params.language || tenant?.communicationLanguage || bill?.communicationLanguage || settings.communicationLanguage;
+            return window.CharisnaRental.message(type,{bill:bill || params,settings},language);
+        }
 
         let msg = '';
         if (type === 'INVOICE') {
@@ -872,13 +880,15 @@
             html += `<tr><td class="p-2 border border-slate-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">Unit ${escapeHtml(r.number)}</td>`;
 
             for (let day = 1; day <= daysInMonth; day++) {
+                const date=targetMonth+'-'+String(day).padStart(2,'0');
+                const occupied=tenantInRoom && (tenantInRoom.leaseInterval!=='Harian' || (date>=tenantInRoom.entryDate && date<tenantInRoom.endDate));
                 let cellClass = 'bg-slate-50 dark:bg-slate-800/40'; // Kosong
                 let title = `Unit ${r.number}: Kosong`;
 
                 if (isRepaired) {
                     cellClass = 'bg-amber-200 dark:bg-amber-900/60 text-amber-800';
                     title = `Unit ${r.number}: Dalam Perbaikan / Tiket Maintenance`;
-                } else if (tenantInRoom) {
+                } else if (occupied) {
                     cellClass = 'bg-emerald-500 text-white font-bold';
                     title = `Unit ${r.number}: Terisi oleh ${tenantInRoom.name}`;
                 }

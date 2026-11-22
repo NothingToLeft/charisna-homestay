@@ -14,7 +14,7 @@ try {
     for (const text of [room.type,room.facilities]) {
       const line = document.createElement('p'); line.textContent = text; article.append(line);
     }
-    const price=document.createElement('p');price.className='catalog-price';price.textContent='Rp '+Number(room.price).toLocaleString('id-ID')+' / bulan';article.append(price);
+    const price=document.createElement('p');price.className='catalog-price';price.textContent=CharisnaRental.rateLabel(room);article.append(price);
     if (/^data:image\/(png|jpeg);base64,/.test(room.image || '')) {
       const image = document.createElement('img'); image.src = room.image; image.alt = 'Foto unit ' + room.number;
       image.style.maxWidth = '100%'; article.append(image);

@@ -170,7 +170,7 @@
     for (const room of getScopedRooms().filter(item => item.status === 'KOSONG')) {
       const label = make('label');
       const checkbox = make('input'); checkbox.type = 'checkbox';
-      label.append(checkbox, make('span', ' Unit ' + room.number + ' · ' + formatRupiah(room.price)));
+      label.append(checkbox, make('span', ' Unit ' + room.number + ' · ' + CharisnaRental.rateLabel(room)));
       const photo = field(modal, 'Foto pemasaran unit ' + room.number + ' (opsional, JPEG/PNG maksimum 140 KB)', 'file');
       photo.accept = 'image/png,image/jpeg';
       photo.onchange = async () => {
@@ -191,7 +191,7 @@
     modal.append(make('p', 'Pilih kamar yang boleh dipublikasikan. File katalog dapat diunggah ke hosting atau dibagikan.'));
     modal.append(button('Terbitkan pilihan / perbarui tautan', async () => {
       const rooms = selected.filter(item => item.checkbox.checked).map(({room}) => ({
-        number:room.number,type:room.type || '',facilities:room.facilities || '',price:Number(room.price) || 0,image:room.marketingImage || ''
+        number:room.number,type:room.type || '',facilities:room.facilities || '',price:Number(room.price) || 0,rentalMode:CharisnaRental.mode(room),nightlyPrice:Number(room.nightlyPrice) || 0,image:room.marketingImage || ''
       }));
       const url = await window.charisnaPortal.catalog(rooms);
       const link = field(modal, 'Tautan katalog publik'); link.value = url; link.readOnly = true;
@@ -205,7 +205,7 @@
         if (!checkbox.checked) continue;
         const article = page.createElement('article');
         article.style.cssText = 'padding:20px;margin:16px;border:1px solid #ccc;border-radius:12px';
-        for (const text of ['Unit ' + room.number, room.type || '', room.facilities || '', formatRupiah(room.price) + '/bulan']) {
+        for (const text of ['Unit ' + room.number, room.type || '', room.facilities || '', CharisnaRental.rateLabel(room)]) {
           const line = page.createElement('p'); line.textContent = text; article.append(line);
         }
         page.body.append(article);
