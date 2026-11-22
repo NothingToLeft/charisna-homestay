@@ -11,10 +11,11 @@ export function findBrowser({env = process.env, exists = fs.existsSync} = {}) {
   const bases = [programFiles, programFilesX86, env.LOCALAPPDATA].filter(Boolean);
   const candidates = [
     ...bases.map(base => path.win32.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe')),
+    ...bases.map(base => path.win32.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe')),
     ...bases.map(base => path.win32.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe')),
   ];
   const found = candidates.find(candidate => exists(candidate));
-  if (!found) throw Error('Google Chrome atau Microsoft Edge tidak ditemukan. Pasang atau perbarui browser, lalu jalankan ulang pendamping.');
+  if (!found) throw Error('Google Chrome, Brave, atau Microsoft Edge tidak ditemukan. Pasang atau perbarui browser, lalu jalankan ulang pendamping.');
   return found;
 }
 

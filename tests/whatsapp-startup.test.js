@@ -7,6 +7,8 @@ describe('WhatsApp companion laptop browser startup',()=>{
   ['64-bit Chrome',env.ProgramFiles,'Google\\Chrome','chrome.exe'],
   ['32-bit Chrome',env['ProgramFiles(x86)'],'Google\\Chrome','chrome.exe'],
   ['per-user Chrome',env.LOCALAPPDATA,'Google\\Chrome','chrome.exe'],
+  ['system Brave',env.ProgramFiles,'BraveSoftware\\Brave-Browser','brave.exe'],
+  ['per-user Brave',env.LOCALAPPDATA,'BraveSoftware\\Brave-Browser','brave.exe'],
   ['system Edge',env['ProgramFiles(x86)'],'Microsoft\\Edge','msedge.exe'],
   ['per-user Edge',env.LOCALAPPDATA,'Microsoft\\Edge','msedge.exe']
  ]) it('finds '+name,()=>{
@@ -18,7 +20,7 @@ describe('WhatsApp companion laptop browser startup',()=>{
   expect(()=>findBrowser({env:{...env,CHARISNA_CHROME_PATH:'missing.exe'},exists:()=>false})).toThrow('CHARISNA_CHROME_PATH');
  });
  it('explains when no supported browser is installed',()=>{
-  expect(()=>findBrowser({env,exists:()=>false})).toThrow('Chrome atau Microsoft Edge');
+  expect(()=>findBrowser({env,exists:()=>false})).toThrow('Chrome, Brave, atau Microsoft Edge');
  });
  it('retains actionable launch errors while removing long secret-like values',()=>{
   const message=startupErrorMessage(Error('Browser launch failed ENOENT '+ 'a'.repeat(64)));
