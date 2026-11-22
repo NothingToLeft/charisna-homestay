@@ -453,9 +453,11 @@ async function syncMoneyFeed() {
     const assigned=item=>item.propertyId===property.id || (!item.propertyId && rooms.some(room=>room.number===item.roomNumber) && data.rooms.filter(room=>room.number===item.roomNumber).length===1);
     const income=data.bills.filter(bill=>assigned(bill)&&bill.status==='LUNAS'&&bill.paidDate?.startsWith(month)).reduce((sum,bill)=>sum+Number(bill.amount||0),0);
     const expense=data.expenses.filter(item=>item.propertyId===property.id&&item.date?.startsWith(month)).reduce((sum,item)=>sum+Number(item.amount||0),0);
+    if (![income,expense].every(value=>Number.isSafeInteger(value)&&value>=0)) throw Error('Nominal ringkasan tidak valid.');
     return {id:property.id,name:property.name,income,expense,net:income-expense,totalRooms:rooms.length,occupiedRooms:rooms.filter(room=>room.status==='TERISI').length};
   });
-  await setDoc(doc(db,'moneyFeeds',token),{ownerUid:user.uid,month,properties,updatedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+30*86400000)});
+  const unassignedExpenses=data.expenses.filter(item=>!item.propertyId&&item.date?.startsWith(month)).reduce((sum,item)=>sum+Number(item.amount||0),0);
+  await setDoc(doc(db,'moneyFeeds',token),{ownerUid:user.uid,month,properties,unassignedExpenses,updatedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+30*86400000)});
 }
 window.addEventListener('charisna:data-saved',()=>{void syncMoneyFeed().catch(()=>{});});
 window.addEventListener('online',()=>{void syncMoneyFeed().catch(()=>{});});
