@@ -349,7 +349,7 @@
       if(!/^[a-f0-9]{64}$/.test(token.value.trim()))throw Error('Kode penghubung tidak valid.');
       const response=await fetch(waEndpoint+'/health',{headers:{Authorization:'Bearer '+token.value.trim()},signal:AbortSignal.timeout(10000)});
       if(!response.ok)throw Error('Kode ditolak pendamping.');
-      const health=await response.json();appData.privateIntegrations ||= {};appData.privateIntegrations.whatsappToken=token.value.trim();
+      const health=await response.json();if(health.error)throw Error(health.error);appData.privateIntegrations ||= {};appData.privateIntegrations.whatsappToken=token.value.trim();
       if(await saveData()){token.value='';showToast(health.ready?'WhatsApp terhubung.':'Kode tersimpan. Scan QR WhatsApp di PC.');}
     }),button('Cek antrean terakhir',async()=>{
       const integration=appData.privateIntegrations;
