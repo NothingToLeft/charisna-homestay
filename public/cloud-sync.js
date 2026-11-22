@@ -442,6 +442,39 @@ lockButton.onclick = async () => {
 };
 document.getElementById('settings-account-actions').append(lockButton);
 
+async function syncMoneyFeed() {
+  if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault) return;
+  const data=window.charisnaData.snapshot();
+  const token=data.privateIntegrations?.moneyFeedToken;
+  if (!token) return;
+  const month=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Jakarta'}).format(new Date()).slice(0,7);
+  const properties=data.properties.map(property=>{
+    const rooms=data.rooms.filter(room=>room.propertyId===property.id);
+    const assigned=item=>item.propertyId===property.id || (!item.propertyId && rooms.some(room=>room.number===item.roomNumber) && data.rooms.filter(room=>room.number===item.roomNumber).length===1);
+    const income=data.bills.filter(bill=>assigned(bill)&&bill.status==='LUNAS'&&bill.paidDate?.startsWith(month)).reduce((sum,bill)=>sum+Number(bill.amount||0),0);
+    const expense=data.expenses.filter(item=>item.propertyId===property.id&&item.date?.startsWith(month)).reduce((sum,item)=>sum+Number(item.amount||0),0);
+    return {id:property.id,name:property.name,income,expense,net:income-expense,totalRooms:rooms.length,occupiedRooms:rooms.filter(room=>room.status==='TERISI').length};
+  });
+  await setDoc(doc(db,'moneyFeeds',token),{ownerUid:user.uid,month,properties,updatedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+30*86400000)});
+}
+window.addEventListener('charisna:data-saved',()=>{void syncMoneyFeed().catch(()=>{});});
+window.addEventListener('online',()=>{void syncMoneyFeed().catch(()=>{});});
+setInterval(()=>{void syncMoneyFeed().catch(()=>{});},60000);
+window.charisnaMoneyFeed = {
+  async connect() {
+    if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault) throw Error('Buka brankas owner.');
+    const data=window.charisnaData.snapshot(); data.privateIntegrations ||= {};
+    data.privateIntegrations.moneyFeedToken ||= Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');
+    await window.charisnaVault.save(data); window.charisnaData.hydrate(data);
+    await syncMoneyFeed(); return data.privateIntegrations.moneyFeedToken;
+  },
+  async revoke() {
+    const data=window.charisnaData.snapshot(); const token=data.privateIntegrations?.moneyFeedToken;
+    if (token) await deleteDoc(doc(db,'moneyFeeds',token));
+    if (data.privateIntegrations) delete data.privateIntegrations.moneyFeedToken;
+    await window.charisnaVault.save(data); window.charisnaData.hydrate(data);
+  }
+};
 window.charisnaPortal = {
   async catalog(rooms) {
     if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault) throw Error('Masuk owner dan buka brankas.');

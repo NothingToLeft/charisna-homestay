@@ -109,3 +109,10 @@ Pengumuman mendukung template, arsip, dan draf WhatsApp berdasarkan properti. Ow
 Catatan kejadian penghuni merupakan catatan internal yang dapat dicari dan dihapus owner. Simpan fakta dan tindak lanjut secara proporsional.
 
 Validasi paket mencakup pemeriksaan sintaks, build, tes unit, 34 pemeriksaan Firestore emulator, serta uji browser sintetis untuk simpan catatan dan paraf serah terima. Belum dilakukan transaksi pembayaran nyata atau pengiriman pesan WhatsApp otomatis. Modul web baru perlu build APK berikutnya agar tersedia dalam APK terpasang.
+
+## v1.0.6 — pembayaran dan konektor
+- QRIS unggahan dibaca lokal dan CRC diperiksa. QRIS statis IDR tanpa biaya khusus dapat dibuat bernominal tagihan; nama merchant dan nominal perlu diperiksa di aplikasi bank sebelum transaksi nyata.
+- Money Management memiliki kode feed privat untuk ringkasan bisnis. Salin kode dari KOST → Ringkasan bulanan ke Pengaturan Money Management. Sumber dan penerima memperbarui saat aplikasi/brankas terbuka. Kode dapat dicabut dan kedaluwarsa setelah 30 hari tanpa sinkronisasi.
+- WhatsApp gratis memakai pendamping Windows `tools/whatsapp-free/Jalankan-WhatsApp.cmd`. Scan QR WhatsApp Web pada PC, lalu simpan kode lokal ke Pengaturan KOST → WhatsApp gratis. Pengumuman memiliki tombol Kirim otomatis via PC. Periksa cakupan properti dan isi pesan pada konfirmasi sebelum mengirim. Status UNCERTAIN memerlukan pemeriksaan manual agar pesan tidak dikirim ganda.
+- Pendamping memakai whatsapp-web.js dan sesi WhatsApp Web, bukan layanan resmi Meta Cloud API. Perubahan WhatsApp Web dapat mengganggu kompatibilitas. Sesi dan kode lokal berada di profil Windows di luar repo. PC harus menyala. Pengiriman tetap mengikuti batas dan kebijakan WhatsApp.
+- Uji perangkat fisik ditunda karena HP owner sedang dipakai. Pembayaran nyata dan pengiriman WhatsApp memerlukan konfirmasi akun/session owner; jangan menganggap tes unit sebagai bukti transaksi nyata.

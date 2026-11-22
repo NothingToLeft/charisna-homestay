@@ -2726,6 +2726,7 @@
             </div>
             <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button onclick="closeModal('broadcastModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+                <button onclick="sendFreeWhatsApp()" class="rounded-xl border px-3 py-2">Kirim otomatis via PC</button>
                 <button onclick="preparePropertyBroadcast()" class="rounded-xl border px-3 py-2">Siapkan draf per properti</button>
                 <button onclick="saveAnnouncement()" class="rounded-xl border px-3 py-2">Simpan arsip</button>
                 <button onclick="showAnnouncementArchive()" class="rounded-xl border px-3 py-2">Lihat arsip</button>
@@ -4618,10 +4619,14 @@
             if (receipt && /^data:image\/(png|jpeg);base64,/.test(appData.settings.qrisImage || '')) {
                 const qr = document.createElement('img');
                 qr.src = appData.settings.qrisImage;
+                if (bill.status !== 'LUNAS' && appData.settings.qrisPayload) {
+                    try { qr.src = window.CharisnaQRIS.image(appData.settings.qrisPayload, Number(bill.amount)); }
+                    catch (error) { showToast(error.message, 'warning'); }
+                }
                 qr.alt = 'QRIS merchant';
                 qr.style.cssText = 'display:block;width:240px;max-width:100%;margin:16px auto';
                 const info = document.createElement('p');
-                info.textContent = 'Masukkan nominal sesuai tagihan. Pembayaran diperiksa pengelola.';
+                info.textContent = 'Periksa nama merchant dan nominal di aplikasi pembayaran. Pembayaran diperiksa pengelola.';
                 receipt.append(qr, info);
             }
 
@@ -5993,5 +5998,8 @@
 <script>setTimeout(() => { if (!window.CHARISNA_AUTH_READY) document.getElementById("auth-error").textContent = "Login memerlukan internet untuk memuat Firebase."; }, 12000);</script>
     <script src="./feature-modules.js"></script>
     <script type="module" src="./cloud-sync.js?v=20261122-suite"></script>
+<script src="./vendor/qrcode.js"></script>
+<script src="./vendor/jsQR.js"></script>
+<script src="./qris.js"></script>
 <script src="./strategic-suite.js?v=20261122"></script>
 </body></html>

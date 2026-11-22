@@ -223,6 +223,20 @@
         const preview = new Image(); preview.onload = resolve;
         preview.onerror = () => reject(Error('Gambar QRIS tidak valid.')); preview.src = image;
       });
+      const bitmap = new Image();
+      await new Promise((resolve,reject) => { bitmap.onload=resolve; bitmap.onerror=reject; bitmap.src=image; });
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+      canvas.width=Math.round(bitmap.width*scale); canvas.height=Math.round(bitmap.height*scale);
+      const ctx=canvas.getContext('2d'); ctx.fillStyle='white'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+      const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+      const decoded=window.jsQR(pixels.data,canvas.width,canvas.height);
+      if (!decoded) throw Error('Barcode belum terbaca. Unggah gambar QRIS yang jelas.');
+      const parsed=window.CharisnaQRIS.parse(decoded.data);
+      window.CharisnaQRIS.amountPayload(decoded.data,1);
+      if (!confirm('Simpan QRIS merchant '+parsed.values['59']+'? Pastikan nama sesuai usaha Anda.')) return;
+      appData.settings.qrisPayload=decoded.data;
       appData.settings.qrisImage = image;
       if (await saveData()) { modal.close(); showToast('QRIS tersimpan.'); }
     }));
@@ -231,7 +245,7 @@
       image.alt = 'QRIS merchant'; image.style.maxWidth = '320px'; modal.append(image);
       modal.append(button('Hapus QRIS', async () => {
         if (!confirm('Hapus QRIS tersimpan?')) return;
-        delete appData.settings.qrisImage;
+        delete appData.settings.qrisImage; delete appData.settings.qrisPayload;
         if (await saveData()) modal.close();
       }));
     }
@@ -256,7 +270,7 @@
       const bills = appData.bills.filter(bill => bill.roomNumber === tenant.roomNumber && (bill.tenantId === tenant.id || bill.tenantName === tenant.name));
       await window.charisnaPortal.publish(token, {
         name: tenant.name, room: tenant.roomNumber, endDate: tenant.endDate || '',
-        qrisImage: appData.settings.qrisImage || '',
+        qrisImage: appData.settings.qrisImage || '', qrisPayload: appData.settings.qrisPayload || '',
         bills: bills.slice(-60).map(bill => ({ id: bill.id, amount: bill.amount, status: bill.status, paidDate: bill.paidDate || '' }))
       });
       const link = field(modal, 'Salin tautan privat');
@@ -300,6 +314,12 @@
 
   function insights() {
     const modal = dialog('Ringkasan Bulanan');
+    modal.append(button('Hubungkan Charisna Money Management', async () => {
+      if (!confirm('Terbitkan ringkasan keuangan melalui kode privat untuk Charisna Money Management?')) return;
+      const token=await window.charisnaMoneyFeed.connect();
+      const input=field(modal,'Kode privat Money Management (berlaku 30 hari sejak sinkron terakhir)'); input.type='password';input.value=token;
+      modal.append(make('p','Masukkan kode ini di Pengaturan Money Management → Ringkasan CHARISNA KOST.'));
+    }),button('Putuskan Money Management',async()=>{await window.charisnaMoneyFeed.revoke();showToast('Koneksi dicabut.');}));
     const month = field(modal, 'Bulan', 'month');
     month.value = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Jakarta'}).format(new Date()).slice(0,7);
     modal.append(make('p', 'SuperApp memakai koneksi di Cloud & Akun. Ekspor berikut berisi ringkasan untuk MoniFlow.'));
@@ -319,6 +339,44 @@
       download('charisna-insights-' + month.value + '.json', JSON.stringify({schema:1,month:month.value,properties,unassignedExpenses},null,2),'application/json');
     }));
   }
+
+  const waEndpoint='http://127.0.0.1:8772';
+  function whatsappSettings() {
+    const modal=dialog('WhatsApp gratis melalui PC');
+    modal.append(make('p','Jalankan tools/whatsapp-free/Jalankan-WhatsApp.cmd pada PC lalu scan QR dengan WhatsApp. Pendamping memakai WhatsApp Web dan memerlukan PC tetap menyala.'));
+    const token=field(modal,'Kode penghubung dari halaman pendamping','password');
+    modal.append(button('Simpan dan cek koneksi',async()=>{
+      if(!/^[a-f0-9]{64}$/.test(token.value.trim()))throw Error('Kode penghubung tidak valid.');
+      const response=await fetch(waEndpoint+'/health',{headers:{Authorization:'Bearer '+token.value.trim()},signal:AbortSignal.timeout(10000)});
+      if(!response.ok)throw Error('Kode ditolak pendamping.');
+      const health=await response.json();appData.privateIntegrations ||= {};appData.privateIntegrations.whatsappToken=token.value.trim();
+      if(await saveData()){token.value='';showToast(health.ready?'WhatsApp terhubung.':'Kode tersimpan. Scan QR WhatsApp di PC.');}
+    }),button('Cek antrean terakhir',async()=>{
+      const integration=appData.privateIntegrations;
+      if(!integration?.whatsappJob)throw Error('Belum ada antrean.');
+      const response=await fetch(waEndpoint+'/jobs/'+integration.whatsappJob,{headers:{Authorization:'Bearer '+integration.whatsappToken},signal:AbortSignal.timeout(10000)});
+      if(!response.ok)throw Error('Pendamping tidak tersedia.');
+      const state=await response.json();modal.append(make('p',state.status+' · '+(state.sent||0)+'/'+(state.total||0)+' pesan. Jika UNCERTAIN, periksa WhatsApp sebelum mengirim ulang.'));
+    }));
+  }
+  window.sendFreeWhatsApp=async()=>{
+    const token=appData.privateIntegrations?.whatsappToken;
+    if(!token){whatsappSettings();return;}
+    const message=document.getElementById('broadcastMessage').value.trim();
+    if(!message||message.length>2000){showToast('Isi pesan maksimum 2.000 karakter.','warning');return;}
+    const rooms=new Set(getScopedRooms().map(room=>room.number));
+    const recipients=appData.tenants.filter(tenant=>rooms.has(tenant.roomNumber)&&appData.rooms.filter(room=>room.number===tenant.roomNumber).length===1);
+    const phones=[...new Set(recipients.map(tenant=>cleanWaNumber(tenant.phone)).filter(phone=>/^62[0-9]{8,13}$/.test(phone)))];
+    if(!phones.length||phones.length>50){showToast('Pilih 1–50 penerima valid dalam cakupan properti.','warning');return;}
+    if(!confirm('Kirim otomatis melalui WhatsApp PC ke '+phones.length+' nomor?\n\n'+message))return;
+    const id=crypto.randomUUID();appData.privateIntegrations.whatsappJob=id;
+    if(!await saveData())return;
+    try{
+      const response=await fetch(waEndpoint+'/send',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({id,phones,message}),signal:AbortSignal.timeout(15000)});
+      const result=await response.json();if(!response.ok)throw Error(result.error||'Pendamping menolak antrean.');
+      showToast('Antrean dimulai. Cek progres melalui Pengaturan → WhatsApp gratis.');
+    }catch(error){showToast(error.message+' Periksa antrean terakhir sebelum mencoba lagi.','danger');}
+  };
   const actions = document.getElementById('strategicActions');
-  if (actions) actions.append(button('Serah terima kamar', handover), button('Catatan penghuni', records), button('Katalog kamar kosong', catalog), button('QRIS merchant', qrisSettings), button('Portal penghuni', portal), button('Ringkasan bulanan', insights));
+  if (actions) actions.append(button('Serah terima kamar', handover), button('Catatan penghuni', records), button('Katalog kamar kosong', catalog), button('QRIS merchant', qrisSettings), button('Portal penghuni', portal), button('Ringkasan bulanan', insights), button('WhatsApp gratis', whatsappSettings));
 })();
