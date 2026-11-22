@@ -1,0 +1,30 @@
+import {describe,it,expect} from 'vitest';
+import vm from 'node:vm';
+import fs from 'node:fs';
+const context=vm.createContext({});
+vm.runInContext(fs.readFileSync('public/rental.js','utf8'),context);
+const api=context.CharisnaRental;
+const room={price:1500000,rentalMode:'BOTH',nightlyPrice:250000};
+const stay={leaseInterval:'Harian',entryDate:'2026-11-22',endDate:'2026-11-25'};
+const daily={...api.quote(room,stay),id:'QA-1',tenantName:'Example Guest',roomNumber:'A-01',period:'2026-11-22 – 2026-11-25',amount:825000,electricAmount:50000,otherAmount:25000,status:'LUNAS',paidDate:'2026-11-22'};
+describe('rental pricing compatibility',()=>{
+ it('defaults legacy rooms to monthly without changing data',()=>{const legacy={price:1000000};expect(api.mode(legacy)).toBe('MONTHLY');expect(api.quote(legacy,{leaseInterval:'Bulanan'}).baseAmount).toBe(1000000);expect(legacy).toEqual({price:1000000});});
+ it('charges checkout-exclusive nights across month and year boundaries',()=>{expect(api.nights('2026-12-30','2027-01-02')).toBe(3);expect(api.quote(room,stay)).toMatchObject({nights:3,nightlyRate:250000,baseAmount:750000,rentalMode:'DAILY'});});
+ it('counts leap days without timezone or daylight-saving drift',()=>expect(api.nights('2028-02-28','2028-03-01')).toBe(2));
+ for(const end of ['2026-11-22','2026-11-21','2026-02-30','invalid',''])it('rejects invalid checkout '+end,()=>expect(()=>api.nights(stay.entryDate,end)).toThrow());
+ for(const rate of [-1,0,1.5,Infinity,NaN,Number.MAX_SAFE_INTEGER])it('rejects invalid nightly rate '+rate,()=>expect(()=>api.quote({...room,nightlyPrice:rate},stay)).toThrow());
+ it('keeps monthly and daily prices independent and supports both offerings',()=>{expect(api.quote(room,{leaseInterval:'3 Bulanan'}).baseAmount).toBe(1500000);expect(api.supports(room,'Harian')).toBe(true);expect(api.supports({rentalMode:'DAILY'},'Bulanan')).toBe(false);expect(api.supports({},'Harian')).toBe(false);});
+ it('retains agreed rate when a room price changes',()=>expect(api.quote({...room,nightlyPrice:300000},{...stay,nightlyRate:250000}).baseAmount).toBe(750000));
+ it('shows both rates and labels daily-only rooms per night',()=>{expect(api.rateLabel(room)).toContain('250.000 / malam');expect(api.rateLabel({...room,rentalMode:'DAILY'},'en')).toBe('IDR 250,000 / night');});
+});
+describe('localized payment documents',()=>{
+ it('uses singular night for a one-night stay',()=>{expect(api.nightWord(1,'en')).toBe('night');expect(api.period({...daily,nights:1},'en')).toContain('(1 night)');});
+ it('welcomes a daily guest in English without assuming a payment',()=>{const text=api.message('BOOKING_WELCOME',{tenantName:'Example',roomNumber:'A',leaseInterval:'Harian',entryDate:'2026-11-22',endDate:'2026-11-25',deposit:500000},'en');expect(text).toContain('Rental plan: Nightly');expect(text).toContain('Check-out / lease end: 2026-11-25');expect(text).not.toContain('Total paid');});
+ it('separates rent, electricity and other charges',()=>expect(api.charges(daily)).toEqual({base:750000,electric:50000,other:25000}));
+ it('supports legacy bills without a stored base amount',()=>expect(api.charges({amount:1000,electricAmount:100,otherAmount:50}).base).toBe(850));
+ it('uses English dates, currency and night count',()=>{const text=api.message('RECEIPT',{bill:daily,settings:{kostName:'CHARISNA KOST'}},'en');expect(text).toContain('Payment receipt');expect(text).toContain('3 nights × IDR 250,000');expect(text).toContain('Electricity & water: IDR 50,000');expect(text).toContain('Total paid: IDR 825,000');expect(text).not.toContain('Halo');});
+ it('outputs Indonesian and English in combined mode',()=>{const text=api.message('RECEIPT',{bill:daily},'both');expect(text).toContain('Kuitansi pembayaran');expect(text).toContain('Payment receipt');expect(api.text('room','both')).toBe('Unit kamar / Room');});
+ it('never claims unpaid bills have been paid',()=>{const text=api.message('RECEIPT',{bill:{...daily,status:'BELUM_LUNAS',paidDate:null,dueDate:'2026-11-23'}},'en');expect(text).toContain('Rental invoice');expect(text).toContain('Total due');expect(text).not.toContain('Payment receipt');expect(text).not.toContain('Total paid');});
+ it('translates legacy Indonesian month names without editing the invoice',()=>{const bill={period:'November 2026'};expect(api.period(bill,'en')).toBe('November 2026');expect(api.period({period:'Desember 2026'},'en')).toBe('December 2026');expect(bill.period).toBe('November 2026');});
+ it('defaults unknown language to Indonesian',()=>expect(api.message('INVOICE',{bill:daily},'invalid')).toContain('Tagihan sewa'));
+});

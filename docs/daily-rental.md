@@ -1,0 +1,31 @@
+# Sewa harian dan komunikasi bilingual
+
+## Atur kamar
+
+Di Units, tambah atau edit kamar. Pilih **Bulanan**, **Harian**, atau **Harian & Bulanan**. Harga bulanan tetap menggunakan kolom lama. Harga per malam disimpan terpisah dan wajib untuk mode harian. Kamar lama tanpa pilihan mode tetap dianggap bulanan.
+
+Mode kamar tidak boleh bertentangan dengan penghuni yang masih aktif. Gunakan mode gabungan jika kamar masih memiliki kontrak bulanan dan juga akan ditawarkan harian. Mengedit kamar mempertahankan metadata yang sudah tersimpan.
+
+## Check-in tamu harian
+
+Pilih interval **Harian**, isi tanggal masuk dan tanggal check-out. Tanggal check-out harus setelah tanggal masuk. Sistem menghitung malam secara eksklusif terhadap check-out: 22–25 November berarti tiga malam, bukan empat.
+
+Harga per malam × jumlah malam menjadi sewa pokok invoice awal. Tarif yang disepakati tersimpan pada penghuni dan invoice; perubahan harga kamar tidak mengubah invoice lama. Invoice manual untuk tamu harian menyediakan tanggal masuk, check-out, dan harga per malam. Listrik dan biaya lainnya ditambahkan secara terpisah. Tamu harian dilewati oleh penerbitan invoice bulanan otomatis. Kalender menandai malam menginap dan mengecualikan tanggal check-out.
+
+Tamu asing dapat memakai jenis identitas **Paspor / Passport**. Nomor paspor tidak dianggap sebagai verifikasi NIK KTP. Dokumen dan identitas tetap mengikuti brankas, sinkronisasi, dan aturan akses data penghuni yang sudah ada.
+
+## Bahasa
+
+Pengaturan profil menyediakan bahasa default. Setiap penghuni dapat memilih **Bahasa Indonesia**, **English**, atau **Indonesia + English**. Bahasa penghuni dipakai untuk pesan tagihan, pengingat, template sambutan, dan kuitansi. Invoice menyimpan bahasa sebagai fallback untuk arsip ketika penghuni tidak lagi aktif.
+
+Pada daftar penghuni, tombol **Sambutan WA** membuka draf sambutan sesuai bahasa tamu, termasuk tanggal masuk, check-out, mode sewa, dan deposit.
+
+Pada pratinjau kuitansi, pilihan **Bahasa / Language** mengubah tampilan dan pesan WhatsApp yang dikirim dari dialog tersebut. Dokumen belum lunas ditampilkan sebagai tagihan, bukan bukti pembayaran. Kuitansi lunas memisahkan sewa, listrik/air, dan biaya lain. Mata uang tetap Rupiah/IDR; tidak ada konversi kurs otomatis.
+
+WhatsApp membuka draf untuk diperiksa dan dikirim pemilik. Nomor internasional dengan kode negara dapat digunakan pada tautan WhatsApp langsung. Pendamping WhatsApp PC versi lama masih membatasi siaran otomatis ke nomor Indonesia; fitur bahasa tidak mengubah batas pendamping itu.
+
+## Kompatibilitas dan verifikasi
+
+Data lama tidak dihapus atau dikonversi massal. Kolom baru bersifat tambahan, dan nilai bulanan lama tetap dipakai. Gunakan web terbaru untuk mengelola sewa harian; APK/Windows lama belum memiliki kontrol dan perhitungan baru. Jalur build native tetap menggunakan aset web yang sama, tetapi binary rilis lama tidak berubah.
+
+Pengujian mencakup jumlah malam lintas tahun/tahun kabisat, tanggal tidak valid, nominal, harga tersimpan, rincian biaya, Indonesia/Inggris/dua bahasa, dokumen belum lunas, check-in paspor, invoice pertama/manual, pengecualian batch bulanan, kalender malam, dan draf WhatsApp. Browser diuji memakai data contoh serta penyimpanan simulasi, tanpa mengirim pesan atau memungut pembayaran nyata. Perangkat Android fisik belum diuji.
