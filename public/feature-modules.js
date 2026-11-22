@@ -931,14 +931,22 @@
         const todayStr = new Date().toISOString().slice(0, 10);
         const today = new Date();
 
-        const overdueBills = (data.bills || []).filter(b => b.status !== 'LUNAS' && b.dueDate <= todayStr);
-        const dueSoonBills = (data.bills || []).filter(b => {
+        const rooms = typeof window.getScopedRooms === 'function' ? window.getScopedRooms() : (data.rooms || []);
+        const belongsToScope = item => {
+            const matches = (data.rooms || []).filter(room => room.number === item.roomNumber
+                && (!item.propertyId || (room.propertyId || 'PROP-1') === item.propertyId));
+            return matches.length === 1 && rooms.some(room => room.id === matches[0].id);
+        };
+        const bills = (data.bills || []).filter(belongsToScope);
+        const contracts = (data.kontrak || []).filter(belongsToScope);
+        const overdueBills = bills.filter(b => b.status !== 'LUNAS' && b.dueDate <= todayStr);
+        const dueSoonBills = bills.filter(b => {
             if (b.status === 'LUNAS' || b.dueDate <= todayStr) return false;
             const diffDays = Math.ceil((new Date(b.dueDate) - today) / (1000 * 60 * 60 * 24));
             return diffDays >= 0 && diffDays <= 3;
         });
 
-        const expiringContracts = (data.kontrak || []).filter(k => {
+        const expiringContracts = contracts.filter(k => {
             if (!k.endDate) return false;
             const diffDays = Math.ceil((new Date(k.endDate) - today) / (1000 * 60 * 60 * 24));
             return diffDays >= 0 && diffDays <= 30;
@@ -950,6 +958,12 @@
     function renderDashboardReminders() {
         const container = document.getElementById('dashboardRemindersWidget');
         if (!container) return;
+        const rooms = typeof window.getScopedRooms === 'function'
+            ? window.getScopedRooms() : (window.charisnaData?.snapshot()?.rooms || []);
+        if (!rooms.length) {
+            container.replaceChildren();
+            return;
+        }
 
         const { overdueBills, dueSoonBills, expiringContracts } = computeDueReminders();
         const totalAlerts = overdueBills.length + dueSoonBills.length + expiringContracts.length;
