@@ -10,9 +10,11 @@ try {
   const data = entry.data(); document.getElementById('title').textContent = data.name;
   for (const room of data.rooms) {
     const article = document.createElement('article');
-    for (const text of ['Unit ' + room.number,room.type,room.facilities,'Rp ' + Number(room.price).toLocaleString('id-ID') + '/bulan']) {
+    const title=document.createElement('h2');title.textContent='Unit '+room.number;article.append(title);
+    for (const text of [room.type,room.facilities]) {
       const line = document.createElement('p'); line.textContent = text; article.append(line);
     }
+    const price=document.createElement('p');price.className='catalog-price';price.textContent='Rp '+Number(room.price).toLocaleString('id-ID')+' / bulan';article.append(price);
     if (/^data:image\/(png|jpeg);base64,/.test(room.image || '')) {
       const image = document.createElement('img'); image.src = room.image; image.alt = 'Foto unit ' + room.number;
       image.style.maxWidth = '100%'; article.append(image);
