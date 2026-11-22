@@ -1,7 +1,7 @@
 {
   "name": "charisna-kost-whatsapp-companion",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "start": "node server.mjs"
@@ -17,5 +17,8 @@
     "glob": "14.0.6",
     "minimatch": "11.0.9",
     "zod": "4.6.7"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }
