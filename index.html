@@ -495,21 +495,33 @@
                         </div>
                     </div>
 
+                    <div id="billSelectionBar" hidden class="bg-white rounded-xl border border-slate-200 p-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span id="billSelectionCount" role="status" class="text-sm font-semibold"></span>
+                            <button type="button" onclick="clearBillSelection()" class="px-3 py-2 rounded-lg bg-slate-100 text-sm">Batal pilih</button>
+                            <button id="deleteSelectedBillsButton" type="button" onclick="deleteInvoices(selectedBillIds)" class="px-3 py-2 rounded-lg bg-rose-50 text-rose-700 text-sm font-semibold">Hapus terpilih</button>
+                        </div>
+                    </div>
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-slate-50 border-b border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                                        <th class="py-3.5 px-4">
+                                            <label class="flex items-center cursor-pointer p-2">
+                                                <input id="selectVisibleBills" type="checkbox" aria-label="Pilih semua tagihan yang tampil" onchange="selectVisibleInvoices(this.checked)">
+                                            </label>
+                                        </th>
                                         <th class="py-3.5 px-4">Periode &amp; ID</th>
                                         <th class="py-3.5 px-4">Penghuni &amp; Unit</th>
                                         <th class="py-3.5 px-4">Rincian Tagihan</th>
                                         <th class="py-3.5 px-4">Total</th>
                                         <th class="py-3.5 px-4">Status &amp; Bukti Bayar</th>
-                                        <th class="py-3.5 px-4 text-right">Tindakan WA / Lunas</th>
+                                        <th class="py-3.5 px-4 text-right">Tindakan</th>
                                     </tr>
                                 </thead>
                                 <tbody id="billsTableBody" class="divide-y divide-slate-100 text-sm">
-                                    <tr><td colspan="6" class="py-8 text-center text-slate-400 text-xs">Belum ada tagihan sewa.</td></tr>
+                                    <tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Belum ada tagihan sewa.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1750,6 +1762,8 @@
         let currentPropertyFilter = 'ALL';
         let currentRoomFilter = 'ALL';
         let currentBillFilter = 'ALL';
+        const selectedBillIds = new Set();
+        let deletingInvoices = false;
         let tempUploadedKtpData = null;
         let activeProofBillId = null;
 
@@ -3655,15 +3669,103 @@
             renderBills();
         }
 
+        function visibleInvoices() {
+            return auditScopeData(appData, currentPropertyFilter).bills
+                .filter(bill => currentBillFilter === 'ALL' || bill.status === currentBillFilter);
+        }
+
+        function isLegacyExampleInvoice(bill) {
+            const examples = {
+                'INV-101': ['101', 1870000], 'INV-102': ['102', 1845000], 'INV-104': ['104', 1485000],
+                'INV-201': ['201', 1425000], 'INV-A01': ['A-01', 2015000], 'INV-B01': ['B-01', 990000]
+            };
+            const example = examples[bill.id];
+            return Array.isArray(example) && bill.period === 'Oktober 2026' &&
+                bill.roomNumber === example[0] && Number(bill.amount) === example[1] && !bill.tenantId;
+        }
+
+        function updateInvoiceSelection(visible = visibleInvoices()) {
+            const ids = new Set(visible.map(bill => bill.id));
+            for (const id of selectedBillIds) {
+                if (!ids.has(id)) selectedBillIds.delete(id);
+            }
+            const count = selectedBillIds.size;
+            const all = document.getElementById('selectVisibleBills');
+            all.disabled = deletingInvoices || !ids.size;
+            all.checked = ids.size > 0 && count === ids.size;
+            all.indeterminate = count > 0 && count < ids.size;
+            document.getElementById('billSelectionBar').hidden = count === 0;
+            document.getElementById('billSelectionCount').textContent = `${count} tagihan dipilih`;
+            document.getElementById('deleteSelectedBillsButton').disabled = deletingInvoices;
+        }
+
+        function toggleInvoiceSelection(id, checked) {
+            if (checked) selectedBillIds.add(id);
+            else selectedBillIds.delete(id);
+            updateInvoiceSelection();
+        }
+
+        function clearBillSelection() {
+            selectedBillIds.clear();
+            renderBills();
+        }
+
+        function selectVisibleInvoices(checked) {
+            selectedBillIds.clear();
+            if (checked) {
+                for (const bill of visibleInvoices()) selectedBillIds.add(bill.id);
+            }
+            renderBills();
+        }
+
+        async function deleteInvoices(ids) {
+            if (deletingInvoices) return;
+            const requested = new Set(ids);
+            const targets = visibleInvoices().filter(bill => requested.has(bill.id));
+            if (!targets.length) return;
+            const paid = targets.filter(bill => bill.status === 'LUNAS').length;
+            const label = targets.length === 1 ? `tagihan ${targets[0].id}` : `${targets.length} tagihan terpilih`;
+            const paidNotice = paid ? ` Termasuk ${paid} tagihan lunas.` : '';
+            if (!confirm(`Hapus ${label}?${paidNotice} Tagihan akan hilang dari laporan dan pengingat. Lanjutkan?`)) return;
+
+            const database = appData;
+            const previousBills = database.bills;
+            const previousLogs = database.auditLogs;
+            const removed = new Set(targets);
+            const nextBills = previousBills.filter(bill => !removed.has(bill));
+            deletingInvoices = true;
+            updateInvoiceSelection();
+            try {
+                database.bills = nextBills;
+                database.auditLogs = [...previousLogs];
+                window.CharisnaFeatureModules?.recordAuditLog({
+                    action: 'HAPUS', entity: 'Tagihan', entityId: targets.length === 1 ? targets[0].id : 'bulk',
+                    summary: `Hapus ${label}`
+                }, { deferSave: true });
+                if (!await saveData()) {
+                    if (appData === database && database.bills === nextBills) {
+                        database.bills = previousBills;
+                        database.auditLogs = previousLogs;
+                    }
+                    return;
+                }
+                for (const bill of targets) selectedBillIds.delete(bill.id);
+                showToast(`${targets.length} tagihan dihapus.`);
+            } finally {
+                deletingInvoices = false;
+                renderBills();
+            }
+        }
+
         function renderBills() {
             const tbody = document.getElementById('billsTableBody');
             if (!tbody) return;
 
-            const filtered = auditScopeData(appData, currentPropertyFilter).bills
-                .filter(b => currentBillFilter === 'ALL' || b.status === currentBillFilter);
+            const filtered = visibleInvoices();
+            updateInvoiceSelection(filtered);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 text-xs">Tidak ada data invoice pada kategori ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Tidak ada data invoice pada kategori ini.</td></tr>`;
                 return;
             }
 
@@ -3717,8 +3819,15 @@
                 return `
                     <tr class="hover:bg-slate-50/80 transition">
                         <td class="py-3.5 px-4">
+                            <label class="flex items-center cursor-pointer p-2">
+                                <input type="checkbox" aria-label="Pilih tagihan ${escapePropertyText(b.id)}"
+                                    onchange="toggleInvoiceSelection(${safeCallArg(b.id)}, this.checked)" ${selectedBillIds.has(b.id) ? 'checked' : ''}>
+                            </label>
+                        </td>
+                        <td class="py-3.5 px-4">
                             <p class="font-bold text-slate-800 text-xs">${escapePropertyText(b.period)}</p>
                             <p class="text-[11px] font-mono text-slate-400">${escapePropertyText(b.id)} • JT: ${escapePropertyText(b.dueDate)}</p>
+                            ${isLegacyExampleInvoice(b) ? '<span class="text-xs font-semibold text-amber-700">Data contoh lama</span>' : ''}
                         </td>
                         <td class="py-3.5 px-4">
                             <p class="font-bold text-slate-800 text-xs">${escapePropertyText(b.tenantName)}</p>
@@ -3739,6 +3848,10 @@
                         </td>
                         <td class="py-3.5 px-4 text-right space-x-1">
                             ${rowActionsHtml}
+                            <button type="button" onclick="deleteInvoices([${safeCallArg(b.id)}])" aria-label="Hapus tagihan ${escapePropertyText(b.id)}"
+                                title="Hapus tagihan" class="px-3 py-2 rounded-lg bg-rose-50 text-rose-700">
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
