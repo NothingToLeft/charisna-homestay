@@ -46,11 +46,22 @@
   function chooseTenant(parent) {
     const select = make('select');
     select.setAttribute('aria-label','Pilih penghuni');
-    select.className = 'block w-full rounded-lg border p-2';
-    for (const tenant of appData.tenants) {
-      const option = make('option', tenant.name + ' · ' + tenant.roomNumber);
-      option.value = tenant.id;
+    select.className = 'block w-full rounded-lg border p-2 text-sm';
+    const tenants = appData.tenants || [];
+    if (tenants.length === 0) {
+      const option = make('option', '(Belum ada penghuni terdaftar)');
+      option.value = '';
       select.append(option);
+      select.disabled = true;
+    } else {
+      const defaultOpt = make('option', '-- Pilih Penghuni Aktif --');
+      defaultOpt.value = '';
+      select.append(defaultOpt);
+      for (const tenant of tenants) {
+        const option = make('option', tenant.name + ' · ' + (tenant.roomNumber || '-'));
+        option.value = tenant.id;
+        select.append(option);
+      }
     }
     parent.append(select);
     return select;
@@ -62,6 +73,10 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   async function handover() {
+    if (!appData.tenants || appData.tenants.length === 0) {
+      showToast('Belum ada penghuni aktif untuk serah terima kamar.', 'warning');
+      return;
+    }
     const modal = dialog('Berita Acara Masuk Kamar');
     const tenantSelect = chooseTenant(modal);
     const condition = field(modal, 'Kondisi AC, kasur, dinding dan kamar mandi', 'textarea');
@@ -138,7 +153,7 @@
     const note = field(modal, 'Kejadian faktual, tanggal dan tindak lanjut', 'textarea');
     note.maxLength = 2000;
     modal.append(button('Simpan catatan', async () => {
-      const tenant = appData.tenants.find(item => item.id === select.value);
+      const tenant = (appData.tenants || []).find(item => item.id === select.value);
       const name = subject.value.trim() || tenant?.name;
       if (!name || !note.value.trim()) throw Error('Isi nama dan catatan.');
       appData.tenantNotes ||= [];
@@ -150,8 +165,14 @@
     const list = make('div'); modal.append(list);
     const render = () => {
       list.replaceChildren();
-      for (const entry of appData.tenantNotes || []) {
-        if (!entry.name.toLowerCase().includes(search.value.toLowerCase())) continue;
+      const filtered = (appData.tenantNotes || []).filter(entry => entry.name.toLowerCase().includes(search.value.toLowerCase()));
+      if (filtered.length === 0) {
+        const emptyMsg = make('p', 'Belum ada catatan internal tersimpan.');
+        emptyMsg.className = 'text-xs text-slate-400 py-3 text-center italic';
+        list.append(emptyMsg);
+        return;
+      }
+      for (const entry of filtered) {
         const row = make('article');
         row.append(make('h3', entry.name), make('p', entry.createdAt), make('p', entry.note),
           button('Hapus catatan', async () => {
@@ -261,6 +282,10 @@
   }
 
   function portal() {
+    if (!appData.tenants || appData.tenants.length === 0) {
+      showToast('Belum ada penghuni aktif untuk membuat portal.', 'warning');
+      return;
+    }
     const modal = dialog('Portal Penghuni');
     const select = chooseTenant(modal);
     modal.append(make('p', 'Tautan privat berlaku 30 hari. Pemegang tautan dapat melihat ringkasan penghuni. Bagikan hanya kepada penghuni terkait.'));

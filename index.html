@@ -142,7 +142,7 @@
                             <i class="fa-solid fa-gear"></i> Kelola
                         </button>
                     </div>
-                    <select id="propertySwitcher" onchange="switchProperty(this.value)" class="w-full bg-slate-900 text-white text-xs font-bold px-2.5 py-2 rounded-lg border border-slate-700 focus:outline-none focus:border-emerald-500"><option value="ALL" selected="">🏢 Semua Properti (2 Lokasi)</option><option value="PROP-1">🏠 CHARISNA KOST Pusat</option><option value="PROP-2">🏠 CHARISNA KOST Suites</option></select>
+                    <select id="propertySwitcher" onchange="switchProperty(this.value)" class="w-full bg-slate-900 text-white text-xs font-bold px-2.5 py-2 rounded-lg border border-slate-700 focus:outline-none focus:border-emerald-500"><option value="ALL" selected="">🏢 Semua Properti</option><option value="PROP-1">🏠 CHARISNA KOST</option></select>
                 </div>
             </div>
 
@@ -382,146 +382,8 @@
                             </div>
 
                             <div id="dashboardRoomMap" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-5">
-                        <button onclick="openRoomInspector('R101')" class="p-3 rounded-xl border bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit 101</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">1/2 <i class="fa-solid fa-user text-[8px]"></i></span>
+                                <div class="col-span-full py-8 text-center text-slate-400 text-xs">Belum ada unit kamar. Klik '+ Tambah Unit' untuk memulai.</div>
                             </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Dimas</p>
-                                    <span title="KTP Lengkap" class="text-[10px] text-emerald-600"><i class="fa-solid fa-id-card"></i></span>
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.750.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R102')" class="p-3 rounded-xl border bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit 102</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">1/1 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Nadia</p>
-                                    <span title="KTP Lengkap" class="text-[10px] text-emerald-600"><i class="fa-solid fa-id-card"></i></span>
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.750.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R103')" class="p-3 rounded-xl border bg-emerald-50/90 border-emerald-200 text-emerald-900 hover:bg-emerald-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit 103</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">0/1 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Kosong</p>
-
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.400.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R104')" class="p-3 rounded-xl border bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit 104</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">1/1 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Rizky</p>
-                                    <span title="KTP Lengkap" class="text-[10px] text-emerald-600"><i class="fa-solid fa-id-card"></i></span>
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.400.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R105')" class="p-3 rounded-xl border bg-amber-50/90 border-amber-200 text-amber-900 hover:bg-amber-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit 105</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">0/1 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Perbaikan</p>
-
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.400.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R201')" class="p-3 rounded-xl border bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit 201</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">1/1 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Putri</p>
-                                    <span title="KTP Lengkap" class="text-[10px] text-emerald-600"><i class="fa-solid fa-id-card"></i></span>
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.350.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R202')" class="p-3 rounded-xl border bg-emerald-50/90 border-emerald-200 text-emerald-900 hover:bg-emerald-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit 202</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">0/1 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Kosong</p>
-
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.350.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R203')" class="p-3 rounded-xl border bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit A-01</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">1/2 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Fajar</p>
-                                    <span title="Belum Upload KTP" class="text-[10px] text-amber-500"><i class="fa-solid fa-triangle-exclamation"></i></span>
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.950.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R204')" class="p-3 rounded-xl border bg-emerald-50/90 border-emerald-200 text-emerald-900 hover:bg-emerald-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit A-02</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">0/2 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Kosong</p>
-
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 1.950.000</p>
-                            </div>
-                        </button>
-
-                        <button onclick="openRoomInspector('R205')" class="p-3 rounded-xl border bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100 transition text-left flex flex-col justify-between group shadow-2xs">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-extrabold text-sm">Unit B-01</span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700">1/1 <i class="fa-solid fa-user text-[8px]"></i></span>
-                            </div>
-                            <div class="mt-2.5">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xs font-bold truncate">Bagas</p>
-                                    <span title="KTP Lengkap" class="text-[10px] text-emerald-600"><i class="fa-solid fa-id-card"></i></span>
-                                </div>
-                                <p class="text-[10px] opacity-75 mt-0.5">Rp 950.000</p>
-                            </div>
-                        </button>
-                    </div>
                         </div>
 
                         <!-- Tagihan Belum Lunas -->
@@ -535,42 +397,12 @@
                                     <button onclick="switchTab('tagihan')" class="text-xs font-bold text-emerald-600 hover:underline">Lihat Semua</button>
                                 </div>
                                 <div id="dashboardUnpaidList" class="divide-y divide-slate-100 mt-2 max-h-80 overflow-y-auto">
-                        <div class="py-3 flex items-center justify-between gap-2">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-slate-800">Rizky Ramadhan</span>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">Unit 104</span>
+                                    <div class="py-8 text-center text-slate-400">
+                                        <i class="fa-solid fa-circle-check text-3xl text-emerald-400 mb-2"></i>
+                                        <p class="text-xs font-bold text-slate-700">Tidak ada tagihan tertunggak</p>
+                                        <p class="text-[11px]">Semua tagihan lunas atau belum ada invoice terbit.</p>
+                                    </div>
                                 </div>
-                                <p class="text-xs font-extrabold text-rose-600 mt-0.5">Rp 1.485.000 <span class="text-[10px] font-normal text-slate-400">• Oktober 2026</span></p>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <button onclick="sendWhatsAppReminder('INV-104')" title="Tagih via WhatsApp" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center gap-1 transition">
-                                    <i class="fa-brands fa-whatsapp"></i> Tagih
-                                </button>
-                                <button onclick="markBillPaid('INV-104')" title="Tandai Lunas" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition">
-                                    Lunas
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="py-3 flex items-center justify-between gap-2">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-slate-800">Fajar Nugroho</span>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">Unit A-01</span>
-                                </div>
-                                <p class="text-xs font-extrabold text-rose-600 mt-0.5">Rp 2.015.000 <span class="text-[10px] font-normal text-slate-400">• Oktober 2026</span></p>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <button onclick="sendWhatsAppReminder('INV-A01')" title="Tagih via WhatsApp" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center gap-1 transition">
-                                    <i class="fa-brands fa-whatsapp"></i> Tagih
-                                </button>
-                                <button onclick="markBillPaid('INV-A01')" title="Tandai Lunas" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition">
-                                    Lunas
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                             </div>
                             <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
                                 <button onclick="generateMonthlyBills()" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-2">
@@ -602,484 +434,8 @@
                     </div>
 
                     <div id="roomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Pusat</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit 101 <span class="text-xs font-semibold text-slate-400">• VIP AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700">Occupied (1/2)</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.750.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 1420 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="AC, WiFi, KM Dalam, Water Heater, Springbed Queen"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> AC, WiFi, KM Dalam, Water Heater, Springbed Queen</p>
-
-
-                        <div class="mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-
-                            <div class="pb-2 last:pb-0 border-b last:border-b-0 border-slate-200/60 space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-user-check text-blue-600"></i> Dimas Anggara
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                        <i class="fa-solid fa-id-card mr-0.5"></i> KTP OK
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span class="font-mono text-[10px] text-slate-500">NIK: 3578041205980001</span>
-                                    <span class="px-1.5 py-0.2 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">Bulanan</span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span><i class="fa-brands fa-whatsapp text-emerald-600"></i> 081298765432</span>
-                                    <span class="font-semibold text-slate-700">L 1829 QP (Mobil)</span>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R101')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openTenantModal('101')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
-                            <i class="fa-solid fa-user-plus"></i> Check-In
-                        </button>
-
-                        </div>
+                        <div class="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-sm">Belum ada unit kamar. Klik '+ Tambah Unit' untuk menambahkan.</div>
                     </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Pusat</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit 102 <span class="text-xs font-semibold text-slate-400">• VIP AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700">Occupied (1/1)</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.750.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 1180 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="AC, WiFi, KM Dalam, Water Heater, Springbed"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> AC, WiFi, KM Dalam, Water Heater, Springbed</p>
-
-
-                        <div class="mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-
-                            <div class="pb-2 last:pb-0 border-b last:border-b-0 border-slate-200/60 space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-user-check text-blue-600"></i> Nadia Safitri
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                        <i class="fa-solid fa-id-card mr-0.5"></i> KTP OK
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span class="font-mono text-[10px] text-slate-500">NIK: 3578085409030002</span>
-                                    <span class="px-1.5 py-0.2 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">3 Bulanan</span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span><i class="fa-brands fa-whatsapp text-emerald-600"></i> 085712345678</span>
-                                    <span class="font-semibold text-slate-700">W 4910 N (Motor)</span>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R102')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openEditTenantModal('T2')" class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition" title="Upload KTP">
-                            <i class="fa-solid fa-camera"></i> KTP
-                        </button>
-
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Pusat</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit 103 <span class="text-xs font-semibold text-slate-400">• Reguler AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">Available</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.400.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 950 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="AC, WiFi, KM Dalam, Kasur Busa"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> AC, WiFi, KM Dalam, Kasur Busa</p>
-
-
-                        <div class="mt-3.5 p-4 rounded-xl bg-emerald-50/50 border border-dashed border-emerald-200 text-center">
-                            <p class="text-xs font-bold text-emerald-800">Unit Kosong (Kapasitas 1 Penghuni)</p>
-                            <p class="text-[11px] text-emerald-600 mt-0.5">Klik Check-In untuk membuat kontrak sewa &amp; unggah KTP</p>
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R103')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openTenantModal('103')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
-                            <i class="fa-solid fa-user-plus"></i> Check-In
-                        </button>
-
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Pusat</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit 104 <span class="text-xs font-semibold text-slate-400">• Reguler AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700">Occupied (1/1)</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.400.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 1610 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="AC, WiFi, KM Dalam, Kasur Busa"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> AC, WiFi, KM Dalam, Kasur Busa</p>
-
-
-                        <div class="mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-
-                            <div class="pb-2 last:pb-0 border-b last:border-b-0 border-slate-200/60 space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-user-check text-blue-600"></i> Rizky Ramadhan
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                        <i class="fa-solid fa-id-card mr-0.5"></i> KTP OK
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span class="font-mono text-[10px] text-slate-500">NIK: 3515182211990004</span>
-                                    <span class="px-1.5 py-0.2 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">Bulanan</span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span><i class="fa-brands fa-whatsapp text-emerald-600"></i> 081345678901</span>
-                                    <span class="font-semibold text-slate-700">L 6721 KK (Motor)</span>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R104')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openEditTenantModal('T3')" class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition" title="Upload KTP">
-                            <i class="fa-solid fa-camera"></i> KTP
-                        </button>
-
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Pusat</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit 105 <span class="text-xs font-semibold text-slate-400">• Reguler AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700">Maintenance</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.400.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 890 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="AC, WiFi, KM Dalam, Kasur Busa"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> AC, WiFi, KM Dalam, Kasur Busa</p>
-
-
-                        <div class="mt-3.5 p-4 rounded-xl bg-emerald-50/50 border border-dashed border-emerald-200 text-center">
-                            <p class="text-xs font-bold text-emerald-800">Unit Kosong (Kapasitas 1 Penghuni)</p>
-                            <p class="text-[11px] text-emerald-600 mt-0.5">Klik Check-In untuk membuat kontrak sewa &amp; unggah KTP</p>
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R105')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openTenantModal('105')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
-                            <i class="fa-solid fa-user-plus"></i> Check-In
-                        </button>
-
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Pusat</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit 201 <span class="text-xs font-semibold text-slate-400">• Reguler AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700">Occupied (1/1)</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.350.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 2105 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="AC, WiFi, KM Dalam, Balkon"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> AC, WiFi, KM Dalam, Balkon</p>
-
-
-                        <div class="mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-
-                            <div class="pb-2 last:pb-0 border-b last:border-b-0 border-slate-200/60 space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-user-check text-blue-600"></i> Putri Maharani
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                        <i class="fa-solid fa-id-card mr-0.5"></i> KTP OK
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span class="font-mono text-[10px] text-slate-500">NIK: 3578106102010003</span>
-                                    <span class="px-1.5 py-0.2 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">Bulanan</span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span><i class="fa-brands fa-whatsapp text-emerald-600"></i> 082199887766</span>
-                                    <span class="font-semibold text-slate-700">AG 3319 Y (Motor)</span>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R201')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openEditTenantModal('T4')" class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition" title="Upload KTP">
-                            <i class="fa-solid fa-camera"></i> KTP
-                        </button>
-
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Pusat</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit 202 <span class="text-xs font-semibold text-slate-400">• Reguler AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">Available</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.350.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 740 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="AC, WiFi, KM Dalam, Balkon"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> AC, WiFi, KM Dalam, Balkon</p>
-
-
-                        <div class="mt-3.5 p-4 rounded-xl bg-emerald-50/50 border border-dashed border-emerald-200 text-center">
-                            <p class="text-xs font-bold text-emerald-800">Unit Kosong (Kapasitas 1 Penghuni)</p>
-                            <p class="text-[11px] text-emerald-600 mt-0.5">Klik Check-In untuk membuat kontrak sewa &amp; unggah KTP</p>
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R202')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openTenantModal('202')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
-                            <i class="fa-solid fa-user-plus"></i> Check-In
-                        </button>
-
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Suites</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit A-01 <span class="text-xs font-semibold text-slate-400">• VIP AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700">Occupied (1/2)</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.950.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 530 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="Smart TV, AC, WiFi, KM Dalam, Pantry"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> Smart TV, AC, WiFi, KM Dalam, Pantry</p>
-
-
-                        <div class="mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-
-                            <div class="pb-2 last:pb-0 border-b last:border-b-0 border-slate-200/60 space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-user-check text-blue-600"></i> Fajar Nugroho
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">
-                                        <i class="fa-solid fa-id-card mr-0.5"></i> Belum KTP
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span class="font-mono text-[10px] text-slate-500">NIK: 3578021907040005</span>
-                                    <span class="px-1.5 py-0.2 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">Tahunan</span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span><i class="fa-brands fa-whatsapp text-emerald-600"></i> 087811223344</span>
-                                    <span class="font-semibold text-slate-700">S 2819 TT (Mobil)</span>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R203')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openTenantModal('A-01')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
-                            <i class="fa-solid fa-user-plus"></i> Check-In
-                        </button>
-
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Suites</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit A-02 <span class="text-xs font-semibold text-slate-400">• VIP AC</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">Available</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 1.950.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 410 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="Smart TV, AC, WiFi, KM Dalam, Pantry"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> Smart TV, AC, WiFi, KM Dalam, Pantry</p>
-
-
-                        <div class="mt-3.5 p-4 rounded-xl bg-emerald-50/50 border border-dashed border-emerald-200 text-center">
-                            <p class="text-xs font-bold text-emerald-800">Unit Kosong (Kapasitas 2 Penghuni)</p>
-                            <p class="text-[11px] text-emerald-600 mt-0.5">Klik Check-In untuk membuat kontrak sewa &amp; unggah KTP</p>
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R204')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openTenantModal('A-02')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
-                            <i class="fa-solid fa-user-plus"></i> Check-In
-                        </button>
-
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase">CHARISNA KOST Suites</span>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-1">Unit B-01 <span class="text-xs font-semibold text-slate-400">• Standar Kipas</span></h4>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700">Occupied (1/1)</span>
-                            </div>
-
-                            <div class="flex items-baseline justify-between mt-2">
-                                <p class="text-base font-extrabold text-emerald-600">Rp 950.000 <span class="text-xs font-normal text-slate-400">/ bln</span></p>
-                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-solid fa-bolt text-amber-500"></i> 685 kWh</span>
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2 truncate" title="Kipas Angin, WiFi, KM Luar, Lemari"><i class="fa-solid fa-couch text-slate-400 mr-1"></i> Kipas Angin, WiFi, KM Luar, Lemari</p>
-
-
-                        <div class="mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-
-                            <div class="pb-2 last:pb-0 border-b last:border-b-0 border-slate-200/60 space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-user-check text-blue-600"></i> Bagas Prasetyo
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                        <i class="fa-solid fa-id-card mr-0.5"></i> KTP OK
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span class="font-mono text-[10px] text-slate-500">NIK: 3578060812000002</span>
-                                    <span class="px-1.5 py-0.2 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">Bulanan</span>
-                                </div>
-                                <div class="flex items-center justify-between text-[11px] text-slate-600">
-                                    <span><i class="fa-brands fa-whatsapp text-emerald-600"></i> 081900112233</span>
-                                    <span class="font-semibold text-slate-700">L 5102 BB (Motor)</span>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <button onclick="openRoomInspector('R205')" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-id-card-clip text-emerald-400"></i> Detail &amp; KTP
-                            </button>
-
-                        <button onclick="openEditTenantModal('T6')" class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition" title="Upload KTP">
-                            <i class="fa-solid fa-camera"></i> KTP
-                        </button>
-
-                        </div>
-                    </div>
-                </div>
                 </section>
 
                 <!-- ==================== TAB 3: LEASES & PENGHUNI ==================== -->
@@ -1114,210 +470,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tenantsTableBody" class="divide-y divide-slate-100 text-sm">
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800">Dimas Anggara</p>
-                            <p class="text-[11px] font-mono text-slate-400">NIK: 3578041205980001</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">Unit 101</span>
-                            <span class="ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">Bulanan</span>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <button onclick="openRoomInspector('R101')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <i class="fa-solid fa-id-card"></i> Lihat KTP
-                            </button>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <a href="https://wa.me/6281298765432" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> 081298765432
-                            </a>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Darurat: 0811345678 (Bpk. Agus)</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-slate-700">L 1829 QP (Mobil)</p>
-                            <p class="text-[11px] text-emerald-600 font-bold">Deposit: Rp 500.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-                            <button onclick="openEditTenantModal('T1')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </button>
-                            <button onclick="checkoutTenant('T1')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
-                                Check-Out
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800">Nadia Safitri</p>
-                            <p class="text-[11px] font-mono text-slate-400">NIK: 3578085409030002</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">Unit 102</span>
-                            <span class="ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">3 Bulanan</span>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <button onclick="openRoomInspector('R102')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <i class="fa-solid fa-id-card"></i> Lihat KTP
-                            </button>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <a href="https://wa.me/6285712345678" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> 085712345678
-                            </a>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Darurat: 0812334455 (Ibu Rina)</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-slate-700">W 4910 N (Motor)</p>
-                            <p class="text-[11px] text-emerald-600 font-bold">Deposit: Rp 500.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-                            <button onclick="openEditTenantModal('T2')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </button>
-                            <button onclick="checkoutTenant('T2')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
-                                Check-Out
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800">Rizky Ramadhan</p>
-                            <p class="text-[11px] font-mono text-slate-400">NIK: 3515182211990004</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">Unit 104</span>
-                            <span class="ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">Bulanan</span>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <button onclick="openRoomInspector('R104')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <i class="fa-solid fa-id-card"></i> Lihat KTP
-                            </button>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <a href="https://wa.me/6281345678901" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> 081345678901
-                            </a>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Darurat: 0819887766 (Ibu Dewi)</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-slate-700">L 6721 KK (Motor)</p>
-                            <p class="text-[11px] text-emerald-600 font-bold">Deposit: Rp 400.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-                            <button onclick="openEditTenantModal('T3')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </button>
-                            <button onclick="checkoutTenant('T3')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
-                                Check-Out
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800">Putri Maharani</p>
-                            <p class="text-[11px] font-mono text-slate-400">NIK: 3578106102010003</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">Unit 201</span>
-                            <span class="ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">Bulanan</span>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <button onclick="openRoomInspector('R201')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <i class="fa-solid fa-id-card"></i> Lihat KTP
-                            </button>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <a href="https://wa.me/6282199887766" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> 082199887766
-                            </a>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Darurat: 0852112233 (Bpk. Joko)</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-slate-700">AG 3319 Y (Motor)</p>
-                            <p class="text-[11px] text-emerald-600 font-bold">Deposit: Rp 400.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-                            <button onclick="openEditTenantModal('T4')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </button>
-                            <button onclick="checkoutTenant('T4')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
-                                Check-Out
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800">Fajar Nugroho</p>
-                            <p class="text-[11px] font-mono text-slate-400">NIK: 3578021907040005</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">Unit A-01</span>
-                            <span class="ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">Tahunan</span>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <button onclick="openRoomInspector('R203')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                <i class="fa-solid fa-id-card"></i> Upload KTP
-                            </button>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <a href="https://wa.me/6287811223344" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> 087811223344
-                            </a>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Darurat: 0813990011 (Ibu Sri)</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-slate-700">S 2819 TT (Mobil)</p>
-                            <p class="text-[11px] text-emerald-600 font-bold">Deposit: Rp 1.000.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-                            <button onclick="openEditTenantModal('T5')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </button>
-                            <button onclick="checkoutTenant('T5')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
-                                Check-Out
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800">Bagas Prasetyo</p>
-                            <p class="text-[11px] font-mono text-slate-400">NIK: 3578060812000002</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">Unit B-01</span>
-                            <span class="ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">Bulanan</span>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <button onclick="openRoomInspector('R205')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <i class="fa-solid fa-id-card"></i> Lihat KTP
-                            </button>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <a href="https://wa.me/6281900112233" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> 081900112233
-                            </a>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Darurat: 0815667788 (Bpk. Tono)</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-slate-700">L 5102 BB (Motor)</p>
-                            <p class="text-[11px] text-emerald-600 font-bold">Deposit: Rp 300.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-                            <button onclick="openEditTenantModal('T6')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </button>
-                            <button onclick="checkoutTenant('T6')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
-                                Check-Out
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
+                                    <tr><td colspan="6" class="py-8 text-center text-slate-400 text-xs">Belum ada data penghuni terdaftar.</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -1355,210 +509,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="billsTableBody" class="divide-y divide-slate-100 text-sm">
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Oktober 2026</p>
-                            <p class="text-[11px] font-mono text-slate-400">INV-101 • JT: 2026-10-05</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Dimas Anggara</p>
-                            <span class="text-[11px] font-semibold text-blue-600">Unit 101</span>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs text-slate-600">
-                            <p>Pokok: <b>Rp 1.750.000</b></p>
-                            <p class="text-[11px] text-slate-400">+ Listrik/Lain: Rp 120.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 font-extrabold text-slate-800 text-xs">Rp 1.870.000</td>
-                        <td class="py-3.5 px-4">
-                            <div class="flex flex-col items-start gap-1">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">PAID (2026-10-03)</span>
-                                <button onclick="openProofModal('INV-101')" class="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
-                                    <i class="fa-solid fa-file-circle-check"></i> Lihat Bukti Transfer
-                                </button>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-
-                        <button onclick="sendReceiptToWhatsApp('INV-101')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition" title="Kirim Kwitansi Lunas ke WA">
-                            <i class="fa-brands fa-whatsapp"></i> Kwitansi WA
-                        </button>
-                        <button onclick="openReceipt('INV-101')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                            <i class="fa-solid fa-receipt"></i> Kwitansi
-                        </button>
-
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Oktober 2026</p>
-                            <p class="text-[11px] font-mono text-slate-400">INV-102 • JT: 2026-10-15</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Nadia Safitri</p>
-                            <span class="text-[11px] font-semibold text-blue-600">Unit 102</span>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs text-slate-600">
-                            <p>Pokok: <b>Rp 1.750.000</b></p>
-                            <p class="text-[11px] text-slate-400">+ Listrik/Lain: Rp 95.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 font-extrabold text-slate-800 text-xs">Rp 1.845.000</td>
-                        <td class="py-3.5 px-4">
-                            <div class="flex flex-col items-start gap-1">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">PAID (2026-10-14)</span>
-                                <button onclick="openProofModal('INV-102')" class="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
-                                    <i class="fa-solid fa-file-circle-check"></i> Lihat Bukti Transfer
-                                </button>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-
-                        <button onclick="sendReceiptToWhatsApp('INV-102')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition" title="Kirim Kwitansi Lunas ke WA">
-                            <i class="fa-brands fa-whatsapp"></i> Kwitansi WA
-                        </button>
-                        <button onclick="openReceipt('INV-102')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                            <i class="fa-solid fa-receipt"></i> Kwitansi
-                        </button>
-
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Oktober 2026</p>
-                            <p class="text-[11px] font-mono text-slate-400">INV-104 • JT: 2026-10-10</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Rizky Ramadhan</p>
-                            <span class="text-[11px] font-semibold text-blue-600">Unit 104</span>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs text-slate-600">
-                            <p>Pokok: <b>Rp 1.400.000</b></p>
-                            <p class="text-[11px] text-slate-400">+ Listrik/Lain: Rp 85.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 font-extrabold text-slate-800 text-xs">Rp 1.485.000</td>
-                        <td class="py-3.5 px-4">
-                            <div class="flex flex-col items-start gap-1">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700">OVERDUE</span>
-                                <button onclick="openProofModal('INV-104')" class="text-[10px] font-bold text-slate-500 hover:underline flex items-center gap-1">
-                                    <i class="fa-solid fa-camera"></i> Upload Bukti Bayar
-                                </button>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-
-                        <button onclick="sendWhatsAppReminder('INV-104')" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition" title="Kirim Tagihan via WA">
-                            <i class="fa-brands fa-whatsapp"></i> Tagih
-                        </button>
-                        <button onclick="markBillPaid('INV-104')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">
-                            Lunas
-                        </button>
-
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Oktober 2026</p>
-                            <p class="text-[11px] font-mono text-slate-400">INV-201 • JT: 2026-10-05</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Putri Maharani</p>
-                            <span class="text-[11px] font-semibold text-blue-600">Unit 201</span>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs text-slate-600">
-                            <p>Pokok: <b>Rp 1.350.000</b></p>
-                            <p class="text-[11px] text-slate-400">+ Listrik/Lain: Rp 75.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 font-extrabold text-slate-800 text-xs">Rp 1.425.000</td>
-                        <td class="py-3.5 px-4">
-                            <div class="flex flex-col items-start gap-1">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">PAID (2026-10-04)</span>
-                                <button onclick="openProofModal('INV-201')" class="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
-                                    <i class="fa-solid fa-file-circle-check"></i> Lihat Bukti Transfer
-                                </button>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-
-                        <button onclick="sendReceiptToWhatsApp('INV-201')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition" title="Kirim Kwitansi Lunas ke WA">
-                            <i class="fa-brands fa-whatsapp"></i> Kwitansi WA
-                        </button>
-                        <button onclick="openReceipt('INV-201')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                            <i class="fa-solid fa-receipt"></i> Kwitansi
-                        </button>
-
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Oktober 2026</p>
-                            <p class="text-[11px] font-mono text-slate-400">INV-A01 • JT: 2026-10-20</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Fajar Nugroho</p>
-                            <span class="text-[11px] font-semibold text-blue-600">Unit A-01</span>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs text-slate-600">
-                            <p>Pokok: <b>Rp 1.950.000</b></p>
-                            <p class="text-[11px] text-slate-400">+ Listrik/Lain: Rp 65.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 font-extrabold text-slate-800 text-xs">Rp 2.015.000</td>
-                        <td class="py-3.5 px-4">
-                            <div class="flex flex-col items-start gap-1">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700">OVERDUE</span>
-                                <button onclick="openProofModal('INV-A01')" class="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
-                                    <i class="fa-solid fa-file-circle-check"></i> Lihat Bukti Transfer
-                                </button>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-
-                        <button onclick="sendWhatsAppReminder('INV-A01')" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition" title="Kirim Tagihan via WA">
-                            <i class="fa-brands fa-whatsapp"></i> Tagih
-                        </button>
-                        <button onclick="markBillPaid('INV-A01')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">
-                            Lunas
-                        </button>
-
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Oktober 2026</p>
-                            <p class="text-[11px] font-mono text-slate-400">INV-B01 • JT: 2026-10-05</p>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <p class="font-bold text-slate-800 text-xs">Bagas Prasetyo</p>
-                            <span class="text-[11px] font-semibold text-blue-600">Unit B-01</span>
-                        </td>
-                        <td class="py-3.5 px-4 text-xs text-slate-600">
-                            <p>Pokok: <b>Rp 950.000</b></p>
-                            <p class="text-[11px] text-slate-400">+ Listrik/Lain: Rp 40.000</p>
-                        </td>
-                        <td class="py-3.5 px-4 font-extrabold text-slate-800 text-xs">Rp 990.000</td>
-                        <td class="py-3.5 px-4">
-                            <div class="flex flex-col items-start gap-1">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">PAID (2026-10-05)</span>
-                                <button onclick="openProofModal('INV-B01')" class="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
-                                    <i class="fa-solid fa-file-circle-check"></i> Lihat Bukti Transfer
-                                </button>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
-
-                        <button onclick="sendReceiptToWhatsApp('INV-B01')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition" title="Kirim Kwitansi Lunas ke WA">
-                            <i class="fa-brands fa-whatsapp"></i> Kwitansi WA
-                        </button>
-                        <button onclick="openReceipt('INV-B01')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                            <i class="fa-solid fa-receipt"></i> Kwitansi
-                        </button>
-
-                        </td>
-                    </tr>
-                </tbody>
+                                    <tr><td colspan="6" class="py-8 text-center text-slate-400 text-xs">Belum ada tagihan sewa.</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -1631,22 +583,8 @@
                                             </tr>
                                         </thead>
                                         <tbody id="waLogsTableBody" class="divide-y divide-slate-100">
-                        <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-4 font-mono text-slate-500">2026-10-14 14:22</td>
-                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-700">KWITANSI LUNAS</span></td>
-                            <td class="py-3 px-4 font-bold text-slate-800">Nadia Safitri (085712345678)</td>
-                            <td class="py-3 px-4 text-slate-600">Kwitansi Resmi #INV-102 Periode Oktober 2026 (Rp 1.845.000)</td>
-                            <td class="py-3 px-4 text-right"><span class="text-[10px] font-bold text-emerald-600"><i class="fa-solid fa-check-double"></i> DELIVERED</span></td>
-                        </tr>
-
-                        <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-4 font-mono text-slate-500">2026-10-11 09:15</td>
-                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-700">PENGINGAT SEWA</span></td>
-                            <td class="py-3 px-4 font-bold text-slate-800">Rizky Ramadhan (081345678901)</td>
-                            <td class="py-3 px-4 text-slate-600">Pengingat Tagihan #INV-104 Kamar 104 jatuh tempo 2026-10-10</td>
-                            <td class="py-3 px-4 text-right"><span class="text-[10px] font-bold text-emerald-600"><i class="fa-solid fa-check-double"></i> SENT</span></td>
-                        </tr>
-                    </tbody>
+                                            <tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">Belum ada riwayat pesan WhatsApp.</td></tr>
+                                        </tbody>
                                     </table>
                                 </div>
                             </div>
@@ -1679,42 +617,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="expensesTableBody" class="divide-y divide-slate-100 text-sm">
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="py-3.5 px-4 text-xs text-slate-500">2026-10-05</td>
-                    <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">Internet WiFi</span></td>
-                    <td class="py-3.5 px-4 font-semibold text-slate-800 text-xs">Tagihan Internet Biznet Dedicated 100 Mbps</td>
-                    <td class="py-3.5 px-4 font-extrabold text-rose-600 text-xs">Rp 485.000</td>
-                    <td class="py-3.5 px-4 text-right">
-                        <button onclick="deleteExpense('EXP-1')" class="text-slate-400 hover:text-rose-600 text-xs px-2 py-1">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="py-3.5 px-4 text-xs text-slate-500">2026-10-10</td>
-                    <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">Listrik &amp; Air</span></td>
-                    <td class="py-3.5 px-4 font-semibold text-slate-800 text-xs">Listrik PLN Area Umum &amp; Pompa Air PDAM</td>
-                    <td class="py-3.5 px-4 font-extrabold text-rose-600 text-xs">Rp 620.000</td>
-                    <td class="py-3.5 px-4 text-right">
-                        <button onclick="deleteExpense('EXP-2')" class="text-slate-400 hover:text-rose-600 text-xs px-2 py-1">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="py-3.5 px-4 text-xs text-slate-500">2026-10-25</td>
-                    <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">Kebersihan &amp; Keamanan</span></td>
-                    <td class="py-3.5 px-4 font-semibold text-slate-800 text-xs">Iuran Sampah RW &amp; Kebersihan Lingkungan</td>
-                    <td class="py-3.5 px-4 font-extrabold text-rose-600 text-xs">Rp 250.000</td>
-                    <td class="py-3.5 px-4 text-right">
-                        <button onclick="deleteExpense('EXP-3')" class="text-slate-400 hover:text-rose-600 text-xs px-2 py-1">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
+                                    <tr><td colspan="5" class="py-8 text-center text-slate-400 text-xs">Belum ada catatan pengeluaran operasional.</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -1733,78 +637,8 @@
                     </div>
 
                     <div id="complaintsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs">Unit 105</span>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-600 border border-blue-200">IN_PROGRESS</span>
-                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700">Mendesak</span>
-                                </div>
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-sm mt-3 ">Pengecatan ulang &amp; perbaikan plafon rembes</h4>
-                            <p class="text-xs text-slate-500 mt-1">Sedang dikerjakan tukang, target selesai 2 hari lagi.</p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                            <span class="text-[11px] text-slate-400">2026-10-28</span>
-                            <div class="flex items-center gap-1.5">
-
-                                <button onclick="advanceComplaintState('C1', 'RESOLVED')" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition"><i class="fa-solid fa-check mr-1"></i> Resolve</button>
-                                <button onclick="deleteComplaint('C1')" class="text-slate-400 hover:text-rose-600 text-xs px-1.5">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
+                        <div class="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-xs">Belum ada catatan keluhan atau perbaikan fasilitas.</div>
                     </div>
-
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs">Unit 104</span>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-50 text-rose-600 border border-rose-200">REPORTED</span>
-                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700">Normal</span>
-                                </div>
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-sm mt-3 ">Freon AC kurang dingin</h4>
-                            <p class="text-xs text-slate-500 mt-1">Jadwal teknisi cuci AC hari Sabtu pagi.</p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                            <span class="text-[11px] text-slate-400">2026-10-29</span>
-                            <div class="flex items-center gap-1.5">
-                                <button onclick="advanceComplaintState('C2', 'IN_PROGRESS')" class="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition">Kerjakan →</button>
-                                <button onclick="advanceComplaintState('C2', 'RESOLVED')" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition"><i class="fa-solid fa-check mr-1"></i> Resolve</button>
-                                <button onclick="deleteComplaint('C2')" class="text-slate-400 hover:text-rose-600 text-xs px-1.5">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs">Unit 201</span>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-200">RESOLVED</span>
-                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">Rendah</span>
-                                </div>
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-sm mt-3 line-through text-slate-400">Ganti lampu kamar mandi</h4>
-                            <p class="text-xs text-slate-500 mt-1">Sudah diganti dengan LED Philips 9W.</p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                            <span class="text-[11px] text-slate-400">2026-10-22</span>
-                            <div class="flex items-center gap-1.5">
-
-                                <span class="text-xs font-bold text-emerald-600"><i class="fa-solid fa-circle-check"></i> Resolved</span>
-                                <button onclick="deleteComplaint('C3')" class="text-slate-400 hover:text-rose-600 text-xs px-1.5">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 </section>
 
                 <!-- ==================== TAB 8: PLUGINS & SPATIE RBAC ==================== -->
@@ -2000,8 +834,8 @@
                                 <i class="fa-solid fa-upload text-emerald-600"></i> Pulihkan (.json)
                                 <input type="file" accept=".json" onchange="importData(event)" class="hidden">
                             </label>
-                            <button onclick="resetDemoData()" class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold flex items-center gap-2 ml-auto">
-                                <i class="fa-solid fa-rotate-left"></i> Reset Data Contoh
+                            <button onclick="resetDemoData()" class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold flex items-center gap-2 ml-auto" title="Kosongkan seluruh data aplikasi ke kondisi awal">
+                                <i class="fa-solid fa-rotate-left"></i> Reset Data (Kosongkan)
                             </button>
                         </div>
                     </div>
@@ -2383,7 +1217,7 @@
 
     <!-- Modal 2: Add/Edit Room Unit -->
     <div id="roomModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl fade-in">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl fade-in max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 id="roomModalTitle" class="font-bold text-slate-800 text-base">Tambah Unit Kamar Baru</h3>
                 <button onclick="closeModal('roomModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -2391,17 +1225,19 @@
             <form onsubmit="saveRoom(event)" class="space-y-4 mt-4">
                 <input type="hidden" id="roomFormId">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Properti / Cabang *</label>
-                    <select id="roomFormProperty" onchange="renderFloorOptions()" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500"><option value="PROP-1">CHARISNA KOST Pusat</option><option value="PROP-2">CHARISNA KOST Suites</option></select>
+                    <label for="roomFormProperty" class="block text-xs font-semibold text-slate-700 mb-1">Pilih Properti / Cabang *</label>
+                    <select id="roomFormProperty" onchange="renderFloorOptions()" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white font-medium text-slate-800 focus:outline-none focus:border-emerald-500">
+                        <option value="PROP-1">CHARISNA KOST</option>
+                    </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor / Nama Unit *</label>
+                        <label for="roomFormNumber" class="block text-xs font-semibold text-slate-700 mb-1">Nomor / Nama Unit *</label>
                         <input type="text" id="roomFormNumber" placeholder="101 / A-01" required="" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Lantai *</label>
-                        <select id="roomFormFloor" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                        <label for="roomFormFloor" class="block text-xs font-semibold text-slate-700 mb-1">Lantai *</label>
+                        <select id="roomFormFloor" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                             <option value="Lantai 1">Lantai 1</option>
                             <option value="Lantai 2">Lantai 2</option>
                             <option value="Lantai 3">Lantai 3</option>
@@ -2410,50 +1246,125 @@
                 </div>
                 <div class="grid grid-cols-3 gap-2">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tipe *</label>
-                        <select id="roomFormType" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                        <label for="roomFormType" class="block text-xs font-semibold text-slate-700 mb-1">Tipe *</label>
+                        <select id="roomFormType" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                             <option value="VIP AC">VIP AC</option>
                             <option value="Reguler AC">Reguler AC</option>
                             <option value="Standar Kipas">Standar Kipas</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kapasitas *</label>
-                        <select id="roomFormCapacity" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                        <label for="roomFormCapacity" class="block text-xs font-semibold text-slate-700 mb-1">Kapasitas *</label>
+                        <select id="roomFormCapacity" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                             <option value="1">1 Orang</option>
                             <option value="2">2 Orang</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Meteran kWh</label>
+                        <label for="roomFormKwh" class="block text-xs font-semibold text-slate-700 mb-1">Meteran kWh</label>
                         <input type="number" id="roomFormKwh" placeholder="1000" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Harga sewa bulanan (Rp) *</label>
-                    <input type="number" id="roomFormPrice" placeholder="1500000" required="" min="0" step="1" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+
+                <!-- Rent Mode & Monthly Price in clean grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label for="roomFormRentalMode" class="block text-xs font-semibold text-slate-700 mb-1">Mode Sewa Kamar *</label>
+                        <select id="roomFormRentalMode" onchange="syncRoomRentalFields()" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <option value="MONTHLY">Bulanan</option>
+                            <option value="DAILY">Harian</option>
+                            <option value="BOTH">Harian &amp; Bulanan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="roomFormPrice" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Harga Sewa Bulanan <span id="monthlyPriceRequiredBadge" class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400 select-none">Rp</span>
+                            <input type="text" inputmode="numeric" id="roomFormPrice" placeholder="1.500.000" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label class="block text-sm font-semibold">Mode sewa kamar<select id="roomFormRentalMode" onchange="syncRoomRentalFields()" class="w-full border rounded-xl p-3"><option value="MONTHLY">Bulanan</option><option value="DAILY">Harian</option><option value="BOTH">Harian &amp; Bulanan</option></select></label>
-                    <label class="block text-sm font-semibold">Harga per malam (Rp)<input id="roomFormNightlyPrice" type="number" min="1" step="1" placeholder="250000" class="w-full border rounded-xl p-3"></label>
+
+                <!-- Homestay & Daily Rate Section -->
+                <div id="nightlyRateCard" class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-3">
+                    <div>
+                        <label for="roomFormNightlyPrice" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Harga per Malam (Homestay) <span id="nightlyPriceRequiredBadge" class="text-rose-500 hidden">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400 select-none">Rp</span>
+                            <input type="text" inputmode="numeric" id="roomFormNightlyPrice" placeholder="250.000" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <p id="roomRentalHelperText" class="text-[11px] text-slate-500 mt-1">Harga bulanan tetap tersimpan. Harga per malam wajib untuk kamar harian.</p>
+                    </div>
+
+                    <fieldset id="dailyRateSettings" class="hidden pt-3 border-t border-slate-200/70 space-y-2.5">
+                        <legend class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tarif Harian Lanjutan &amp; Jam Operasional</legend>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                                <label for="roomWeekendRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Weekend (Sabtu–Minggu)</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
+                                    <input type="text" inputmode="numeric" id="roomWeekendRate" placeholder="300.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="roomHolidayRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Musim Liburan (Peak)</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
+                                    <input type="text" inputmode="numeric" id="roomHolidayRate" placeholder="350.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="roomTransitRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Tarif Transit (per kunjungan singkat)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
+                                <input type="text" inputmode="numeric" id="roomTransitRate" placeholder="150.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="roomHolidayDates" class="block text-[11px] font-semibold text-slate-600 mb-1">Daftar Tanggal Libur (YYYY-MM-DD, pisahkan koma)</label>
+                            <input type="text" id="roomHolidayDates" placeholder="2026-12-25, 2026-12-31, 2027-01-01" maxlength="1500" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label for="roomCheckInTime" class="block text-[11px] font-semibold text-slate-600 mb-1">Jam Check-In</label>
+                                <input type="time" id="roomCheckInTime" value="14:00" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="roomCheckOutTime" class="block text-[11px] font-semibold text-slate-600 mb-1">Jam Check-Out</label>
+                                <input type="time" id="roomCheckOutTime" value="12:00" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                    </fieldset>
                 </div>
-                <fieldset id="dailyRateSettings" class="hidden grid gap-2">
-                  <legend>Tarif harian lanjutan</legend>
-                  <label>Weekend Sabtu–Minggu <input id="roomWeekendRate" type="number" min="1" step="1"></label>
-                  <label>Tarif tanggal libur <input id="roomHolidayRate" type="number" min="1" step="1"></label>
-                  <label>Tanggal libur (YYYY-MM-DD, pisahkan dengan koma) <input id="roomHolidayDates" maxlength="1500"></label>
-                  <label>Tarif transit (Rp per kunjungan) <input id="roomTransitRate" type="number" min="1" step="1"></label>
-                  <label>Jam masuk <input id="roomCheckInTime" type="time"></label>
-                  <label>Jam keluar <input id="roomCheckOutTime" type="time"></label>
-                </fieldset>
-                <p class="text-xs text-slate-500">Harga bulanan tetap tersimpan. Harga per malam wajib untuk kamar harian.</p>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Fasilitas Unit</label>
-                    <input type="text" id="roomFormFacilities" placeholder="AC, WiFi, KM Dalam, Springbed" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+
+                <!-- Facilities Section with Checklist & Custom Additions -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-slate-700">Fasilitas Unit (Pilihan Ceklis)</label>
+                        <span id="facilitiesCountBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">0 dipilih</span>
+                    </div>
+                    <div id="facilitiesChecklistGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 max-h-48 overflow-y-auto text-xs">
+                        <!-- Populated by renderFacilitiesChecklist() -->
+                    </div>
+                    <div>
+                        <label for="roomFormFacilitiesCustom" class="block text-[11px] font-semibold text-slate-600 mb-1">Fasilitas Tambahan Lainnya (opsional, pisahkan koma)</label>
+                        <input type="text" id="roomFormFacilitiesCustom" oninput="syncFacilitiesFromChecklist()" placeholder="contoh: Dispenser, Kopi sachet, Hair dryer" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <input type="hidden" id="roomFormFacilities">
+                    <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600">
+                        <span class="font-bold text-slate-700">Terpilih: </span>
+                        <span id="facilitiesPreviewText" class="italic text-slate-500">Belum ada fasilitas dipilih</span>
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Status Unit</label>
-                    <select id="roomFormStatus" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                    <label for="roomFormStatus" class="block text-xs font-semibold text-slate-700 mb-1">Status Unit</label>
+                    <select id="roomFormStatus" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                         <option value="KOSONG">Kosong (Tersedia)</option>
                         <option value="TERISI">Terisi</option>
                         <option value="PERBAIKAN">Sedang Perbaikan</option>
@@ -2893,104 +1804,51 @@
         let activeProofBillId = null;
 
         const defaultData = {
-            meta: { exampleData: true, localUpdatedAt: '' },
+            meta: { exampleData: false, localUpdatedAt: '' },
             settings: {
                 kostName: 'CHARISNA KOST',
-                ownerName: 'Ibu Charisna Wijaya',
+                ownerName: 'Ibu Charisna',
                 ownerPhone: '081234567890',
-                bankInfo: 'BCA 8291048291 a/n CHARISNA KOST',
-                kostAddress: 'Jl. Dharmawangsa Indah No. 18, Surabaya',
+                bankInfo: 'BCA 1234567890 a/n CHARISNA KOST',
+                kostAddress: 'Surabaya',
                 kwhRate: 1600,
+                defaultLanguage: 'id',
+                lastBackup: '-',
                 driveScriptUrl: ''
             },
             properties: [
-                { id: 'PROP-1', name: 'CHARISNA KOST Pusat', address: 'Jl. Dharmawangsa Indah No. 18, Surabaya' },
-                { id: 'PROP-2', name: 'CHARISNA KOST Suites', address: 'Jl. Dharmahusada Utara No. 42, Surabaya' }
+                { id: 'PROP-1', name: 'CHARISNA KOST', address: 'Surabaya', floors: ['Lantai 1', 'Lantai 2'] }
             ],
             plugins: [
                 { id: 'plg-wa', name: 'WhatsApp Pluggable Driver', version: 'v1.2.0', desc: 'Kirim Kwitansi Digital & Pengingat Jatuh Tempo langsung ke WhatsApp + Outbox Logger', enabled: true },
                 { id: 'plg-ktp', name: 'KYC Identity & KTP Vault', version: 'v1.1.0', desc: 'Penyimpanan terkompresi foto KTP/SIM penghuni & validasi NIK di setiap kartu kamar', enabled: true },
                 { id: 'plg-cap', name: 'Multi-Tenant Capacity Guard', version: 'v1.0.4', desc: 'Dukungan kapasitas 1-2 penghuni per kamar dengan pelacakan kontrak sewa (Lease)', enabled: true },
                 { id: 'plg-proof', name: 'Payment Proof & Overdue Detector', version: 'v1.0.8', desc: 'Unggah foto bukti transfer pembayaran sewa & deteksi otomatis keterlambatan jatuh tempo', enabled: true },
-                { id: 'plg-passport', name: 'Foreign Guest Passport & WNA Registry', version: 'v1.0.0', desc: 'Validasi nomor Paspor, tanggal kedaluwarsa, tipe Visa (VoA/Tourist/KITAS), kebangsaan (Nationality), serta ekspor formulir cetak Wajib Lapor Tamu Asing ke RT/Lingkungan.', enabled: false },
-                { id: 'plg-daily', name: 'Daily Homestay & Dynamic Rate Engine', version: 'v1.0.2', desc: 'Dukungan sewa harian/transit, penetapan tarif per malam (Weekday, Weekend, & Musim Liburan), serta pelacakan jam Check-In (14:00) dan Check-Out (12:00).', enabled: false },
+                { id: 'plg-passport', name: 'Foreign Guest Passport & WNA Registry', version: 'v1.0.0', desc: 'Validasi nomor Paspor, tanggal kedaluwarsa, tipe Visa (VoA/Tourist/KITAS), kebangsaan (Nationality), serta ekspor formulir cetak Wajib Lapor Tamu Asing ke RT/Lingkungan.', enabled: true },
+                { id: 'plg-daily', name: 'Daily Homestay & Dynamic Rate Engine', version: 'v1.0.2', desc: 'Dukungan sewa harian/transit, penetapan tarif per malam (Weekday, Weekend, & Musim Liburan), serta pelacakan jam Check-In (14:00) dan Check-Out (12:00).', enabled: true },
                 { id: 'plg-i18n', name: 'Bilingual Receipt & English Communication Pack', version: 'v1.0.5', desc: 'Sakelar dwibahasa (ID/EN) untuk Kwitansi resmi, invoice PDF, serta draf pesan WhatsApp berbahasa Inggris (Official Receipt, Room Charge, Settlement).', enabled: true },
-                { id: 'plg-ical', name: 'Kalender OTA & iCal', version: 'v1.1.0', desc: 'Impor feed yang mendukung browser, impor file iCal, dan ekspor ketersediaan per unit. Blok tanggal diperiksa saat check-in.', enabled: false },
-                { id: 'plg-turnover', name: 'Housekeeping Dispatch & Room Turnover', version: 'v1.2.0', desc: 'Otomasi status kamar pasca check-out (Dirty ➔ In-Progress ➔ Clean & Ready) terhubung ke checklist tugas petugas kebersihan untuk pergantian sprei & handuk kilat.', enabled: false },
+                { id: 'plg-ical', name: 'Kalender OTA & iCal', version: 'v1.1.0', desc: 'Impor feed yang mendukung browser, impor file iCal, dan ekspor ketersediaan per unit. Blok tanggal diperiksa saat check-in.', enabled: true },
+                { id: 'plg-turnover', name: 'Housekeeping Dispatch & Room Turnover', version: 'v1.2.0', desc: 'Otomasi status kamar pasca check-out (Dirty ➔ In-Progress ➔ Clean & Ready) terhubung ke checklist tugas petugas kebersihan untuk pergantian sprei & handuk kilat.', enabled: true },
                 { id: 'plg-qris', name: 'Smart QRIS & Multi-Currency Converter', version: 'v1.0.3', desc: 'Generator kode QRIS pembayaran instan m-Banking/e-Wallet di invoice, serta kalkulator konversi kurs estimasi valuta asing (USD/EUR/AUD ke IDR).', enabled: true }
             ],
-            waLogs: [
-                { id: 'LOG-101', timestamp: '2026-10-14 14:22', type: 'KWITANSI LUNAS', recipient: 'Nadia Safitri (085712345678)', summary: 'Kwitansi Resmi #INV-102 Periode Oktober 2026 (Rp 1.845.000)', status: 'DELIVERED' },
-                { id: 'LOG-102', timestamp: '2026-10-11 09:15', type: 'PENGINGAT SEWA', recipient: 'Rizky Ramadhan (081345678901)', summary: 'Pengingat Tagihan #INV-104 Kamar 104 jatuh tempo 2026-10-10', status: 'SENT' }
-            ],
-            rooms: [
-                { id: 'R101', propertyId: 'PROP-1', number: '101', floor: 'Lantai 1', type: 'VIP AC', capacity: 2, price: 1750000, kwh: 1420, status: 'TERISI', facilities: 'AC, WiFi, KM Dalam, Water Heater, Springbed Queen' },
-                { id: 'R102', propertyId: 'PROP-1', number: '102', floor: 'Lantai 1', type: 'VIP AC', capacity: 1, price: 1750000, kwh: 1180, status: 'TERISI', facilities: 'AC, WiFi, KM Dalam, Water Heater, Springbed' },
-                { id: 'R103', propertyId: 'PROP-1', number: '103', floor: 'Lantai 1', type: 'Reguler AC', capacity: 1, price: 1400000, kwh: 950, status: 'KOSONG', facilities: 'AC, WiFi, KM Dalam, Kasur Busa' },
-                { id: 'R104', propertyId: 'PROP-1', number: '104', floor: 'Lantai 1', type: 'Reguler AC', capacity: 1, price: 1400000, kwh: 1610, status: 'TERISI', facilities: 'AC, WiFi, KM Dalam, Kasur Busa' },
-                { id: 'R105', propertyId: 'PROP-1', number: '105', floor: 'Lantai 1', type: 'Reguler AC', capacity: 1, price: 1400000, kwh: 890, status: 'PERBAIKAN', facilities: 'AC, WiFi, KM Dalam, Kasur Busa' },
-                { id: 'R201', propertyId: 'PROP-1', number: '201', floor: 'Lantai 2', type: 'Reguler AC', capacity: 1, price: 1350000, kwh: 2105, status: 'TERISI', facilities: 'AC, WiFi, KM Dalam, Balkon' },
-                { id: 'R202', propertyId: 'PROP-1', number: '202', floor: 'Lantai 2', type: 'Reguler AC', capacity: 1, price: 1350000, kwh: 740, status: 'KOSONG', facilities: 'AC, WiFi, KM Dalam, Balkon' },
-                { id: 'R203', propertyId: 'PROP-2', number: 'A-01', floor: 'Lantai 1', type: 'VIP AC', capacity: 2, price: 1950000, kwh: 530, status: 'TERISI', facilities: 'Smart TV, AC, WiFi, KM Dalam, Pantry' },
-                { id: 'R204', propertyId: 'PROP-2', number: 'A-02', floor: 'Lantai 1', type: 'VIP AC', capacity: 2, price: 1950000, kwh: 410, status: 'KOSONG', facilities: 'Smart TV, AC, WiFi, KM Dalam, Pantry' },
-                { id: 'R205', propertyId: 'PROP-2', number: 'B-01', floor: 'Lantai 2', type: 'Standar Kipas', capacity: 1, price: 950000, kwh: 685, status: 'TERISI', facilities: 'Kipas Angin, WiFi, KM Luar, Lemari' }
-            ],
-            tenants: [
-                { id: 'T1', name: 'Dimas Anggara', nik: '3578041205980001', roomNumber: '101', leaseInterval: 'Bulanan', phone: '081298765432', emergency: '0811345678 (Bpk. Agus)', job: 'Karyawan BUMN', vehicle: 'L 1829 QP (Mobil)', deposit: 500000, entryDate: '2026-03-01', ktpVerified: true, ktpImage: null },
-                { id: 'T2', name: 'Nadia Safitri', nik: '3578085409030002', roomNumber: '102', leaseInterval: '3 Bulanan', phone: '085712345678', emergency: '0812334455 (Ibu Rina)', job: 'Mahasiswi UNAIR', vehicle: 'W 4910 N (Motor)', deposit: 500000, entryDate: '2026-06-15', ktpVerified: true, ktpImage: null },
-                { id: 'T3', name: 'Rizky Ramadhan', nik: '3515182211990004', roomNumber: '104', leaseInterval: 'Bulanan', phone: '081345678901', emergency: '0819887766 (Ibu Dewi)', job: 'Software Engineer', vehicle: 'L 6721 KK (Motor)', deposit: 400000, entryDate: '2026-01-10', ktpVerified: true, ktpImage: null },
-                { id: 'T4', name: 'Putri Maharani', nik: '3578106102010003', roomNumber: '201', leaseInterval: 'Bulanan', phone: '082199887766', emergency: '0852112233 (Bpk. Joko)', job: 'Desainer Grafis', vehicle: 'AG 3319 Y (Motor)', deposit: 400000, entryDate: '2026-08-01', ktpVerified: true, ktpImage: null },
-                { id: 'T5', name: 'Fajar Nugroho', nik: '3578021907040005', roomNumber: 'A-01', leaseInterval: 'Tahunan', phone: '087811223344', emergency: '0813990011 (Ibu Sri)', job: 'Dokter Muda RSUD', vehicle: 'S 2819 TT (Mobil)', deposit: 1000000, entryDate: '2026-07-20', ktpVerified: false, ktpImage: null },
-                { id: 'T6', name: 'Bagas Prasetyo', nik: '3578060812000002', roomNumber: 'B-01', leaseInterval: 'Bulanan', phone: '081900112233', emergency: '0815667788 (Bpk. Tono)', job: 'Staff Administrasi', vehicle: 'L 5102 BB (Motor)', deposit: 300000, entryDate: '2026-09-05', ktpVerified: true, ktpImage: null }
-            ],
-            bills: [
-                { id: 'INV-101', tenantName: 'Dimas Anggara', phone: '081298765432', roomNumber: '101', period: 'Oktober 2026', dueDate: '2026-10-05', baseAmount: 1750000, electricAmount: 120000, otherAmount: 0, amount: 1870000, status: 'LUNAS', paidDate: '2026-10-03', proofUploaded: true, proofImage: null },
-                { id: 'INV-102', tenantName: 'Nadia Safitri', phone: '085712345678', roomNumber: '102', period: 'Oktober 2026', dueDate: '2026-10-15', baseAmount: 1750000, electricAmount: 95000, otherAmount: 0, amount: 1845000, status: 'LUNAS', paidDate: '2026-10-14', proofUploaded: true, proofImage: null },
-                { id: 'INV-104', tenantName: 'Rizky Ramadhan', phone: '081345678901', roomNumber: '104', period: 'Oktober 2026', dueDate: '2026-10-10', baseAmount: 1400000, electricAmount: 85000, otherAmount: 0, amount: 1485000, status: 'BELUM_LUNAS', paidDate: null, proofUploaded: false, proofImage: null },
-                { id: 'INV-201', tenantName: 'Putri Maharani', phone: '082199887766', roomNumber: '201', period: 'Oktober 2026', dueDate: '2026-10-05', baseAmount: 1350000, electricAmount: 75000, otherAmount: 0, amount: 1425000, status: 'LUNAS', paidDate: '2026-10-04', proofUploaded: true, proofImage: null },
-                { id: 'INV-A01', tenantName: 'Fajar Nugroho', phone: '087811223344', roomNumber: 'A-01', period: 'Oktober 2026', dueDate: '2026-10-20', baseAmount: 1950000, electricAmount: 65000, otherAmount: 0, amount: 2015000, status: 'BELUM_LUNAS', paidDate: null, proofUploaded: true, proofImage: null },
-                { id: 'INV-B01', tenantName: 'Bagas Prasetyo', phone: '081900112233', roomNumber: 'B-01', period: 'Oktober 2026', dueDate: '2026-10-05', baseAmount: 950000, electricAmount: 40000, otherAmount: 0, amount: 990000, status: 'LUNAS', paidDate: '2026-10-05', proofUploaded: true, proofImage: null }
-            ],
-            expenses: [
-                { id: 'EXP-1', date: '2026-10-05', category: 'Internet WiFi', title: 'Tagihan Internet Biznet Dedicated 100 Mbps', amount: 485000 },
-                { id: 'EXP-2', date: '2026-10-10', category: 'Listrik & Air', title: 'Listrik PLN Area Umum & Pompa Air PDAM', amount: 620000 },
-                { id: 'EXP-3', date: '2026-10-25', category: 'Kebersihan & Keamanan', title: 'Iuran Sampah RW & Kebersihan Lingkungan', amount: 250000 }
-            ],
-            complaints: [
-                { id: 'C1', roomNumber: '105', title: 'Pengecatan ulang & perbaikan plafon rembes', desc: 'Sedang dikerjakan tukang, target selesai 2 hari lagi.', priority: 'Mendesak', status: 'IN_PROGRESS', date: '2026-10-28' },
-                { id: 'C2', roomNumber: '104', title: 'Freon AC kurang dingin', desc: 'Jadwal teknisi cuci AC hari Sabtu pagi.', priority: 'Normal', status: 'REPORTED', date: '2026-10-29' },
-                { id: 'C3', roomNumber: '201', title: 'Ganti lampu kamar mandi', desc: 'Sudah diganti dengan LED Philips 9W.', priority: 'Rendah', status: 'RESOLVED', date: '2026-10-22' }
-            ],
-            inventaris: [
-                { id: 'INV-1', propertyId: 'PROP-1', roomRef: '101', item: 'AC Split 1/2 PK Panasonic', category: 'Elektronik', qty: 1, condition: 'Baik', notes: 'Servis cuci filter terakhir 2026-10-15' },
-                { id: 'INV-2', propertyId: 'PROP-1', roomRef: 'Umum', item: 'Kamera CCTV Dome 4MP', category: 'Keamanan', qty: 6, condition: 'Baik', notes: 'Perekaman 24 jam' },
-                { id: 'INV-3', propertyId: 'PROP-2', roomRef: 'A-01', item: 'Springbed Queen + Matras', category: 'Furnitur', qty: 1, condition: 'Baik', notes: '' }
-            ],
-            stok: [
-                { id: 'STK-1', name: 'Sabun cuci piring', unit: 'botol', qty: 8, minStock: 4, location: 'Gudang utama' },
-                { id: 'STK-2', name: 'Pemutih pakaian', unit: 'liter', qty: 2, minStock: 5, location: 'Gudang utama' },
-                { id: 'STK-3', name: 'Air mineral galon', unit: 'galon', qty: 12, minStock: 6, location: 'Dapur bersama' }
-            ],
-            stokMutasi: [
-                { id: 'MUT-1', ts: '2026-10-20T08:00', type: 'MASUK', itemId: 'STK-1', qty: 12, from: 'Supplier grosir', to: 'Gudang utama', note: 'Pembelian bulanan' }
-            ],
-            perawatan: [
-                { id: 'PWT-1', asset: 'AC kamar 101', propertyId: 'PROP-1', frequency: 'BULANAN', nextDate: '2026-11-15', lastDate: '2026-10-15', notes: '' },
-                { id: 'PWT-2', asset: 'Pompa air & tandon', propertyId: 'PROP-1', frequency: '3 BULANAN', nextDate: '2027-01-05', lastDate: '2026-10-05', notes: '' }
-            ],
-            perbaikan: [
-                { id: 'PRB-1', date: '2026-10-18', asset: 'Pompa air', desc: 'Ganti bantalan & seal bocor', cost: 250000, photo: '', status: 'SELESAI', propertyId: 'PROP-1' }
-            ],
-            kontrak: [
-                { id: 'KTK-1', tenantName: 'Fajar Nugroho', roomNumber: 'A-01', startDate: '2026-07-20', endDate: '2027-07-19', remindDays: 30, notified: false }
-            ],
-            tagihanBertahap: [
-                { id: 'TGB-1', tenantName: 'Nadia Safitri', phone: '085712345678', period: 'Oktober 2026', total: 1845000, stages: [ { n: 1, due: '2026-10-05', amount: 700000, status: 'LUNAS' }, { n: 2, due: '2026-10-15', amount: 600000, status: 'LUNAS' }, { n: 3, due: '2026-10-25', amount: 545000, status: 'BELUM' } ] }
-            ],
-            meter: [
-                { id: 'MTR-1', type: 'LISTRIK', ref: '101', date: '2026-10-01', reading: 1420, usage: 118, rate: 1600, cost: 188800 },
-                { id: 'MTR-2', type: 'AIR', ref: 'Umum', date: '2026-10-01', reading: 855, usage: 42, rate: 7500, cost: 315000 }
-            ]
+            waLogs: [],
+            rooms: [],
+            tenants: [],
+            bills: [],
+            expenses: [],
+            complaints: [],
+            inventaris: [],
+            stok: [],
+            stokMutasi: [],
+            perawatan: [],
+            perbaikan: [],
+            kontrak: [],
+            tagihanBertahap: [],
+            meter: [],
+            handovers: [],
+            tenantNotes: [],
+            announcements: [],
+            auditLogs: []
         };
 
         let appData = loadData();
@@ -3062,6 +1920,137 @@
 
         function formatRupiah(num) {
             return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
+        }
+
+        function formatNumberWithDots(val) {
+            if (val === null || val === undefined || val === '') return '';
+            const clean = String(val).replace(/\D/g, '');
+            if (!clean) return '';
+            return Number(clean).toLocaleString('id-ID');
+        }
+
+        function getNumericValue(el) {
+            if (!el) return 0;
+            const val = typeof el === 'string' ? el : el.value;
+            const clean = String(val || '').replace(/\D/g, '');
+            return clean ? Number(clean) : 0;
+        }
+
+        function handleCurrencyInput(e) {
+            const input = e.target;
+            const originalVal = input.value;
+            const clean = originalVal.replace(/\D/g, '');
+            if (!clean) {
+                input.value = '';
+                return;
+            }
+            const oldCursor = input.selectionStart || 0;
+            const oldDigitsBeforeCursor = (originalVal.slice(0, oldCursor).match(/\d/g) || []).length;
+            const formatted = Number(clean).toLocaleString('id-ID');
+            input.value = formatted;
+            let newCursor = 0;
+            let digitsSeen = 0;
+            for (let i = 0; i < formatted.length; i++) {
+                if (/\d/.test(formatted[i])) digitsSeen++;
+                if (digitsSeen >= oldDigitsBeforeCursor) {
+                    newCursor = i + 1;
+                    break;
+                }
+            }
+            if (digitsSeen < oldDigitsBeforeCursor) newCursor = formatted.length;
+            input.setSelectionRange(newCursor, newCursor);
+        }
+
+        const STANDARD_FACILITIES = [
+            { id: 'fac-ac', name: 'AC', aliases: ['ac'] },
+            { id: 'fac-kmdalam', name: 'KM Dalam', aliases: ['km dalam', 'kamar mandi dalam'] },
+            { id: 'fac-kmluar', name: 'KM Luar', aliases: ['km luar', 'kamar mandi luar'] },
+            { id: 'fac-wifi', name: 'WiFi', aliases: ['wifi', 'wi-fi', 'wifi cepat', 'internet'] },
+            { id: 'fac-waterheater', name: 'Water Heater', aliases: ['water heater', 'pemanas air'] },
+            { id: 'fac-springbed', name: 'Springbed', aliases: ['springbed', 'springbed queen', 'springbed single', 'kasur springbed'] },
+            { id: 'fac-kasurbusa', name: 'Kasur Busa', aliases: ['kasur busa'] },
+            { id: 'fac-lemari', name: 'Lemari Pakaian', aliases: ['lemari', 'lemari pakaian'] },
+            { id: 'fac-mejakursi', name: 'Meja & Kursi Kerja', aliases: ['meja', 'kursi', 'meja kerja', 'meja & kursi kerja', 'meja kursi'] },
+            { id: 'fac-smarttv', name: 'Smart TV', aliases: ['smart tv', 'tv', 'televisi'] },
+            { id: 'fac-kulkasmini', name: 'Kulkas Mini', aliases: ['kulkas mini', 'kulkas'] },
+            { id: 'fac-balkon', name: 'Balkon', aliases: ['balkon', 'teras', 'balkon / teras'] },
+            { id: 'fac-dapur', name: 'Dapur / Pantry', aliases: ['dapur', 'pantry', 'dapur / pantry', 'dapur bersama'] },
+            { id: 'fac-dispenser', name: 'Dispenser Air', aliases: ['dispenser', 'dispenser air'] },
+            { id: 'fac-kipas', name: 'Kipas Angin', aliases: ['kipas', 'kipas angin'] },
+            { id: 'fac-parkirmotor', name: 'Parkir Motor', aliases: ['parkir motor'] },
+            { id: 'fac-parkirmobil', name: 'Parkir Mobil', aliases: ['parkir mobil'] },
+            { id: 'fac-tokenlistrik', name: 'Token Listrik Mandiri', aliases: ['token listrik', 'token listrik mandiri', 'meteran listrik mandiri'] },
+            { id: 'fac-freelistrik', name: 'Termasuk Listrik', aliases: ['termasuk listrik', 'free listrik'] },
+            { id: 'fac-amenities', name: 'Handuk & Amenities', aliases: ['handuk', 'amenities', 'handuk & amenities', 'sabun'] },
+            { id: 'fac-cctv', name: 'CCTV 24 Jam', aliases: ['cctv', 'cctv 24 jam'] }
+        ];
+
+        function renderFacilitiesChecklist() {
+            const grid = document.getElementById('facilitiesChecklistGrid');
+            if (!grid) return;
+            grid.innerHTML = STANDARD_FACILITIES.map(fac => `
+                <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer select-none">
+                    <input type="checkbox" data-fac-name="${escapePropertyText(fac.name)}" value="${escapePropertyText(fac.id)}" onchange="syncFacilitiesFromChecklist()" class="fac-checkbox rounded text-emerald-600 focus:ring-emerald-500">
+                    <span class="text-xs text-slate-700 font-medium">${escapePropertyText(fac.name)}</span>
+                </label>
+            `).join('');
+        }
+
+        function populateFacilitiesChecklist(facilitiesStr = '') {
+            renderFacilitiesChecklist();
+            const tokens = String(facilitiesStr || '').split(',').map(s => s.trim()).filter(Boolean);
+            const checkboxes = document.querySelectorAll('.fac-checkbox');
+            const customExtras = [];
+
+            checkboxes.forEach(cb => { cb.checked = false; });
+
+            tokens.forEach(token => {
+                const norm = token.toLowerCase();
+                let matched = false;
+                for (const fac of STANDARD_FACILITIES) {
+                    if (fac.name.toLowerCase() === norm || fac.aliases.some(alias => alias === norm)) {
+                        const cb = Array.from(checkboxes).find(c => c.dataset.facName === fac.name);
+                        if (cb) {
+                            cb.checked = true;
+                            matched = true;
+                            break;
+                        }
+                    }
+                }
+                if (!matched) {
+                    customExtras.push(token);
+                }
+            });
+
+            const customInput = document.getElementById('roomFormFacilitiesCustom');
+            if (customInput) customInput.value = customExtras.join(', ');
+
+            syncFacilitiesFromChecklist();
+        }
+
+        function syncFacilitiesFromChecklist() {
+            const checkedCbs = Array.from(document.querySelectorAll('.fac-checkbox:checked'));
+            const selected = checkedCbs.map(cb => cb.dataset.facName).filter(Boolean);
+
+            const customInput = document.getElementById('roomFormFacilitiesCustom');
+            if (customInput && customInput.value.trim()) {
+                const customTokens = customInput.value.split(',').map(s => s.trim()).filter(Boolean);
+                customTokens.forEach(t => {
+                    if (!selected.includes(t)) selected.push(t);
+                });
+            }
+
+            const hiddenField = document.getElementById('roomFormFacilities');
+            if (hiddenField) hiddenField.value = selected.join(', ');
+
+            const countBadge = document.getElementById('facilitiesCountBadge');
+            if (countBadge) countBadge.textContent = `${selected.length} dipilih`;
+
+            const previewText = document.getElementById('facilitiesPreviewText');
+            if (previewText) {
+                previewText.textContent = selected.length > 0 ? selected.join(', ') : 'Belum ada fasilitas dipilih';
+                previewText.className = selected.length > 0 ? 'font-medium text-slate-700' : 'italic text-slate-500';
+            }
         }
 
         function terbilang(value) {
@@ -3919,6 +2908,7 @@
         function openRoomModal(roomId = null) {
             renderPropertySelectors();
             const modal = document.getElementById('roomModal');
+            let initialFacilities = 'AC, WiFi, KM Dalam, Springbed';
             if (roomId) {
                 const room = appData.rooms.find(r => r.id === roomId);
                 if (!room) return;
@@ -3929,34 +2919,41 @@
                 document.getElementById('roomFormNumber').value = room.number;
                 document.getElementById('roomFormFloor').value = room.floor;
                 document.getElementById('roomFormType').value = room.type;
-                document.getElementById('roomFormPrice').value = room.price;
+                document.getElementById('roomFormPrice').value = formatNumberWithDots(room.price);
                 document.getElementById('roomFormRentalMode').value = CharisnaRental.mode(room);
-                document.getElementById('roomFormNightlyPrice').value = room.nightlyPrice || '';
+                document.getElementById('roomFormNightlyPrice').value = formatNumberWithDots(room.nightlyPrice || '');
                 document.getElementById('roomFormCapacity').value = String(room.capacity || 1);
                 document.getElementById('roomFormKwh').value = room.kwh || 1000;
-                document.getElementById('roomFormFacilities').value = room.facilities;
                 document.getElementById('roomFormStatus').value = room.status;
+                initialFacilities = room.facilities || '';
             } else {
                 document.getElementById('roomModalTitle').textContent = 'Tambah Unit Kamar Baru';
                 document.getElementById('roomFormId').value = '';
                 document.getElementById('roomFormProperty').value = currentPropertyFilter === 'ALL' ? appData.properties[0]?.id || '' : currentPropertyFilter;
                 renderFloorOptions();
                 document.getElementById('roomFormNumber').value = '';
-                document.getElementById('roomFormPrice').value = '1500000';
+                document.getElementById('roomFormPrice').value = formatNumberWithDots('1500000');
                 document.getElementById('roomFormRentalMode').value = 'MONTHLY';
                 document.getElementById('roomFormNightlyPrice').value = '';
                 document.getElementById('roomFormCapacity').value = '1';
                 document.getElementById('roomFormKwh').value = '1000';
-                document.getElementById('roomFormFacilities').value = 'AC, WiFi, KM Dalam, Springbed';
                 document.getElementById('roomFormStatus').value = 'KOSONG';
             }
-            const plan=appData.rooms.find(room=>room.id===roomId)?.ratePlan || {};
-            document.getElementById('roomTransitRate').value=plan.transit || '';
-            document.getElementById('roomWeekendRate').value=plan.weekend || '';
-            document.getElementById('roomHolidayRate').value=plan.holiday || '';
-            document.getElementById('roomHolidayDates').value=(plan.holidays || []).join(', ');
-            document.getElementById('roomCheckInTime').value=plan.checkIn || '14:00';
-            document.getElementById('roomCheckOutTime').value=plan.checkOut || '12:00';
+            populateFacilitiesChecklist(initialFacilities);
+            const plan = appData.rooms.find(room => room.id === roomId)?.ratePlan || {};
+            document.getElementById('roomTransitRate').value = formatNumberWithDots(plan.transit || '');
+            document.getElementById('roomWeekendRate').value = formatNumberWithDots(plan.weekend || '');
+            document.getElementById('roomHolidayRate').value = formatNumberWithDots(plan.holiday || '');
+            document.getElementById('roomHolidayDates').value = (plan.holidays || []).join(', ');
+            document.getElementById('roomCheckInTime').value = plan.checkIn || '14:00';
+            document.getElementById('roomCheckOutTime').value = plan.checkOut || '12:00';
+            ['roomFormPrice', 'roomFormNightlyPrice', 'roomWeekendRate', 'roomHolidayRate', 'roomTransitRate'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el._hasCurrencyListener) {
+                    el.addEventListener('input', handleCurrencyInput);
+                    el._hasCurrencyListener = true;
+                }
+            });
             syncRoomRentalFields();
             if (modal) {
                 modal.classList.remove('hidden');
@@ -3967,28 +2964,37 @@
         function saveRoom(e) {
             e.preventDefault();
             const id = document.getElementById('roomFormId').value;
+            const priceVal = getNumericValue(document.getElementById('roomFormPrice'));
+            const nightlyPriceVal = getNumericValue(document.getElementById('roomFormNightlyPrice'));
             const roomObj = {
-                ...(appData.rooms.find(room=>room.id===id) || {}),
+                ...(appData.rooms.find(room => room.id === id) || {}),
                 id: id || 'R' + Date.now(),
                 propertyId: document.getElementById('roomFormProperty').value,
                 number: document.getElementById('roomFormNumber').value.trim(),
                 floor: document.getElementById('roomFormFloor').value,
                 type: document.getElementById('roomFormType').value,
                 capacity: Number(document.getElementById('roomFormCapacity').value || 1),
-                price: Number(document.getElementById('roomFormPrice').value),
+                price: priceVal,
                 rentalMode: document.getElementById('roomFormRentalMode').value,
-                nightlyPrice: Number(document.getElementById('roomFormNightlyPrice').value || 0),
+                nightlyPrice: nightlyPriceVal,
                 kwh: Number(document.getElementById('roomFormKwh').value || 0),
                 facilities: document.getElementById('roomFormFacilities').value.trim(),
                 status: document.getElementById('roomFormStatus').value
             };
-            if(!['MONTHLY','DAILY','BOTH'].includes(roomObj.rentalMode) || !Number.isSafeInteger(roomObj.price) || roomObj.price<0 || !Number.isSafeInteger(roomObj.nightlyPrice) || roomObj.nightlyPrice<0 || (roomObj.rentalMode!=='DAILY' && roomObj.price<=0) || (roomObj.rentalMode!=='MONTHLY' && roomObj.nightlyPrice<=0))return showToast('Isi harga bulanan / per malam sesuai mode sewa, dalam Rupiah bulat positif.','warning');
-            if(appData.tenants.some(tenant=>tenant.roomNumber===roomObj.number && !CharisnaRental.supports(roomObj,tenant.leaseInterval)))return showToast('Mode sewa bertentangan dengan penghuni aktif. Pilih Harian & Bulanan atau selesaikan sewa yang masih aktif.','warning');
-            if(pluginEnabled('plg-daily') && roomObj.rentalMode!=='MONTHLY'){
-                const holidays=document.getElementById('roomHolidayDates').value.split(',').map(date=>date.trim()).filter(Boolean);
-                if(holidays.some(date=>!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0,10)!==date))
-                    return showToast('Tanggal libur harus valid dalam format YYYY-MM-DD.','warning');
-                roomObj.ratePlan={transit:Number(document.getElementById('roomTransitRate').value),weekend:Number(document.getElementById('roomWeekendRate').value),holiday:Number(document.getElementById('roomHolidayRate').value),holidays:[...new Set(holidays)],checkIn:document.getElementById('roomCheckInTime').value || '14:00',checkOut:document.getElementById('roomCheckOutTime').value || '12:00'};
+            if (!['MONTHLY', 'DAILY', 'BOTH'].includes(roomObj.rentalMode) || !Number.isSafeInteger(roomObj.price) || roomObj.price < 0 || !Number.isSafeInteger(roomObj.nightlyPrice) || roomObj.nightlyPrice < 0 || (roomObj.rentalMode !== 'DAILY' && roomObj.price <= 0) || (roomObj.rentalMode !== 'MONTHLY' && roomObj.nightlyPrice <= 0)) return showToast('Isi harga bulanan / per malam sesuai mode sewa, dalam Rupiah bulat positif.', 'warning');
+            if (appData.tenants.some(tenant => tenant.roomNumber === roomObj.number && !CharisnaRental.supports(roomObj, tenant.leaseInterval))) return showToast('Mode sewa bertentangan dengan penghuni aktif. Pilih Harian & Bulanan atau selesaikan sewa yang masih aktif.', 'warning');
+            if (pluginEnabled('plg-daily') && roomObj.rentalMode !== 'MONTHLY') {
+                const holidays = document.getElementById('roomHolidayDates').value.split(',').map(date => date.trim()).filter(Boolean);
+                if (holidays.some(date => !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date))
+                    return showToast('Tanggal libur harus valid dalam format YYYY-MM-DD.', 'warning');
+                roomObj.ratePlan = {
+                    transit: getNumericValue(document.getElementById('roomTransitRate')),
+                    weekend: getNumericValue(document.getElementById('roomWeekendRate')),
+                    holiday: getNumericValue(document.getElementById('roomHolidayRate')),
+                    holidays: [...new Set(holidays)],
+                    checkIn: document.getElementById('roomCheckInTime').value || '14:00',
+                    checkOut: document.getElementById('roomCheckOutTime').value || '12:00'
+                };
             }
             let beforeRoom = null;
             if (id) {
@@ -4095,13 +3101,28 @@
             }).join('');
         }
 
-        function syncRoomRentalFields(){
-            const mode=document.getElementById('roomFormRentalMode').value;
-            const showPlan=pluginEnabled('plg-daily') && mode!=='MONTHLY';
-            const rateSettings=document.getElementById('dailyRateSettings');
-            rateSettings.classList.toggle('hidden',!showPlan);rateSettings.disabled=!showPlan;
-            document.getElementById('roomFormPrice').required=mode!=='DAILY';
-            document.getElementById('roomFormNightlyPrice').required=mode!=='MONTHLY';
+        function syncRoomRentalFields() {
+            const mode = document.getElementById('roomFormRentalMode').value;
+            const showPlan = pluginEnabled('plg-daily') && mode !== 'MONTHLY';
+            const rateSettings = document.getElementById('dailyRateSettings');
+            if (rateSettings) {
+                rateSettings.classList.toggle('hidden', !showPlan);
+                rateSettings.disabled = !showPlan;
+            }
+            const monthlyReq = document.getElementById('monthlyPriceRequiredBadge');
+            if (monthlyReq) monthlyReq.classList.toggle('hidden', mode === 'DAILY');
+            const nightlyReq = document.getElementById('nightlyPriceRequiredBadge');
+            if (nightlyReq) nightlyReq.classList.toggle('hidden', mode === 'MONTHLY');
+            const helper = document.getElementById('roomRentalHelperText');
+            if (helper) {
+                if (mode === 'DAILY') helper.textContent = 'Harga per malam wajib untuk mode harian. Harga bulanan opsional.';
+                else if (mode === 'BOTH') helper.textContent = 'Harga bulanan dan harga per malam keduanya wajib diisi.';
+                else helper.textContent = 'Harga bulanan tersimpan. Tarif per malam hanya berlaku untuk sewa harian.';
+            }
+            const priceEl = document.getElementById('roomFormPrice');
+            if (priceEl) priceEl.required = mode !== 'DAILY';
+            const nightlyEl = document.getElementById('roomFormNightlyPrice');
+            if (nightlyEl) nightlyEl.required = mode !== 'MONTHLY';
         }
         function syncTenantIdentity(){
             const passport=document.getElementById('tenantFormIdentityType').value==='PASSPORT';
@@ -4174,7 +3195,10 @@
             });
 
             if (availableRooms.length === 0) {
-                showToast('Semua kapasitas unit kamar penuh!', 'warning');
+                const msg = (appData.rooms || []).length === 0
+                    ? 'Belum ada unit kamar terdaftar. Silakan buat unit kamar terlebih dahulu.'
+                    : 'Semua kapasitas unit kamar penuh!';
+                showToast(msg, 'warning');
                 return;
             }
 
@@ -5136,6 +4160,10 @@
         }
 
         function openComplaintModal() {
+            if ((appData.rooms || []).length === 0) {
+                showToast('Belum ada unit kamar terdaftar.', 'warning');
+                return;
+            }
             const select = document.getElementById('complaintFormRoom');
             if (select) select.innerHTML = appData.rooms.map(r => `<option value="${escapePropertyText(r.number)}">Unit ${escapePropertyText(r.number)}</option>`).join('');
             const modal = document.getElementById('complaintModal');
@@ -6426,17 +5454,16 @@
         }
 
         function resetDemoData() {
-            const isExample = Boolean(appData.meta && appData.meta.exampleData);
             const totalRecords = (appData.tenants || []).length + (appData.bills || []).length + (appData.rooms || []).length;
-            const message = isExample
-                ? 'Reset data contoh ke kondisi awal?'
-                : `PERINGATAN: Database berisi data NYATA (${totalRecords} catatan kamar/penghuni/tagihan). Semua akan diganti data contoh dan tidak bisa dikembalikan kecuali Anda punya cadangan. Lanjutkan?`;
+            const message = totalRecords === 0
+                ? 'Kosongkan database dan reset ke kondisi awal bersih?'
+                : `PERINGATAN: Database berisi ${totalRecords} catatan (kamar/penghuni/tagihan). Seluruh data akan dikosongkan ke kondisi awal bersih dan tidak dapat dikembalikan tanpa cadangan. Lanjutkan?`;
             if (!confirm(message)) return;
             appData = JSON.parse(JSON.stringify(defaultData));
-                currentPropertyFilter = 'ALL';
-                appData.meta.exampleData = true;
-                saveData();
-            showToast('Database di-reset ke data contoh awal!');
+            currentPropertyFilter = 'ALL';
+            appData.meta.exampleData = false;
+            saveData();
+            showToast('Database berhasil dikosongkan ke kondisi awal!');
         }
 
         function closeModal(id) {
