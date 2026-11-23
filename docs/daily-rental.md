@@ -29,3 +29,16 @@ WhatsApp membuka draf untuk diperiksa dan dikirim pemilik. Nomor internasional d
 Data lama tidak dihapus atau dikonversi massal. Kolom baru bersifat tambahan, dan nilai bulanan lama tetap dipakai. Gunakan web terbaru untuk mengelola sewa harian; APK/Windows lama belum memiliki kontrol dan perhitungan baru. Jalur build native tetap menggunakan aset web yang sama, tetapi binary rilis lama tidak berubah.
 
 Pengujian mencakup jumlah malam lintas tahun/tahun kabisat, tanggal tidak valid, nominal, harga tersimpan, rincian biaya, Indonesia/Inggris/dua bahasa, dokumen belum lunas, check-in paspor, invoice pertama/manual, pengecualian batch bulanan, kalender malam, dan draf WhatsApp. Browser diuji memakai data contoh serta penyimpanan simulasi, tanpa mengirim pesan atau memungut pembayaran nyata. Perangkat Android fisik belum diuji.
+
+## Plugin operasional homestay
+
+Aktifkan modul pada Akses & Ekstensi. Akun lama menerima entri baru sambil mempertahankan pilihan yang tersimpan.
+
+- **Paspor:** simpan kebangsaan, jenis visa dan masa berlaku melalui formulir penghuni. Dari Edit Penghuni, cetak ringkasan untuk RT atau lingkungan. Ringkasan ini merupakan format internal.
+- **Sewa harian:** harga per malam menjadi tarif dasar. Tarif tambahan mengikuti Sabtu–Minggu dan tanggal libur yang ditetapkan owner. Invoice menyimpan rincian tarif per tanggal. Jam masuk dan keluar dapat diatur per kamar.
+- **Dwibahasa:** kuitansi dan draf WhatsApp mengikuti bahasa tamu. Jika modul dimatikan, dokumen kembali ke bahasa Indonesia. Kuitansi lunas menyembunyikan rincian listrik dan air serta biaya lain yang bernilai nol.
+- **iCal:** impor acara sehari penuh melalui file .ics dan unduh kalender per kamar. Blok impor diperiksa saat check-in. Feed HTTPS yang mengizinkan pembacaan browser diperiksa saat brankas terbuka, setelah koneksi kembali, dan setiap lima menit saat tab aktif. URL tersimpan lokal di brankas. Ekspor adalah file .ics berisi hunian lokal. Server opsional menyediakan URL iCal untuk OTA dan mengambil feed setiap 15 menit. Pembaruan lokal dikirim saat aplikasi owner tersambung. Lihat panduan layanan kalender untuk penerbitan dan batas kompatibilitas.
+- **Turnover:** check-out harian terakhir menahan kamar. Owner memilih petugas dari form kebersihan yang sudah ada. Aplikasi owner memantau tugas dan melepas blok kamar setelah menerima status DONE dari server. Aplikasi yang ditutup memeriksa status saat dibuka kembali.
+- **QRIS:** invoice yang belum lunas dapat menampilkan QRIS dan estimasi USD/EUR/AUD dari kurs yang dimasukkan owner. Pembayaran dan nominal tagihan tetap dalam IDR.
+
+Transit menggunakan tarif per kunjungan dan jam masuk/keluar pada tanggal yang sama. Kalender menahan hari tersebut pada ekspor iCal. Mode ini tidak membuat tagihan bulanan otomatis.

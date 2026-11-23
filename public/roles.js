@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { collection, doc, getDoc, getDocs, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, inMemoryPersistence, setPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, signOut } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 
@@ -177,6 +177,59 @@ export function setupOwnerManager({ db, account, firebaseConfig, onMessage }) {
       status('Siap.');
     } catch (error) { status(`Gagal memuat: ${error.message}`); }
   }
+  const turnoverListeners=new Map();
+  function stopTurnover(){
+    window.removeEventListener('charisna:rooms-updated',trackTurnover);
+    for(const stop of turnoverListeners.values())stop();
+    turnoverListeners.clear();
+  }
+  function trackTurnover(){
+    const pending=(window.charisnaData.snapshot().rooms || []).filter(room=>room.turnover?.taskId);
+    for(const [id,stop] of turnoverListeners){
+      if(!pending.some(room=>room.turnover.taskId===id)){stop();turnoverListeners.delete(id);}
+    }
+    for(const room of pending){
+      const {taskId,checkoutId}=room.turnover;
+      if(turnoverListeners.has(taskId))continue;
+      const stop=onSnapshot(doc(db,'users',account.uid,'cleaningTasks',taskId),{includeMetadataChanges:true},snapshot=>{
+        if(getAuth(db.app).currentUser?.uid!==account.uid || snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites)return;
+        if(snapshot.exists() && snapshot.data().status==='DONE'){
+          void window.setRoomTurnover(room.id,checkoutId,null).catch(error=>status(error.message));
+        }
+      },error=>status('Tugas kebersihan belum dapat dipantau: '+error.message));
+      turnoverListeners.set(taskId,stop);
+    }
+  }
+  window.stopRoomTurnoverListeners=stopTurnover;
+  window.addEventListener('charisna:rooms-updated',trackTurnover);
+  trackTurnover();
+  let turnoverDraft=null;
+  dialog.addEventListener('close',()=>{turnoverDraft=null;});
+  window.openRoomTurnover=async room=>{
+    if(!room.turnover)return;
+    if(room.turnover.state==='IN_PROGRESS'){
+      try{
+        const task=await getDoc(doc(db,'users',account.uid,'cleaningTasks',room.turnover.taskId));
+        if(task.exists() && task.data().status==='DONE'){
+          await window.setRoomTurnover(room.id,room.turnover.checkoutId,null);
+          status('Checklist selesai. Kamar siap digunakan.');
+        }else if(!task.exists()){
+          await window.setRoomTurnover(room.id,room.turnover.checkoutId,{state:'DIRTY',checkoutId:room.turnover.checkoutId});
+          status('Tugas sudah dihapus. Buat penugasan baru dari kamar.');
+        }else status('Kamar menunggu checklist petugas selesai.');
+      }catch(error){status('Gagal memeriksa tugas: '+error.message);}
+      return;
+    }
+    turnoverDraft={roomId:room.id,checkoutId:room.turnover.checkoutId};
+    dialog.querySelector('#clean-title').value='Pergantian kamar setelah check-out';
+    dialog.querySelector('#clean-property').value=window.getRoomTurnoverProperty(room.propertyId);
+    dialog.querySelector('#clean-room').value=room.number;
+    dialog.querySelector('#clean-due').value=jakartaDate();
+    dialog.querySelector('#clean-checklist').value='Ganti sprei\nGanti handuk\nBersihkan kamar dan kamar mandi\nPeriksa fasilitas';
+    dialog.querySelector('#clean-repeat').checked=false;
+    if(!dialog.open)dialog.showModal();
+    await refresh();
+  };
   dialog.querySelector('#clean-task-form').onsubmit = async (event) => {
     event.preventDefault();
     if (!assignee.value) return status('Buat petugas dulu.');
@@ -184,12 +237,14 @@ export function setupOwnerManager({ db, account, firebaseConfig, onMessage }) {
     const checklist = value('#clean-checklist').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     if (checklist.length > 20 || checklist.some((line) => line.length > 100) || new Set(checklist).size !== checklist.length) return status('Checklist maksimal 20 langkah unik, masing-masing 100 karakter.');
     try {
-      const count = dialog.querySelector('#clean-repeat').checked ? 7 : 1;
+      const turnover=turnoverDraft;
+      const count = !turnover && dialog.querySelector('#clean-repeat').checked ? 7 : 1;
       const batch = writeBatch(db);
       for (let day = 0; day < count; day++) {
         const due = new Date(`${value('#clean-due')}T00:00:00Z`);
         due.setUTCDate(due.getUTCDate() + day);
-        const task = doc(collection(db, 'users', account.uid, 'cleaningTasks'));
+        const task = turnover ? doc(db,'users',account.uid,'cleaningTasks','turnover-'+turnover.checkoutId) : doc(collection(db, 'users', account.uid, 'cleaningTasks'));
+        if(turnover && (await getDoc(task)).exists())continue;
         batch.set(task, {
           assigneeUid: assignee.value, title: value('#clean-title'), property: value('#clean-property'),
           room: value('#clean-room'), dueDate: due.toISOString().slice(0, 10), priority: value('#clean-priority'),
@@ -198,6 +253,10 @@ export function setupOwnerManager({ db, account, firebaseConfig, onMessage }) {
         });
       }
       await batch.commit();
+      if(turnover){
+        await window.setRoomTurnover(turnover.roomId,turnover.checkoutId,{state:'IN_PROGRESS',checkoutId:turnover.checkoutId,taskId:'turnover-'+turnover.checkoutId});
+        turnoverDraft=null;
+      }
       event.target.reset(); dialog.querySelector('#clean-due').value = jakartaDate(); await refresh(); status(`${count} tugas tersimpan.`);
     } catch (error) { status(`Gagal menyimpan tugas: ${error.message}`); }
   };

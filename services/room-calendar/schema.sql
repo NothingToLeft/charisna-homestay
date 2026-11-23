@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS calendars (
+  id TEXT PRIMARY KEY,
+  token TEXT NOT NULL UNIQUE,
+  source TEXT NOT NULL,
+  local TEXT NOT NULL,
+  imported TEXT NOT NULL DEFAULT '[]',
+  refreshed TEXT,
+  failed INTEGER NOT NULL DEFAULT 0
+);

@@ -3,7 +3,7 @@ import { unlockVault } from './vault-ui.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteDoc, collection, getDocs, query, where, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
-import { staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js?v=20261122b';
+import { staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js?v=20261123-turnover';
 import { buildKostSnapshot } from './superapp-summary.js?v=superapp-demo-20261107';
 
 const firebaseConfig = {
@@ -122,6 +122,7 @@ const showLogin = () => {
   document.body.classList.add('auth-locked');
 };
 async function handleAccount(account, revision = ++authRevision) {
+  window.stopRoomTurnoverListeners?.();
   stopAutoSync();
   user = account; verifiedRole = null;
   window.CHARISNA_CURRENT_USER = account;
@@ -177,6 +178,7 @@ async function handleAccount(account, revision = ++authRevision) {
   if(resolved.role==='OWNER'){
     scheduleSuperApp();
     startAutoSync();
+    window.dispatchEvent(new Event("charisna:owner-ready"));
   }
 }
 onAuthStateChanged(auth, (account) => { const revision = ++authRevision; void handleAccount(account, revision); }, (authError) => showError(`Login tidak tersedia: ${authError.message}`));
