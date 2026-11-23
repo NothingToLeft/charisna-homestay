@@ -201,3 +201,74 @@ body.public-page {margin:0 auto;padding:32px 24px 64px;max-width:1040px;}
   #printableReceipt > .flex {flex-wrap:wrap;gap:12px;}
   #receiptModal > div > .flex {flex-wrap:wrap;justify-content:flex-start;}
 }
+
+.registry-panel {
+  padding: clamp(16px, 2.5vw, 26px);
+  color: var(--ck-ink);
+  background: var(--ck-paper);
+  border: 1px solid var(--ck-line);
+  border-radius: 16px;
+}
+.registry-heading, .registry-module footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.registry-panel h2, .registry-calendar summary { font-size: 18px; font-weight: 750; }
+.registry-panel p { color: var(--ck-muted); font-size: 14px; }
+.registry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 265px), 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.registry-module {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--ck-line);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.registry-module h3 { font-size: 15px; font-weight: 750; }
+.registry-module footer { margin-top: auto; padding-top: 8px; }
+.registry-state { padding: 4px 8px; border-radius: 6px; background: var(--ck-soft); font-size: 13px; font-weight: 650; }
+.registry-state[data-active="true"] { color: var(--ck-ink); border-inline-start: 3px solid #16996e; }
+.registry-button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--ck-control);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 650;
+  text-align: left;
+}
+.registry-button:hover:not(:disabled) { background: var(--ck-soft); }
+.registry-button:disabled { opacity: .55; }
+.registry-primary, .registry-primary:hover:not(:disabled) { background: #087456; border-color: #087456; color: white; }
+.registry-primary:hover:not(:disabled) { background: #065940; }
+.registry-calendar summary { cursor: pointer; }
+.registry-calendar summary + p { margin-top: 8px; }
+.registry-calendar :is(#calendarRoomControls, .registry-empty) { margin-top: 16px; }
+.registry-fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin: 12px 0; }
+.registry-fields label { flex: 1 1 220px; min-width: 0; }
+.registry-calendar label { display: block; font-size: 14px; font-weight: 650; }
+.registry-calendar :is(input, select) {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--ck-control);
+  border-radius: 8px;
+}
+.registry-calendar select { max-width: 360px; }
+.registry-calendar input[type="file"]::file-selector-button { margin-inline-end: 8px; }
+.registry-server { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--ck-line); }
+.registry-server summary { font-size: 15px; }
+.registry-server output { display: block; overflow-wrap: anywhere; }
+.registry-empty { padding: 16px; background: var(--ck-soft); border-radius: 10px; }
+.registry-empty button { margin-top: 12px; }
