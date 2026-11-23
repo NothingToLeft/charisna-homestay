@@ -43,25 +43,29 @@
     parent.append(label);
     return input;
   }
+  function matchingTenantRooms(tenant) {
+    return appData.rooms.filter(room => tenant.roomId ? room.id === tenant.roomId :
+      room.number === tenant.roomNumber &&
+      (!tenant.propertyId || (room.propertyId || 'PROP-1') === tenant.propertyId));
+  }
   function selectableTenants() {
-    const scopedRooms = getScopedRooms();
+    const scopedRooms = new Set(getScopedRooms());
     return (appData.tenants || []).filter(tenant => {
-      if (tenant.roomId) return scopedRooms.some(room => room.id === tenant.roomId);
-      const matches = appData.rooms.filter(room => room.number === tenant.roomNumber &&
-        (!tenant.propertyId || (room.propertyId || 'PROP-1') === tenant.propertyId));
-      return matches.length === 1 && scopedRooms.includes(matches[0]);
+      const matches = matchingTenantRooms(tenant);
+      return matches.length === 1 && scopedRooms.has(matches[0]);
     });
   }
-  function chooseTenant(parent) {
-    const select = make('select');
+  function fillTenantPicker(select) {
+    const previous = select.value;
+    select.replaceChildren();
     select.setAttribute('aria-label','Pilih penghuni');
     select.className = 'block w-full rounded-lg border p-2 text-sm';
     const tenants = selectableTenants();
+    select.disabled = tenants.length === 0;
     if (tenants.length === 0) {
       const option = make('option', 'Belum ada penghuni di properti ini');
       option.value = '';
       select.append(option);
-      select.disabled = true;
     } else {
       const defaultOpt = make('option', 'Pilih penghuni di properti ini');
       defaultOpt.value = '';
@@ -72,6 +76,11 @@
         select.append(option);
       }
     }
+    if (tenants.some(tenant => tenant.id === previous)) select.value = previous;
+  }
+  function chooseTenant(parent) {
+    const select = make('select');
+    fillTenantPicker(select);
     parent.append(select);
     return select;
   }
@@ -155,9 +164,118 @@
       }));
     }
   }
+  function tenantRemovalTools(modal, picker) {
+    const panel = make('details');
+    panel.append(make('summary', 'Hapus data penghuni'));
+    panel.append(make('p', 'Gunakan untuk data salah atau sisa data lama. Tagihan dan catatan tetap tersimpan. Gunakan Check-out untuk menyelesaikan deposit.'));
+    const list = make('fieldset');
+    const selected = new Set();
+    const revoked = new Set();
+    const status = make('p');
+    status.setAttribute('role', 'status');
+    let busy = false;
+
+    async function remove(ids) {
+      if (busy) return;
+      const database = appData;
+      const tenants = database.tenants;
+      const targets = tenants.filter(tenant => ids.has(tenant.id));
+      if (!targets.length || !confirm(`Hapus ${targets.length} data penghuni? Tautan portal terkait akan dicabut.`)) return;
+      busy = true;
+      list.disabled = true;
+      try {
+        const tokens = database.privateIntegrations?.portalTokens;
+        for (const tenant of targets) {
+          const token = tokens?.[tenant.id];
+          if (token && !revoked.has(token)) {
+            await window.charisnaPortal.revoke(token);
+            revoked.add(token);
+          }
+        }
+        if (appData !== database || database.tenants !== tenants) throw Error('Data berubah saat sinkronisasi. Buka ulang daftar dan coba lagi.');
+        const affected = new Set(targets.flatMap(tenant => {
+          const rooms = matchingTenantRooms(tenant);
+          return rooms.length === 1 && rooms[0].status === 'TERISI' ? rooms : [];
+        }));
+        const remaining = tenants.filter(tenant => !ids.has(tenant.id));
+        for (const tenant of remaining) {
+          for (const room of matchingTenantRooms(tenant)) affected.delete(room);
+        }
+        database.tenants = remaining;
+        const roomStatuses = new Map([...affected].map(room => [room, room.status]));
+        for (const room of affected) room.status = 'KOSONG';
+        const removedTokens = targets.filter(tenant => tokens?.[tenant.id]).map(tenant => [tenant.id, tokens[tenant.id]]);
+        for (const [id] of removedTokens) delete tokens[id];
+        if (!await saveData()) {
+          if (appData === database && database.tenants === remaining) {
+            database.tenants = tenants;
+            for (const [room, previous] of roomStatuses) room.status = previous;
+            for (const [id, token] of removedTokens) tokens[id] = token;
+          }
+          throw Error('Penghapusan belum tersimpan. Tautan portal yang sudah dicabut tetap nonaktif.');
+        }
+        for (const { id } of targets) selected.delete(id);
+        fillTenantPicker(picker);
+        status.textContent = `${targets.length} data penghuni dihapus.`;
+        render();
+      } finally {
+        busy = false;
+        list.disabled = false;
+      }
+    }
+
+    function render() {
+      const allProperties = currentPropertyFilter === 'ALL';
+      const scoped = new Set(selectableTenants());
+      const tenants = (appData.tenants || []).filter(tenant => allProperties || scoped.has(tenant));
+      list.replaceChildren();
+      if (!tenants.length) {
+        list.append(make('p', 'Tidak ada data penghuni untuk dihapus.'));
+        return;
+      }
+      const toolbar = make('div');
+      toolbar.className = 'flex flex-wrap gap-2';
+      const bulk = button('Hapus terpilih', () => remove(new Set(selected)));
+      const refresh = () => { bulk.disabled = selected.size === 0; };
+      toolbar.append(button('Pilih semua', () => {
+        for (const tenant of tenants) selected.add(tenant.id);
+        render();
+      }), button('Batal pilih', () => { selected.clear(); render(); }), bulk);
+      list.append(toolbar);
+      for (const tenant of tenants) {
+        const row = make('div');
+        row.className = 'flex items-center justify-between gap-2 py-2 border-b';
+        const label = make('label');
+        label.className = 'flex items-center gap-2 text-sm';
+        const check = make('input');
+        check.type = 'checkbox';
+        check.className = 'shrink-0';
+        check.checked = selected.has(tenant.id);
+        check.onchange = () => {
+          if (check.checked) selected.add(tenant.id);
+          else selected.delete(tenant.id);
+          refresh();
+        };
+        const unit = scoped.has(tenant) ? tenant.roomNumber : 'Periksa tautan kamar';
+        label.append(check, make('span', `${tenant.name} · ${unit}`));
+        const trash = button('🗑', () => remove(new Set([tenant.id])));
+        trash.setAttribute('aria-label', 'Hapus data ' + tenant.name);
+        trash.title = 'Hapus data penghuni';
+        row.append(label, trash);
+        list.append(row);
+      }
+      refresh();
+    }
+    panel.append(list, status);
+    panel.addEventListener('toggle', () => {
+      if (panel.open && !busy) { selected.clear(); render(); }
+    });
+    modal.append(panel);
+  }
   function records() {
     const modal = dialog('Catatan Internal Penghuni');
     const select = chooseTenant(modal);
+    tenantRemovalTools(modal, select);
     const subject = field(modal, 'Nama penghuni lama (isi jika tidak memilih penghuni)');
     const note = field(modal, 'Kejadian faktual, tanggal dan tindak lanjut', 'textarea');
     note.maxLength = 2000;
