@@ -9,11 +9,16 @@ const rupiah = value => {
 };
 
 export function isExampleKostData(data){
-  return Boolean(data?.properties?.some(property=>property.id==='PROP-1'&&property.name==='CHARISNA KOST Pusat')
-    ||data?.properties?.some(property=>property.id==='PROP-2'&&property.name==='CHARISNA KOST Suites')
-    ||data?.rooms?.some(room=>room.id==='R101'&&room.number==='101'&&room.propertyId==='PROP-1')
-    ||data?.tenants?.some(tenant=>tenant.id==='T1'&&tenant.name==='Dimas Anggara')
-    ||data?.bills?.some(bill=>bill.id==='INV-101'&&bill.roomNumber==='101'));
+  const hasDemoProperty = Boolean(data?.properties?.some(property=>
+    (property.id==='PROP-1'&&property.name==='CHARISNA KOST Pusat')||
+    (property.id==='PROP-2'&&property.name==='CHARISNA KOST Suites')
+  ));
+  if(hasDemoProperty) return true;
+  const hasDemoRoom = Boolean(data?.rooms?.some(room=>room.id==='R101'&&room.number==='101'&&room.propertyId==='PROP-1'));
+  if(hasDemoRoom) return true;
+  const hasDemoTenant = Boolean(data?.tenants?.some(tenant=>tenant.id==='T1'&&tenant.name==='Dimas Anggara'));
+  if(hasDemoTenant) return true;
+  return Boolean(data?.bills?.some(bill=>bill.id==='INV-101'&&bill.roomNumber==='101') && (hasDemoRoom || hasDemoProperty));
 }
 
 export function buildKostSnapshot(data, now=new Date()){
