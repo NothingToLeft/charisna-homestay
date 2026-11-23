@@ -1744,7 +1744,7 @@
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script src="./rental.js?v=20261123-transit"></script><script src="./room-calendar.js?v=20261123-worker"></script>
-    <script src="./audit-scope.js"></script>
+    <script src="./audit-scope.js?v=20261124-property"></script>
     <script>
         const STORAGE_KEY = 'CHARISNA_HOMESTAY_ENTERPRISE_V6:' + (sessionStorage.getItem('CHARISNA_ACTIVE_UID') || 'guest');
         let currentPropertyFilter = 'ALL';
@@ -1860,12 +1860,17 @@
                 if (detectRealData()) appData.meta.exampleData = false;
                 await window.charisnaVault.save(appData);
                 window.dispatchEvent(new Event('charisna:data-saved'));
-                renderAll();
-                return true;
             } catch (error) {
                 showToast('Data BELUM tersimpan: ' + error.message + ' Jangan tutup aplikasi; ekspor cadangan.', 'danger');
                 return false;
             }
+            try {
+                renderAll();
+            } catch (error) {
+                console.error('Pembaruan tampilan gagal', error);
+                showToast('Data tersimpan. Jika tampilan belum berubah, muat ulang aplikasi.', 'warning');
+            }
+            return true;
         }
 
         function formatRupiah(num) {
@@ -2124,7 +2129,11 @@
         function getPropertyFloors(propertyId) {
             appData.floors ||= {};
             if (!appData.floors[propertyId]) {
-                appData.floors[propertyId] = [...new Set(appData.rooms.filter(room => room.propertyId === propertyId).map(room => room.floor).filter(Boolean))];
+                const property = appData.properties.find(item => item.id === propertyId);
+                appData.floors[propertyId] = [...new Set([
+                    ...(Array.isArray(property?.floors) ? property.floors : []),
+                    ...appData.rooms.filter(room => (room.propertyId || 'PROP-1') === propertyId).map(room => room.floor)
+                ].filter(Boolean))];
                 if (!appData.floors[propertyId].length) appData.floors[propertyId] = ['Lantai 1'];
             }
             return appData.floors[propertyId];
@@ -2200,7 +2209,7 @@
         function deleteProperty(id) {
             const property = appData.properties.find(item => item.id === id);
             if (!property) return;
-            if (appData.rooms.some(room => room.propertyId === id)) return showToast('Pindahkan atau hapus kamar dulu sebelum menghapus properti.', 'warning');
+            if (appData.rooms.some(room => (room.propertyId || 'PROP-1') === id)) return showToast('Pindahkan atau hapus kamar dulu sebelum menghapus properti.', 'warning');
             if (!confirm(`Hapus properti "${property.name}"?`)) return;
             appData.properties = appData.properties.filter(item => item.id !== id);
             delete appData.floors?.[id];
@@ -2223,12 +2232,12 @@
             const floors = getPropertyFloors(id);
             if (floors.some(floor => floor.toLowerCase() === name.toLowerCase())) return showToast('Nama lantai sudah ada.', 'warning');
             floors[floors.indexOf(oldName)] = name;
-            appData.rooms.filter(room => room.propertyId === id && room.floor === oldName).forEach(room => room.floor = name);
+            appData.rooms.filter(room => (room.propertyId || 'PROP-1') === id && room.floor === oldName).forEach(room => room.floor = name);
             saveData(); openPropertyManager();
         }
 
         function deleteFloor(id, name) {
-            if (appData.rooms.some(room => room.propertyId === id && room.floor === name)) return showToast('Pindahkan kamar dulu sebelum menghapus lantai.', 'warning');
+            if (appData.rooms.some(room => (room.propertyId || 'PROP-1') === id && room.floor === name)) return showToast('Pindahkan kamar dulu sebelum menghapus lantai.', 'warning');
             if (getPropertyFloors(id).length === 1) return showToast('Minimal satu lantai harus tersedia.', 'warning');
             if (!confirm(`Hapus "${name}"?`)) return;
             appData.floors[id] = getPropertyFloors(id).filter(floor => floor !== name);
@@ -2389,6 +2398,9 @@
         }
 
         function renderPropertySelectors() {
+            if (currentPropertyFilter !== 'ALL' && !appData.properties.some(property => property.id === currentPropertyFilter)) {
+                currentPropertyFilter = 'ALL';
+            }
             const switcher = document.getElementById('propertySwitcher');
             if (switcher) {
                 const totalProps = (appData.properties || []).length;
@@ -2397,7 +2409,13 @@
             }
             const roomPropSelect = document.getElementById('roomFormProperty');
             if (roomPropSelect) {
+                const selected = roomPropSelect.value;
                 roomPropSelect.innerHTML = (appData.properties || []).map(p => `<option value="${escapePropertyText(p.id)}">${escapePropertyText(p.name)}</option>`).join('');
+                if (appData.properties.some(property => property.id === selected)) roomPropSelect.value = selected;
+                else if (selected && !document.getElementById('roomModal').classList.contains('hidden')) {
+                    roomPropSelect.selectedIndex = -1;
+                    document.getElementById('roomFormFloor').replaceChildren();
+                }
             }
         }
 
@@ -2460,7 +2478,8 @@
             const scopedRooms = getScopedRooms();
             const scopedNumbers = getScopedRoomNumbers();
             const scopedTenants = appData.tenants.filter(t => scopedNumbers.has(t.roomNumber));
-            const scopedBills = appData.bills.filter(b => scopedNumbers.has(b.roomNumber));
+            const scoped = auditScopeData(appData, currentPropertyFilter);
+            const scopedBills = scoped.bills;
 
             const totalRooms = scopedRooms.length;
             const occupiedRooms = scopedRooms.filter(r => r.status === 'TERISI').length;
@@ -2472,13 +2491,13 @@
             const unpaidBills = scopedBills.filter(b => b.status === 'BELUM_LUNAS');
             const totalCollected = paidBills.reduce((s, b) => s + Number(b.amount), 0);
             const totalUnpaid = unpaidBills.reduce((s, b) => s + Number(b.amount), 0);
-            const totalExpenses = (appData.expenses || []).reduce((s, x) => s + Number(x.amount), 0);
+            const totalExpenses = scoped.expenses.reduce((s, x) => s + (Number(x.amount) || 0), 0);
             const netProfit = totalCollected - totalExpenses;
 
             const totalDeposit = scopedTenants.reduce((s, t) => s + Number(t.deposit || 0), 0);
             const verifiedKtpCount = scopedTenants.filter(t => t.ktpVerified || t.ktpImage).length;
             const unverifiedKtpCount = scopedTenants.length - verifiedKtpCount;
-            const activeIssues = appData.complaints.filter(c => scopedNumbers.has(c.roomNumber) && c.status !== 'RESOLVED' && c.status !== 'SELESAI').length;
+            const activeIssues = scoped.complaints.filter(c => c.status !== 'RESOLVED' && c.status !== 'SELESAI').length;
 
             const occText = document.getElementById('sidebarOccupancyText');
             if (occText) occText.textContent = `${occupancyRate}%`;
@@ -2618,19 +2637,32 @@
         }
 
         // ==================== 2. ROOMS & INSPECTOR ====================
+        function filterRooms(status, render = true) {
+            if (!['ALL', 'KOSONG', 'TERISI', 'PERBAIKAN'].includes(status)) return;
+            currentRoomFilter = status;
+            document.querySelectorAll('.room-filter-btn').forEach(button => {
+                const active = button.id === 'filter-room-' + status;
+                button.setAttribute('aria-pressed', String(active));
+                button.classList.toggle('bg-slate-900', active);
+                button.classList.toggle('text-white', active);
+                button.classList.toggle('bg-slate-100', !active);
+                button.classList.toggle('text-slate-600', !active);
+            });
+            if (render) renderRooms();
+        }
+
         function renderRooms() {
             const grid = document.getElementById('roomsGrid');
             if (!grid) return;
 
-            const query = (document.getElementById('searchRoomInput')?.value || '').toLowerCase();
+            const query = (document.getElementById('searchRoomInput')?.value || '').trim().toLowerCase();
             const scopedRooms = getScopedRooms();
             const filtered = scopedRooms.filter(r => {
                 const roomTenants = appData.tenants.filter(t => t.roomNumber === r.number);
                 const matchStatus = currentRoomFilter === 'ALL' || r.status === currentRoomFilter;
-                const matchSearch = r.number.toLowerCase().includes(query) ||
-                    r.type.toLowerCase().includes(query) ||
-                    r.facilities.toLowerCase().includes(query) ||
-                    roomTenants.some(t => t.name.toLowerCase().includes(query) || (t.nik || '').includes(query) || (t.vehicle || '').toLowerCase().includes(query));
+                const matches = value => String(value ?? '').toLowerCase().includes(query);
+                const matchSearch = [r.number, r.type, r.facilities].some(matches) ||
+                    roomTenants.some(tenant => [tenant.name, tenant.nik, tenant.vehicle].some(matches));
                 return matchStatus && matchSearch;
             });
 
@@ -2698,7 +2730,7 @@
                 }
 
                 let secondaryActionBtnHtml = '';
-                if (roomTenants.length < cap) {
+                if (roomTenants.length < cap && room.status !== 'PERBAIKAN' && !room.turnover) {
                     secondaryActionBtnHtml = `
                         <button onclick="openTenantModal(${safeCallArg(room.number)})" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" title="Check-In Penghuni">
                             <i class="fa-solid fa-user-plus"></i> Check-In
@@ -2752,7 +2784,7 @@
             const cap = room.capacity || 1;
 
             document.getElementById('inspRoomTitle').textContent = `Unit Kamar ${room.number} (${getPropertyName(room.propertyId)})`;
-            document.getElementById('inspRoomSub').textContent = `${room.floor} • ${room.type} • Kapasitas ${roomTenants.length}/${cap} Org • ${formatRupiah(room.price)} / bln`;
+            document.getElementById('inspRoomSub').textContent = `${room.floor} • ${room.type} • Kapasitas ${roomTenants.length}/${cap} orang • ${CharisnaRental.rateLabel(room)}`;
 
             const badge = document.getElementById('inspRoomBadge');
             badge.textContent = room.status;
@@ -2769,8 +2801,7 @@
                 openRoomModal(room.id);
             };
             document.getElementById('inspDeleteRoomBtn').onclick = () => {
-                closeModal('roomInspectorModal');
-                deleteRoom(room.id);
+                void deleteRoom(room.id);
             };
 
             const body = document.getElementById('inspContentBody');
@@ -2856,6 +2887,11 @@
         }
 
         function openRoomModal(roomId = null) {
+            if (!appData.properties.length) {
+                showToast('Tambahkan properti sebelum membuat unit.', 'warning');
+                openPropertyManager();
+                return;
+            }
             renderPropertySelectors();
             const modal = document.getElementById('roomModal');
             let initialFacilities = 'AC, WiFi, KM Dalam, Springbed';
@@ -2882,6 +2918,7 @@
                 document.getElementById('roomFormProperty').value = currentPropertyFilter === 'ALL' ? appData.properties[0]?.id || '' : currentPropertyFilter;
                 renderFloorOptions();
                 document.getElementById('roomFormNumber').value = '';
+                document.getElementById('roomFormType').selectedIndex = 0;
                 document.getElementById('roomFormPrice').value = formatNumberWithDots('1500000');
                 document.getElementById('roomFormRentalMode').value = 'MONTHLY';
                 document.getElementById('roomFormNightlyPrice').value = '';
@@ -2911,14 +2948,18 @@
             }
         }
 
-        function saveRoom(e) {
+        async function saveRoom(e) {
             e.preventDefault();
+            const submit = e.currentTarget.querySelector('[type="submit"]');
+            if (submit.disabled) return;
             const id = document.getElementById('roomFormId').value;
             const priceVal = getNumericValue(document.getElementById('roomFormPrice'));
             const nightlyPriceVal = getNumericValue(document.getElementById('roomFormNightlyPrice'));
+            const existing = appData.rooms.find(room => room.id === id);
+            if (id && !existing) return showToast('Unit sudah tidak tersedia. Buka kembali daftar unit.', 'warning');
             const roomObj = {
-                ...(appData.rooms.find(room => room.id === id) || {}),
-                id: id || 'R' + Date.now(),
+                ...existing,
+                id: id || 'R-' + crypto.randomUUID(),
                 propertyId: document.getElementById('roomFormProperty').value,
                 number: document.getElementById('roomFormNumber').value.trim(),
                 floor: document.getElementById('roomFormFloor').value,
@@ -2931,6 +2972,20 @@
                 facilities: document.getElementById('roomFormFacilities').value.trim(),
                 status: document.getElementById('roomFormStatus').value
             };
+            if (!roomObj.number || !appData.properties.some(property => property.id === roomObj.propertyId) ||
+                !getPropertyFloors(roomObj.propertyId).includes(roomObj.floor)) {
+                return showToast('Isi nomor unit, properti, dan lantai yang valid.', 'warning');
+            }
+            const renamed = !existing || existing.number !== roomObj.number;
+            if (renamed && appData.rooms.some(room => room.id !== id && String(room.number).toLowerCase() === roomObj.number.toLowerCase())) {
+                return showToast('Nomor unit harus unik di semua properti. Gunakan awalan cabang bila diperlukan.', 'warning');
+            }
+            const moved = existing && (existing.propertyId || 'PROP-1') !== roomObj.propertyId;
+            if (existing && (renamed || moved) && ['tenants', 'bills', 'complaints', 'inventaris', 'perawatan', 'perbaikan', 'kontrak', 'tagihanBertahap', 'meter']
+                .some(key => appData[key]?.some(item => item.roomNumber === existing.number || item.roomId === existing.id ||
+                    (key === 'meter' && item.ref === existing.number)))) {
+                return showToast('Unit masih dipakai oleh data terkait. Nomor dan properti belum dapat diubah.', 'warning');
+            }
             if (!['MONTHLY', 'DAILY', 'BOTH'].includes(roomObj.rentalMode) || !Number.isSafeInteger(roomObj.price) || roomObj.price < 0 || !Number.isSafeInteger(roomObj.nightlyPrice) || roomObj.nightlyPrice < 0 || (roomObj.rentalMode !== 'DAILY' && roomObj.price <= 0) || (roomObj.rentalMode !== 'MONTHLY' && roomObj.nightlyPrice <= 0)) return showToast('Isi harga bulanan / per malam sesuai mode sewa, dalam Rupiah bulat positif.', 'warning');
             if (appData.tenants.some(tenant => tenant.roomNumber === roomObj.number && !CharisnaRental.supports(roomObj, tenant.leaseInterval))) return showToast('Mode sewa bertentangan dengan penghuni aktif. Pilih Harian & Bulanan atau selesaikan sewa yang masih aktif.', 'warning');
             if (pluginEnabled('plg-daily') && roomObj.rentalMode !== 'MONTHLY') {
@@ -2946,36 +3001,68 @@
                     checkOut: document.getElementById('roomCheckOutTime').value || '12:00'
                 };
             }
-            let beforeRoom = null;
-            if (id) {
-                const idx = appData.rooms.findIndex(r => r.id === id);
-                if (idx > -1) {
-                    beforeRoom = structuredClone(appData.rooms[idx]);
-                    appData.rooms[idx] = roomObj;
-                    window.CharisnaFeatureModules?.recordAuditLog({ action: 'UBAH', entity: 'Kamar', entityId: id, summary: `Perbarui unit ${roomObj.number}`, before: beforeRoom, after: roomObj });
+            const database = appData;
+            const previousRooms = database.rooms;
+            const previousLogs = database.auditLogs;
+            const nextRooms = existing ? previousRooms.map(room => room.id === id ? roomObj : room) : [...previousRooms, roomObj];
+            submit.disabled = true;
+            try {
+                database.rooms = nextRooms;
+                database.auditLogs = [...previousLogs];
+                window.CharisnaFeatureModules?.recordAuditLog({
+                    action: existing ? 'UBAH' : 'TAMBAH', entity: 'Kamar', entityId: roomObj.id,
+                    summary: `${existing ? 'Perbarui' : 'Tambah'} unit ${roomObj.number}`,
+                    before: existing, after: roomObj
+                }, { deferSave: true });
+                if (!await saveData()) {
+                    if (appData === database && database.rooms === nextRooms) {
+                        database.rooms = previousRooms;
+                        database.auditLogs = previousLogs;
+                    }
+                    return;
                 }
-                showToast(`Unit ${roomObj.number} diperbarui!`);
-            } else {
-                appData.rooms.push(roomObj);
-                window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Kamar', entityId: roomObj.id, summary: `Tambah unit ${roomObj.number}`, after: roomObj });
-                showToast(`Unit ${roomObj.number} ditambahkan!`);
+                closeModal('roomModal');
+                if (currentPropertyFilter !== 'ALL' && currentPropertyFilter !== roomObj.propertyId) {
+                    currentPropertyFilter = roomObj.propertyId;
+                    renderPropertySelectors();
+                    renderDashboard();
+                }
+                document.getElementById('searchRoomInput').value = '';
+                switchTab('kamar');
+                filterRooms('ALL');
+                showToast(`Unit ${roomObj.number} tersimpan di ${getPropertyName(roomObj.propertyId)}.`);
+            } finally {
+                submit.disabled = false;
             }
-            closeModal('roomModal');
-            saveData();
         }
 
-        function deleteRoom(roomId) {
+        async function deleteRoom(roomId) {
             const room = appData.rooms.find(r => r.id === roomId);
             if (!room) return;
+            if (appData.tenants.some(tenant => tenant.roomId === roomId || tenant.roomNumber === room.number) || room.turnover) {
+                return showToast('Selesaikan check-out dan tugas kebersihan sebelum menghapus unit.', 'warning');
+            }
+            if (!confirm(`Hapus unit ${room.number}? Riwayat tagihan tetap tersimpan.`)) return;
+            const database = appData;
+            const previousRooms = database.rooms;
+            const previousLogs = database.auditLogs;
             const before = {
                 room: structuredClone(room),
-                tenants: structuredClone(appData.tenants.filter(t => t.roomNumber === room.number))
+                tenants: []
             };
-            appData.rooms = appData.rooms.filter(r => r.id !== roomId);
-            appData.tenants = appData.tenants.filter(t => t.roomNumber !== room.number);
-            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Kamar', entityId: roomId, summary: `Hapus unit ${room.number}`, before });
-            showToast(`Unit ${room.number} dihapus.`, 'warning');
-            saveData();
+            const nextRooms = previousRooms.filter(item => item.id !== roomId);
+            database.rooms = nextRooms;
+            database.auditLogs = [...previousLogs];
+            window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Kamar', entityId: roomId, summary: `Hapus unit ${room.number}`, before }, { deferSave: true });
+            if (!await saveData()) {
+                if (appData === database && database.rooms === nextRooms) {
+                    database.rooms = previousRooms;
+                    database.auditLogs = previousLogs;
+                }
+                return;
+            }
+            closeModal('roomInspectorModal');
+            showToast(`Unit ${room.number} dihapus.`);
         }
 
         // ==================== 3. TENANTS ====================
@@ -3138,16 +3225,17 @@
             document.getElementById('ktpPreviewContainer').classList.add('hidden');
             document.getElementById('tenantFormKtpFile').value = '';
 
-            const availableRooms = appData.rooms.filter(r => {
+            const availableRooms = getScopedRooms().filter(r => {
                 const count = appData.tenants.filter(t => t.roomNumber === r.number).length;
                 const cap = r.capacity || 1;
-                return (r.status !== 'PERBAIKAN' && !r.turnover && count < cap) || r.number === preselectedRoom;
+                return r.status !== 'PERBAIKAN' && !r.turnover && count < cap &&
+                    appData.rooms.filter(room => room.number === r.number).length === 1;
             });
 
             if (availableRooms.length === 0) {
                 const msg = (appData.rooms || []).length === 0
                     ? 'Belum ada unit kamar terdaftar. Silakan buat unit kamar terlebih dahulu.'
-                    : 'Semua kapasitas unit kamar penuh!';
+                    : 'Tidak ada unit siap check-in di properti terpilih.';
                 showToast(msg, 'warning');
                 return;
             }
@@ -3251,6 +3339,11 @@
             const matches=appData.rooms.filter(r=>r.number===roomNumber);
             if(matches.length!==1)return showToast('Pastikan nomor kamar unik sebelum menyimpan sewa.','warning');
             const rentalRoom=matches[0];
+            const previousTenant = appData.tenants.find(tenant => tenant.id === id);
+            if (previousTenant?.roomNumber !== roomNumber && (rentalRoom.status === 'PERBAIKAN' ||
+                appData.tenants.filter(tenant => tenant.roomNumber === roomNumber).length >= (rentalRoom.capacity || 1))) {
+                return showToast('Unit sedang diperbaiki atau kapasitasnya penuh.', 'warning');
+            }
             if(!CharisnaRental.supports(rentalRoom,leaseInterval))return showToast('Mode sewa tidak tersedia untuk kamar ini.','warning');
             if(pluginEnabled('plg-ical') && CharisnaRental.shortStay(leaseInterval) && endDate &&
                 [...(rentalRoom.calendarBlocks || []),...(rentalRoom.feedCalendarBlocks || [])].some(block=>entryDate<block.end && (leaseInterval==='Transit'?block.start<=entryDate:block.start<endDate)))
@@ -3566,8 +3659,8 @@
             const tbody = document.getElementById('billsTableBody');
             if (!tbody) return;
 
-            const scopedNumbers = getScopedRoomNumbers();
-            const filtered = appData.bills.filter(b => scopedNumbers.has(b.roomNumber) && (currentBillFilter === 'ALL' || b.status === currentBillFilter));
+            const filtered = auditScopeData(appData, currentPropertyFilter).bills
+                .filter(b => currentBillFilter === 'ALL' || b.status === currentBillFilter);
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 text-xs">Tidak ada data invoice pada kategori ini.</td></tr>`;
@@ -3991,7 +4084,7 @@
             const tbody = document.getElementById('expensesTableBody');
             if (!tbody) return;
 
-            const list = appData.expenses || [];
+            const list = auditScopeData(appData, currentPropertyFilter).expenses;
             if (list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400 text-xs">Belum ada catatan pengeluaran operasional.</td></tr>`;
                 return;
@@ -4029,11 +4122,15 @@
             e.preventDefault();
             const newExpense = {
                 id: 'EXP-' + Date.now(),
+                ...(currentPropertyFilter === 'ALL' ? {} : { propertyId: currentPropertyFilter }),
                 date: document.getElementById('expFormDate').value,
                 category: document.getElementById('expFormCategory').value,
                 title: document.getElementById('expFormTitle').value.trim(),
                 amount: Number(document.getElementById('expFormAmount').value)
             };
+            if (!newExpense.title || !newExpense.date || !Number.isFinite(newExpense.amount) || newExpense.amount <= 0) {
+                return showToast('Isi tanggal, nama pengeluaran, dan nominal yang lebih besar dari nol.', 'warning');
+            }
             appData.expenses.unshift(newExpense);
             window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Pengeluaran', entityId: newExpense.id, summary: `Catat pengeluaran ${newExpense.title}`, after: newExpense });
             closeModal('expenseModal');
@@ -4054,12 +4151,13 @@
             const grid = document.getElementById('complaintsGrid');
             if (!grid) return;
 
-            if (appData.complaints.length === 0) {
+            const complaints = auditScopeData(appData, currentPropertyFilter).complaints;
+            if (complaints.length === 0) {
                 grid.innerHTML = `<div class="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-xs">Belum ada catatan keluhan atau perbaikan fasilitas.</div>`;
                 return;
             }
 
-            grid.innerHTML = appData.complaints.map(c => {
+            grid.innerHTML = complaints.map(c => {
                 const state = c.status === 'SELESAI' ? 'RESOLVED' : (c.status === 'PROSES' ? 'IN_PROGRESS' : c.status);
                 const isDone = state === 'RESOLVED';
                 const prioColors = {
@@ -4110,12 +4208,13 @@
         }
 
         function openComplaintModal() {
-            if ((appData.rooms || []).length === 0) {
-                showToast('Belum ada unit kamar terdaftar.', 'warning');
+            const rooms = getScopedRooms();
+            if (rooms.length === 0) {
+                showToast('Belum ada unit kamar di properti terpilih.', 'warning');
                 return;
             }
             const select = document.getElementById('complaintFormRoom');
-            if (select) select.innerHTML = appData.rooms.map(r => `<option value="${escapePropertyText(r.number)}">Unit ${escapePropertyText(r.number)}</option>`).join('');
+            if (select) select.innerHTML = rooms.map(r => `<option value="${escapePropertyText(r.id)}">Unit ${escapePropertyText(r.number)} · ${escapePropertyText(getPropertyName(r.propertyId || 'PROP-1'))}</option>`).join('');
             const modal = document.getElementById('complaintModal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -4125,9 +4224,13 @@
 
         function saveComplaint(e) {
             e.preventDefault();
+            const room = getScopedRooms().find(item => item.id === document.getElementById('complaintFormRoom').value);
+            if (!room) return showToast('Pilih unit yang masih tersedia di properti ini.', 'warning');
             const newComplaint = {
                 id: 'C' + Date.now(),
-                roomNumber: document.getElementById('complaintFormRoom').value,
+                roomNumber: room.number,
+                roomId: room.id,
+                propertyId: room.propertyId || 'PROP-1',
                 priority: document.getElementById('complaintFormPriority').value,
                 title: document.getElementById('complaintFormTitle').value.trim(),
                 desc: document.getElementById('complaintFormDesc').value.trim(),
@@ -4154,7 +4257,8 @@
                     return;
                 }
                 if (amount > 0) {
-                    const room = appData.rooms.find(r => r.number === item.roomNumber);
+                    const matches = appData.rooms.filter(room => room.number === item.roomNumber);
+                    const propertyId = item.propertyId || (matches.length === 1 ? matches[0].propertyId || 'PROP-1' : '');
                     const expense = {
                         id: 'EXP-' + crypto.randomUUID(),
                         date: new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(new Date()),
@@ -4163,7 +4267,7 @@
                         amount,
                         complaintId: id
                     };
-                    if (room?.propertyId) expense.propertyId = room.propertyId;
+                    if (propertyId) expense.propertyId = propertyId;
                     appData.expenses.unshift(expense);
                     item.expenseId = expense.id;
                 }
@@ -5433,7 +5537,7 @@
     </script>
 
 <script>setTimeout(() => { if (!window.CHARISNA_AUTH_READY) document.getElementById("auth-error").textContent = "Login memerlukan internet untuk memuat Firebase."; }, 12000);</script>
-    <script src="./feature-modules.js?v=20261123-transit"></script>
+    <script src="./feature-modules.js?v=20261124-unit"></script>
     <script type="module" src="./cloud-sync.js?v=20261123-turnover"></script>
 <script src="./vendor/qrcode.js"></script>
 <script src="./vendor/jsQR.js"></script>

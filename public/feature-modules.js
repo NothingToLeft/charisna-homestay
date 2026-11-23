@@ -303,8 +303,9 @@
     }
 
     // ==================== 3. CENTRAL AUDIT LOG ====================
-    function recordAuditLog(params = {}) {
-        const data = window.charisnaData?.snapshot() || window.getCharisnaKostDataForSuperApp?.();
+    function recordAuditLog(params = {}, { deferSave = false } = {}) {
+        const data = deferSave ? window.getCharisnaKostDataForSuperApp?.() :
+            window.charisnaData?.snapshot() || window.getCharisnaKostDataForSuperApp?.();
         if (!data) return;
         if (!Array.isArray(data.auditLogs)) data.auditLogs = [];
 
@@ -333,6 +334,7 @@
         data.auditLogs.unshift(logEntry);
         if (data.auditLogs.length > 500) data.auditLogs = data.auditLogs.slice(0, 500);
 
+        if (deferSave) return;
         if (typeof window.charisnaData?.hydrate === 'function') {
             window.charisnaData.hydrate(data);
         }
