@@ -22,3 +22,15 @@ it('isolates property records and keeps ambiguous/global records only in the com
   expect(scope(data,'ALL')).toBe(data);
   expect(data.bills).toHaveLength(3);
 });
+
+it('keeps legacy rooms, their tickets, and archived invoices in the correct property', () => {
+  const data = {
+    rooms: [{ id: 'legacy', number: '101' }, { id: 'other', number: '202', propertyId: 'B' }],
+    complaints: [{ id: 'legacy-ticket', roomNumber: '101' }, { id: 'other-ticket', roomNumber: '202' }],
+    bills: [{ id: 'archived', roomNumber: '999', propertyId: 'PROP-1' }]
+  };
+  const home = scope(data, 'PROP-1');
+  expect(home.rooms.map((room: { id: string }) => room.id)).toEqual(['legacy']);
+  expect(home.complaints.map((ticket: { id: string }) => ticket.id)).toEqual(['legacy-ticket']);
+  expect(home.bills.map((bill: { id: string }) => bill.id)).toEqual(['archived']);
+});

@@ -5,10 +5,11 @@ function auditScopeData(data, propertyId) {
   const belongs = (item, ref = item.roomNumber) => {
     if (item.propertyId) return item.propertyId === propertyId;
     const matches = rooms.filter(room => room.number === ref);
-    return matches.length === 1 && matches[0].propertyId === propertyId;
+    return matches.length === 1 && (matches[0].propertyId || 'PROP-1') === propertyId;
   };
   const scoped = { ...data };
-  for (const key of ['rooms', 'inventaris', 'stok', 'expenses', 'perbaikan', 'kontrak', 'tenants', 'bills']) {
+  scoped.rooms = rooms.filter(room => (room.propertyId || 'PROP-1') === propertyId);
+  for (const key of ['inventaris', 'stok', 'expenses', 'perbaikan', 'kontrak', 'tenants', 'bills', 'complaints']) {
     scoped[key] = (data[key] || []).filter(item => belongs(item));
   }
   scoped.meter = (data.meter || []).filter(item => belongs(item, item.ref));
