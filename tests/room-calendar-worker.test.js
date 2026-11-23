@@ -31,12 +31,13 @@ it('publishes anonymous availability, refreshes on schedule and revokes the feed
     const text=await outgoing.text();
     expect(text).toContain('DTEND;VALUE=DATE:20261125');
     expect(text).not.toContain('Private Name');
-    const fetch=vi.fn().mockResolvedValueOnce(new Response('BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:20261128\r\nDTEND;VALUE=DATE:20261129\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n')).mockRejectedValueOnce(Error('feed offline'));
+    const fetch=vi.fn().mockResolvedValueOnce(new Response('BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:20261128\r\nDTEND;VALUE=DATE:20261129\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n')).mockResolvedValueOnce(new Response(null,{status:302,headers:{Location:'https://outside.example.test/'}}));
     vi.stubGlobal('fetch',fetch);
-    await worker.scheduled(null,env);
-    let imported=await (await worker.fetch(new Request(path,{headers}),env)).json();
+    const manual=await worker.fetch(new Request(path,{method:'POST',headers}),env);
+    expect(manual.status).toBe(200);
+    let imported=await manual.json();
     expect(imported.blocks).toEqual([{start:'2026-11-28',end:'2026-11-29'}]);
-    expect(fetch.mock.calls[0][1].redirect).toBe('error');
+    expect(fetch.mock.calls[0][1].redirect).toBe('manual');
     await worker.scheduled(null,env);
     imported=await (await worker.fetch(new Request(path,{headers}),env)).json();
     expect(imported.failed).toBe(true);

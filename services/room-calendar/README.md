@@ -13,3 +13,5 @@ Worker ini menyimpan rentang tanggal lokal, blok yang diimpor, dan URL feed ekst
 Format masuk saat ini adalah VEVENT sehari penuh dengan DTSTART dan DTEND eksklusif. Acara berulang dan acara berjam ditolak. Jika pembacaan gagal, blok terakhir tetap berlaku. Jangan menganggap koneksi Airbnb, Booking.com, Agoda, atau Google Calendar telah terverifikasi sampai contoh feed dan hasil impor nyata diperiksa.
 
 URL feed masuk dapat berisi token penyedia. D1 dan brankas menyimpannya sebagai konfigurasi privat. Gunakan satu deployment untuk satu operator. Tautan yang dicabut dibuat ulang dengan token baru ketika diterbitkan kembali.
+
+Untuk diagnosis, operator dapat memicu pembacaan langsung dengan POST ke endpoint admin /rooms/{id} memakai kunci kalender. Cron dan pembacaan langsung memakai handler impor yang sama.
