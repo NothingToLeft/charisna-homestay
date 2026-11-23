@@ -42,8 +42,8 @@
     if(url.protocol!=='https:' || url.username || url.password || url.hash)throw Error('Gunakan URL HTTPS tanpa kredensial di alamat.');
     return url.href;
   }
-  async function fetchFeed(value){
-    const response=await fetch(feedUrl(value),{credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',signal:AbortSignal.timeout(12000)});
+  async function fetchFeed(value,{redirect='follow'}={}){
+    const response=await fetch(feedUrl(value),{redirect,credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',signal:AbortSignal.timeout(12000)});
     if(!response.ok || !response.body)throw Error('Kalender tidak dapat dimuat.');
     const reader=response.body.getReader();
     let size=0, source='';

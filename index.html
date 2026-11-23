@@ -1831,6 +1831,14 @@
                                 <label>URL kalender eksternal yang mendukung akses browser <input id="calendarFeedUrl" type="url" autocomplete="off" placeholder="https://…" class="border rounded-lg p-2"></label>
                                 <button type="button" onclick="saveCalendarFeed()" class="border rounded-lg p-2">Simpan feed</button>
                                 <button type="button" onclick="saveCalendarFeed(true)" class="border rounded-lg p-2">Hentikan penyegaran</button>
+                                <details class="space-y-2">
+                                    <summary>Kalender OTA di server</summary>
+                                    <label>Alamat layanan kalender <input id="calendarServerUrl" type="url" autocomplete="off" class="border rounded-lg p-2"></label>
+                                    <label>Kunci khusus layanan kalender <input id="calendarServerKey" type="password" autocomplete="new-password" class="border rounded-lg p-2"></label>
+                                    <button type="button" onclick="connectCalendarServer()" class="border rounded-lg p-2">Terbitkan kalender kamar</button>
+                                    <button type="button" onclick="disconnectCalendarServer()" class="border rounded-lg p-2">Cabut tautan kamar</button>
+                                    <output id="calendarPublishedLink" class="block break-all"></output>
+                                </details>
                                 <p id="calendarFeedStatus" role="status" class="text-sm"></p>
                                 <label>Impor blok kalender (.ics) <input id="calendarPluginFile" type="file" accept=".ics,text/calendar" onchange="importRoomCalendar(this)"></label>
                                 <button type="button" onclick="exportRoomCalendar()" class="border rounded-lg p-2">Unduh kalender kamar</button>
@@ -2874,7 +2882,7 @@
     </div>
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
-    <script src="./rental.js?v=20261123-transit"></script><script src="./room-calendar.js?v=20261123-feed"></script>
+    <script src="./rental.js?v=20261123-transit"></script><script src="./room-calendar.js?v=20261123-worker"></script>
     <script src="./audit-scope.js"></script>
     <script>
         const STORAGE_KEY = 'CHARISNA_HOMESTAY_ENTERPRISE_V6:' + (sessionStorage.getItem('CHARISNA_ACTIVE_UID') || 'guest');
@@ -5990,8 +5998,64 @@
         }
         let calendarFeedBusy=false;
         const calendarFeedResults=new Map();
+        const publishedCalendars=new Map();
+        function calendarServerConnection(id){
+            return appData.privateIntegrations?.calendarServers?.[id];
+        }
+        async function calendarServerRequest(connection,id,method,body){
+            const response=await fetch(connection.url+'/rooms/'+encodeURIComponent(id),{
+                method,headers:{Authorization:'Bearer '+connection.key,'Content-Type':'application/json'},
+                body:body===undefined?undefined:JSON.stringify(body),redirect:'error',credentials:'omit',
+                referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)
+            });
+            if(!response.ok)throw Error('Layanan kalender menolak permintaan (HTTP '+response.status+').');
+            return response.json();
+        }
+        async function connectCalendarServer(){
+            const room=calendarRoom();
+            if(!room || !window.charisnaVault || !pluginEnabled('plg-ical'))return;
+            const vault=window.charisnaVault;
+            const status=document.getElementById('calendarFeedStatus');
+            const keyField=document.getElementById('calendarServerKey');
+            try{
+                const endpoint=new URL(document.getElementById('calendarServerUrl').value.trim());
+                const key=keyField.value.trim();
+                if(endpoint.protocol!=='https:' || endpoint.username || endpoint.password || endpoint.search || endpoint.hash || endpoint.pathname!=='/' || !/^[a-f0-9]{64}$/.test(key))
+                    throw Error('Isi alamat HTTPS layanan dan kunci kalender 64 karakter.');
+                if(!confirm('Terbitkan tanggal kamar tanpa nama tamu ke '+endpoint.origin+'?'))return;
+                const connection={url:endpoint.origin,key};
+                const result=await calendarServerRequest(connection,room.id,'PUT',{
+                    blocks:localCalendarStays(room),source:appData.privateIntegrations?.calendarFeeds?.[room.id] || ''
+                });
+                if(window.charisnaVault!==vault)return;
+                appData.privateIntegrations ||= {};
+                appData.privateIntegrations.calendarServers ||= {};
+                const previous=calendarServerConnection(room.id);
+                appData.privateIntegrations.calendarServers[room.id]=connection;
+                if(!await saveData()){
+                    if(previous)appData.privateIntegrations.calendarServers[room.id]=previous;
+                    else delete appData.privateIntegrations.calendarServers[room.id];
+                    throw Error('Tautan sudah dibuat di server, tetapi koneksi perangkat belum tersimpan.');
+                }
+                publishedCalendars.set(room.id,result.feed);
+                keyField.value='';
+                calendarFeedResults.set(room.id,'Kalender terbit. Gunakan tautan ini sebagai kalender impor di OTA.');
+                renderCalendarFeedStatus();
+            }catch(error){status.textContent=error.message;}
+        }
+        async function disconnectCalendarServer(){
+            const room=calendarRoom(),connection=calendarServerConnection(room?.id);
+            if(!connection || !confirm('Cabut tautan iCal dan hentikan sinkron server untuk kamar ini?'))return;
+            try{
+                await calendarServerRequest(connection,room.id,'DELETE');
+                delete appData.privateIntegrations.calendarServers[room.id];
+                publishedCalendars.delete(room.id);
+                if(await saveData())renderCalendarFeedStatus();
+            }catch(error){showToast(error.message,'warning');}
+        }
         function renderCalendarFeedStatus(){
             const room=calendarRoom();
+            document.getElementById('calendarPublishedLink').textContent=publishedCalendars.get(room?.id) || '';
             const configured=Boolean(appData.privateIntegrations?.calendarFeeds?.[room?.id]);
             document.getElementById('calendarFeedUrl').value='';
             document.getElementById('calendarFeedStatus').textContent=calendarFeedResults.get(room?.id) ||
@@ -6020,9 +6084,29 @@
             if(calendarFeedBusy || !window.charisnaVault || window.CHARISNA_ROLE!=='OWNER' || !pluginEnabled('plg-ical') || !navigator.onLine)return;
             const vault=window.charisnaVault;
             const source=appData.privateIntegrations?.calendarFeeds || {};
+            const connections=appData.privateIntegrations?.calendarServers || {};
             calendarFeedBusy=true;
             try{
+                for(const [id,connection] of Object.entries(connections)){
+                    try{
+                        if(window.charisnaVault!==vault || !pluginEnabled('plg-ical'))return;
+                        const room=appData.rooms.find(item=>item.id===id);
+                        if(!room)continue;
+                        const result=await calendarServerRequest(connection,id,'PUT',{blocks:localCalendarStays(room),source:source[id] || ''});
+                        const current=calendarServerConnection(id);
+                        if(window.charisnaVault!==vault || !pluginEnabled('plg-ical') || current?.url!==connection.url || current?.key!==connection.key)continue;
+                        publishedCalendars.set(id,result.feed);
+                        const latest=appData.rooms.find(item=>item.id===id);
+                        if(latest && result.refreshed && JSON.stringify(latest.feedCalendarBlocks)!==JSON.stringify(result.blocks)){
+                            const previous=latest.feedCalendarBlocks;
+                            latest.feedCalendarBlocks=result.blocks;
+                            if(!await saveData()){latest.feedCalendarBlocks=previous;throw Error('Penyimpanan gagal.');}
+                        }
+                        calendarFeedResults.set(id,result.failed?'Feed eksternal gagal. Blok terakhir tetap berlaku.':result.refreshed?'Feed server diperbarui · '+new Date(result.refreshed).toLocaleString('id-ID'):'Kalender terbit. Server menunggu pembacaan pertama.');
+                    }catch{calendarFeedResults.set(id,'Server kalender belum dapat dijangkau. Blok terakhir tetap berlaku.');}
+                }
                 for(const [id,url] of Object.entries(source)){
+                    if(connections[id])continue;
                     try{
                         const blocks=await CharisnaRoomCalendar.fetchFeed(url);
                         if(window.charisnaVault!==vault || appData.privateIntegrations?.calendarFeeds?.[id]!==url || !pluginEnabled('plg-ical'))continue;
@@ -6041,9 +6125,17 @@
             }finally{
                 calendarFeedBusy=false;
                 const room=calendarRoom();
-                if(room && calendarFeedResults.has(room.id))document.getElementById('calendarFeedStatus').textContent=calendarFeedResults.get(room.id);
+                if(room && calendarFeedResults.has(room.id)){
+                    document.getElementById('calendarFeedStatus').textContent=calendarFeedResults.get(room.id);
+                    document.getElementById('calendarPublishedLink').textContent=publishedCalendars.get(room.id) || '';
+                }
             }
         }
+        let calendarPublishTimer;
+        window.addEventListener('charisna:data-saved',()=>{
+            clearTimeout(calendarPublishTimer);
+            calendarPublishTimer=setTimeout(refreshCalendarFeeds,2000);
+        });
         window.addEventListener('online',refreshCalendarFeeds);
         window.addEventListener('charisna:owner-ready',refreshCalendarFeeds);
         setInterval(()=>{if(!document.hidden)void refreshCalendarFeeds();},5*60*1000);
@@ -6060,13 +6152,18 @@
                 if(!await saveData()) room.calendarBlocks=old;
             }catch(error){showToast(error.message,'warning');}
         }
+        function localCalendarStays(room){
+            if(appData.rooms.filter(item=>item.number===room.number).length!==1)throw Error('Nomor kamar harus unik sebelum ekspor.');
+            return appData.tenants.filter(guest=>guest.roomNumber===room.number && guest.entryDate && guest.endDate)
+                .map(guest=>({start:guest.entryDate,end:guest.leaseInterval==='Transit'?new Date(Date.parse(guest.entryDate)+86400000).toISOString().slice(0,10):guest.endDate}))
+                .filter(stay=>stay.start<stay.end);
+        }
         function exportRoomCalendar(){
             const room=calendarRoom();
             if(!pluginEnabled('plg-ical') || !room)return;
-            if(appData.rooms.filter(item=>item.number===room.number).length!==1)return showToast('Nomor kamar harus unik sebelum ekspor.','warning');
-            const stays=appData.tenants.filter(guest=>guest.roomNumber===room.number && guest.entryDate && guest.endDate)
-                .map(guest=>({start:guest.entryDate,end:guest.leaseInterval==='Transit'?new Date(Date.parse(guest.entryDate)+86400000).toISOString().slice(0,10):guest.endDate}));
-            const data=CharisnaRoomCalendar.export(stays,room.id);
+            let data;
+            try{data=CharisnaRoomCalendar.export(localCalendarStays(room),room.id);}
+            catch(error){return showToast(error.message,'warning');}
             const url=URL.createObjectURL(new Blob([data],{type:'text/calendar;charset=utf-8'}));
             const link=document.createElement('a');
             link.href=url;link.download='charisna-calendar.ics';link.click();

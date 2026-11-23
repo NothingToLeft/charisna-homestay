@@ -1,0 +1,12 @@
+name = "charisna-room-calendar"
+main = "worker.mjs"
+compatibility_date = "2026-11-23"
+[vars]
+CALENDAR_APP_ORIGIN = "https://nothingtoleft.github.io"
+CALENDAR_FEED_HOSTS = ""
+[triggers]
+crons = ["*/15 * * * *"]
+[[d1_databases]]
+binding = "DB"
+database_name = "charisna-room-calendar"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
