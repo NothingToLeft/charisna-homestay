@@ -167,7 +167,7 @@
   function catalog() {
     const modal = dialog('Katalog Kamar Kosong');
     const selected = [];
-    for (const room of getScopedRooms().filter(item => item.status === 'KOSONG')) {
+    for (const room of getScopedRooms().filter(item => item.status === 'KOSONG' && !item.turnover)) {
       const label = make('label');
       const checkbox = make('input'); checkbox.type = 'checkbox';
       label.append(checkbox, make('span', ' Unit ' + room.number + ' · ' + CharisnaRental.rateLabel(room)));

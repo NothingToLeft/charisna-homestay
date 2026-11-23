@@ -28,13 +28,37 @@
   function nights(start,end){const count=(dateValue(end)-dateValue(start))/86400000;if(!Number.isInteger(count)||count<1)throw Error('Check-out sewa harian harus setelah tanggal masuk, minimal satu malam.');return count;}
   const mode=room=>['MONTHLY','DAILY','BOTH'].includes(room?.rentalMode)?room.rentalMode:'MONTHLY';
   const supports=(room,interval)=>mode(room)==='BOTH'||mode(room)===(interval==='Harian'?'DAILY':'MONTHLY');
+  function priceNights(room,start,end){
+    const count=nights(start,end), startTime=dateValue(start);
+    return Array.from({length:count},(_,index)=>{
+      const day=new Date(startTime+index*86400000);
+      const date=day.toISOString().slice(0,10);
+      const plan=room.ratePlan || {};
+      const rate=plan.holidays?.includes(date) && plan.holiday ? plan.holiday :
+        [0,6].includes(day.getUTCDay()) && plan.weekend ? plan.weekend : room.nightlyPrice;
+      money(rate);
+      if(rate<=0)throw Error('Tarif per malam harus positif.');
+      return {date,rate};
+    });
+  }
   function quote(room,stay){
     if(!room)throw Error('Kamar tidak ditemukan.');
     if(stay.leaseInterval!=='Harian'){
       const baseAmount=Number(room.price);money(baseAmount);
       return {rentalMode:'MONTHLY',baseAmount};
     }
-    const count=nights(stay.entryDate,stay.endDate),rate=Number(stay.nightlyRate ?? room.nightlyPrice);
+    const count=nights(stay.entryDate,stay.endDate);
+    if(count>366)throw Error('Sewa harian maksimal 366 malam per tagihan.');
+    const saved=stay.stayRateBreakdown;
+    const matches=saved?.length===count && saved[0].date===stay.entryDate &&
+      dateValue(saved.at(-1).date)+86400000===dateValue(stay.endDate);
+    if(stay.nightlyRate==null && (matches || stay.ratePlan)){
+      const nightlyBreakdown=matches?saved:priceNights(room,stay.entryDate,stay.endDate);
+      const baseAmount=nightlyBreakdown.reduce((sum,item)=>sum+item.rate,0);
+      money(baseAmount);
+      return {rentalMode:'DAILY',nightlyRate:nightlyBreakdown[0].rate,nightlyBreakdown,nights:count,stayStart:stay.entryDate,stayEnd:stay.endDate,baseAmount};
+    }
+    const rate=Number(stay.nightlyRate ?? room.nightlyPrice);
     if(!Number.isSafeInteger(rate)||rate<=0||!Number.isSafeInteger(rate*count))throw Error('Isi harga per malam berupa Rupiah bulat yang valid.');
     return {rentalMode:'DAILY',nightlyRate:rate,nights:count,stayStart:stay.entryDate,stayEnd:stay.endDate,baseAmount:rate*count};
   }
@@ -70,9 +94,10 @@
     const lines=[`*${title}*`,settings.kostName || 'CHARISNA KOST','',hello,`No: ${bill.id || '-'}`,`${text('room',lang)}: ${bill.roomNumber}`,`${text('period',lang)}: ${period(bill,lang)}`];
     if(settings.kostAddress)lines.splice(2,0,settings.kostAddress);
     if(settings.ownerPhone)lines.splice(2,0,(lang==='en'?'Phone: ':'Telp. ')+settings.ownerPhone);
-    if(bill.rentalMode==='DAILY')lines.push(`${bill.nights} ${nightWord(bill.nights,lang)} × ${money(bill.nightlyRate,lang)}`);
-    lines.push(`${text('rent',lang)}: ${money(amounts.base,lang)}`);
-    if(amounts.electric)lines.push(`${text('electric',lang)}: ${money(amounts.electric,lang)}`);
+    if(bill.nightlyBreakdown?.length)lines.push(lang==='en'?'Nightly rates vary by date.':'Tarif per malam mengikuti tanggal.');
+    else if(bill.rentalMode==='DAILY')lines.push(`${bill.nights} ${nightWord(bill.nights,lang)} × ${money(bill.nightlyRate,lang)}`);
+    lines.push(`${text('rent',lang)}: ${money(amounts.base+(paid?amounts.electric:0),lang)}`);
+    if(!paid && amounts.electric)lines.push(`${text('electric',lang)}: ${money(amounts.electric,lang)}`);
     if(amounts.other)lines.push(`${text('other',lang)}: ${money(amounts.other,lang)}`);
     lines.push(`*${text(paid?'totalPaid':'totalDue',lang)}: ${money(Number(bill.amount || 0),lang)}*`,`${text(paid?'paidDate':'dueDate',lang)}: ${paid?bill.paidDate || '-':bill.dueDate || '-'}`,`${text(paid?'paid':'unpaid',lang)}`);
     if(!paid){lines.push('',`${text('bank',lang)}: ${settings.bankInfo || '-'}`,lang==='en'?'Please send your payment confirmation after transferring. Thank you.':'Mohon kirim bukti pembayaran setelah transfer. Terima kasih.');}

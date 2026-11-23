@@ -757,7 +757,7 @@
         if(window.CharisnaRental && ['INVOICE','REMINDER','RECEIPT','BOOKING_WELCOME'].includes(type)){
             const bill=(data.bills || []).find(item=>item.tenantName===params.tenantName && item.roomNumber===params.roomNumber && item.period===params.period);
             const tenant=(data.tenants || []).find(item=>item.name===params.tenantName && item.roomNumber===params.roomNumber);
-            const language=params.language || tenant?.communicationLanguage || bill?.communicationLanguage || settings.communicationLanguage;
+            const language=data.plugins?.some(plugin=>plugin.id==='plg-i18n' && plugin.enabled) ? params.language || tenant?.communicationLanguage || bill?.communicationLanguage || settings.communicationLanguage : 'id';
             return window.CharisnaRental.message(type,{bill:bill || params,settings},language);
         }
 
@@ -888,6 +888,9 @@
                 if (isRepaired) {
                     cellClass = 'bg-amber-200 dark:bg-amber-900/60 text-amber-800';
                     title = `Unit ${r.number}: Dalam Perbaikan / Tiket Maintenance`;
+                } else if (r.turnover || (data.plugins?.some(plugin=>plugin.id==='plg-ical' && plugin.enabled) && r.calendarBlocks?.some(block=>block.start<=date && date<block.end))) {
+                    cellClass='bg-amber-200 text-amber-900';
+                    title='Unit '+r.number+': Tidak tersedia';
                 } else if (occupied) {
                     cellClass = 'bg-emerald-500 text-white font-bold';
                     title = `Unit ${r.number}: Terisi oleh ${tenantInRoom.name}`;

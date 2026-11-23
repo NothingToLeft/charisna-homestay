@@ -3,7 +3,7 @@ import { unlockVault } from './vault-ui.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteDoc, collection, getDocs, query, where, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
-import { staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js?v=20261122b';
+import { staffEmail, staffPassword, resolveRole, setupOwnerManager, renderCleanerPortal } from './roles.js?v=20261123-plugins';
 import { buildKostSnapshot } from './superapp-summary.js?v=superapp-demo-20261107';
 
 const firebaseConfig = {
