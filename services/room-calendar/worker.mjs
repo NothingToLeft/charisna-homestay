@@ -35,7 +35,7 @@ function cleanBlocks(value) {
 async function refresh(row, env) {
   try {
     const url = permittedFeed(row.source,env);
-    const blocks = await calendar.fetchFeed(url,{redirect:'error'});
+    const blocks = await calendar.fetchFeed(url,{redirect:'manual'});
     await env.DB.prepare('UPDATE calendars SET imported=?, refreshed=?, failed=0 WHERE id=? AND source=?')
       .bind(JSON.stringify(blocks),new Date().toISOString(),row.id,row.source).run();
   } catch {
@@ -79,6 +79,11 @@ async function route(request, env) {
     }
     row = await env.DB.prepare('SELECT * FROM calendars WHERE id=?').bind(id).first();
     if (!row) return json({error:'Batas 25 kalender tercapai.'},409);
+  } else if (request.method === 'POST') {
+    if (!row) return json({error:'Kalender belum diterbitkan.'},404);
+    if (!row.source) return json({error:'Feed masuk belum diatur.'},409);
+    await refresh(row,env);
+    row = await env.DB.prepare('SELECT * FROM calendars WHERE id=?').bind(id).first();
   } else if (request.method !== 'GET') return json({error:'Metode tidak didukung.'},405);
 
   if (!row) return json({error:'Kalender belum diterbitkan.'},404);
