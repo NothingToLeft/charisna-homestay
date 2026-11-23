@@ -27,7 +27,8 @@
   }
   function nights(start,end){const count=(dateValue(end)-dateValue(start))/86400000;if(!Number.isInteger(count)||count<1)throw Error('Check-out sewa harian harus setelah tanggal masuk, minimal satu malam.');return count;}
   const mode=room=>['MONTHLY','DAILY','BOTH'].includes(room?.rentalMode)?room.rentalMode:'MONTHLY';
-  const supports=(room,interval)=>mode(room)==='BOTH'||mode(room)===(interval==='Harian'?'DAILY':'MONTHLY');
+  const shortStay=interval=>interval==='Harian' || interval==='Transit';
+  const supports=(room,interval)=>mode(room)==='BOTH'||mode(room)===(shortStay(interval)?'DAILY':'MONTHLY');
   function priceNights(room,start,end){
     const count=nights(start,end), startTime=dateValue(start);
     return Array.from({length:count},(_,index)=>{
@@ -43,6 +44,16 @@
   }
   function quote(room,stay){
     if(!room)throw Error('Kamar tidak ditemukan.');
+    if(stay.leaseInterval==='Transit'){
+      dateValue(stay.entryDate);
+      const time=/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/;
+      if(stay.entryDate!==stay.endDate || !time.test(stay.startTime) || !time.test(stay.endTime) || stay.endTime<=stay.startTime)
+        throw Error('Transit harus selesai pada tanggal yang sama dan jam keluar harus setelah jam masuk.');
+      const baseAmount=Number(stay.transitRate ?? room.ratePlan?.transit);
+      money(baseAmount);
+      if(baseAmount<=0)throw Error('Atur tarif transit pada kamar.');
+      return {rentalMode:'TRANSIT',stayStart:stay.entryDate,stayEnd:stay.endDate,startTime:stay.startTime,endTime:stay.endTime,baseAmount};
+    }
     if(stay.leaseInterval!=='Harian'){
       const baseAmount=Number(room.price);money(baseAmount);
       return {rentalMode:'MONTHLY',baseAmount};
@@ -68,6 +79,7 @@
     return mode(room)==='DAILY'?daily:mode(room)==='BOTH'?monthly+' · '+daily:monthly;
   }
   function period(bill,lang='id'){
+    if(bill.rentalMode==='TRANSIT')return bill.stayStart+' · '+bill.startTime+'–'+bill.endTime;
     if(bill.rentalMode==='DAILY')return `${bill.stayStart} – ${bill.stayEnd} (${bill.nights} ${nightWord(bill.nights,lang)})`;
     if(language(lang)==='id')return bill.period || '-';
     const id=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -84,7 +96,7 @@
   function singleMessage(type,data,lang){
     const bill=data.bill || data;const settings=data.settings || {};const paid=type==='RECEIPT'&&bill.status==='LUNAS';
     if(type==='BOOKING_WELCOME'){
-      const plans={Harian:'Nightly',Bulanan:'Monthly','3 Bulanan':'Every 3 months','6 Bulanan':'Every 6 months',Tahunan:'Yearly'};
+      const plans={Transit:'Day use',Harian:'Nightly',Bulanan:'Monthly','3 Bulanan':'Every 3 months','6 Bulanan':'Every 6 months',Tahunan:'Yearly'};
       const interval=lang==='en'?(plans[bill.leaseInterval] || 'Monthly'):bill.leaseInterval || 'Bulanan';
       return lang==='en'?`Welcome to ${settings.kostName || 'CHARISNA KOST'}!\n\nHello ${bill.tenantName},\nRoom: ${bill.roomNumber}\nCheck-in: ${bill.entryDate || '-'}\nCheck-out / lease end: ${bill.endDate || '-'}\nRental plan: ${interval}\nDeposit: ${money(Number(bill.deposit || 0),lang)}\n\nPlease contact management for house rules and Wi-Fi details. We hope you enjoy your stay.`:`Selamat datang di ${settings.kostName || 'CHARISNA KOST'}!\n\nHalo ${bill.tenantName},\nUnit: ${bill.roomNumber}\nTanggal masuk: ${bill.entryDate || '-'}\nCheck-out / akhir sewa: ${bill.endDate || '-'}\nMode sewa: ${interval}\nDeposit: ${money(Number(bill.deposit || 0),lang)}\n\nSilakan hubungi pengelola untuk tata tertib dan informasi Wi-Fi. Semoga nyaman tinggal bersama kami.`;
     }
@@ -112,5 +124,5 @@
     lang=language(lang);
     return lang==='both'?singleMessage(type,data,'id')+'\n\n──────────\n\n'+singleMessage(type,data,'en'):singleMessage(type,data,lang);
   }
-  root.CharisnaRental={language,nightWord,text,money,nights,mode,supports,quote,rateLabel,period,charges,message};
+  root.CharisnaRental={language,nightWord,text,money,nights,mode,shortStay,supports,quote,rateLabel,period,charges,message};
 })(globalThis);

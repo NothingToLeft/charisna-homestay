@@ -37,6 +37,8 @@ Aktifkan modul pada Akses & Ekstensi. Akun lama menerima entri baru sambil mempe
 - **Paspor:** simpan kebangsaan, jenis visa dan masa berlaku melalui formulir penghuni. Dari Edit Penghuni, cetak ringkasan untuk RT atau lingkungan. Ringkasan ini merupakan format internal.
 - **Sewa harian:** harga per malam menjadi tarif dasar. Tarif tambahan mengikuti Sabtu–Minggu dan tanggal libur yang ditetapkan owner. Invoice menyimpan rincian tarif per tanggal. Jam masuk dan keluar dapat diatur per kamar.
 - **Dwibahasa:** kuitansi dan draf WhatsApp mengikuti bahasa tamu. Jika modul dimatikan, dokumen kembali ke bahasa Indonesia. Kuitansi lunas menyembunyikan rincian listrik dan air serta biaya lain yang bernilai nol.
-- **iCal:** impor acara sehari penuh melalui file .ics dan unduh kalender per kamar. Blok impor diperiksa saat check-in. Sinkronisasi URL otomatis dan pengujian penyedia OTA masih diperlukan.
-- **Turnover:** check-out harian terakhir menahan kamar. Owner memilih petugas dari form kebersihan yang sudah ada. Buka kembali pemeriksaan tugas dari detail kamar setelah checklist selesai untuk melepas blok kamar.
+- **iCal:** impor acara sehari penuh melalui file .ics dan unduh kalender per kamar. Blok impor diperiksa saat check-in. Feed HTTPS yang mengizinkan pembacaan browser diperiksa saat brankas terbuka, setelah koneksi kembali, dan setiap lima menit saat tab aktif. URL tersimpan lokal di brankas. Ekspor adalah file .ics berisi hunian lokal. Sinkronisasi dua arah saat aplikasi tutup memerlukan backend dan verifikasi penyedia OTA.
+- **Turnover:** check-out harian terakhir menahan kamar. Owner memilih petugas dari form kebersihan yang sudah ada. Aplikasi owner memantau tugas dan melepas blok kamar setelah menerima status DONE dari server. Aplikasi yang ditutup memeriksa status saat dibuka kembali.
 - **QRIS:** invoice yang belum lunas dapat menampilkan QRIS dan estimasi USD/EUR/AUD dari kurs yang dimasukkan owner. Pembayaran dan nominal tagihan tetap dalam IDR.
+
+Transit menggunakan tarif per kunjungan dan jam masuk/keluar pada tanggal yang sama. Kalender menahan hari tersebut pada ekspor iCal. Mode ini tidak membuat tagihan bulanan otomatis.

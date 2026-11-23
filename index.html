@@ -1827,7 +1827,11 @@
                                 <span class="text-xs font-mono text-slate-400">v0.2-enterprise</span>
                             </div>
                             <section id="calendarPluginTools" hidden class="space-y-2">
-                                <label>Kamar harian <select id="calendarPluginRoom" class="border p-2"></select></label>
+                                <label>Kamar harian <select id="calendarPluginRoom" onchange="renderCalendarFeedStatus()" class="border p-2"></select></label>
+                                <label>URL kalender eksternal yang mendukung akses browser <input id="calendarFeedUrl" type="url" autocomplete="off" placeholder="https://…" class="border rounded-lg p-2"></label>
+                                <button type="button" onclick="saveCalendarFeed()" class="border rounded-lg p-2">Simpan feed</button>
+                                <button type="button" onclick="saveCalendarFeed(true)" class="border rounded-lg p-2">Hentikan penyegaran</button>
+                                <p id="calendarFeedStatus" role="status" class="text-sm"></p>
                                 <label>Impor blok kalender (.ics) <input id="calendarPluginFile" type="file" accept=".ics,text/calendar" onchange="importRoomCalendar(this)"></label>
                                 <button type="button" onclick="exportRoomCalendar()" class="border rounded-lg p-2">Unduh kalender kamar</button>
                             </section>
@@ -2430,6 +2434,7 @@
                   <label>Weekend Sabtu–Minggu <input id="roomWeekendRate" type="number" min="1" step="1"></label>
                   <label>Tarif tanggal libur <input id="roomHolidayRate" type="number" min="1" step="1"></label>
                   <label>Tanggal libur (YYYY-MM-DD, pisahkan dengan koma) <input id="roomHolidayDates" maxlength="1500"></label>
+                  <label>Tarif transit (Rp per kunjungan) <input id="roomTransitRate" type="number" min="1" step="1"></label>
                   <label>Jam masuk <input id="roomCheckInTime" type="time"></label>
                   <label>Jam keluar <input id="roomCheckOutTime" type="time"></label>
                 </fieldset>
@@ -2506,7 +2511,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Interval Kontrak *</label>
                         <select id="tenantFormInterval" onchange="syncTenantRental()" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
-                            <option value="Harian">Harian / per malam</option>
+                            <option value="Harian">Harian / per malam</option><option value="Transit">Transit / hari yang sama</option>
                             <option value="Bulanan">Bulanan</option>
                             <option value="3 Bulanan">3 Bulanan</option>
                             <option value="6 Bulanan">6 Bulanan</option>
@@ -2521,6 +2526,11 @@
                   <label>Paspor berlaku sampai <input id="guestPassportExpiry" type="date"></label>
                   <label>Jenis visa <select id="guestVisa"><option value="">Pilih</option><option>VoA</option><option>Tourist</option><option>KITAS</option><option>Lainnya</option></select></label>
                   <button id="guestReport" type="button" onclick="printGuestReport()">Cetak format lapor lingkungan</button>
+                </fieldset>
+                <fieldset id="tenantTransitTimes" class="hidden grid grid-cols-2 gap-2">
+                    <legend>Jam transit</legend>
+                    <label>Masuk <input id="tenantTransitStart" type="time" onchange="syncTenantRental()"></label>
+                    <label>Keluar <input id="tenantTransitEnd" type="time" onchange="syncTenantRental()"></label>
                 </fieldset>
                 <p id="tenantRentalSummary" role="status" class="text-sm text-slate-600"></p>
                 <div class="grid grid-cols-2 gap-3">
@@ -2864,7 +2874,7 @@
     </div>
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
-    <script src="./rental.js?v=20261123-plugins"></script><script src="./room-calendar.js"></script>
+    <script src="./rental.js?v=20261123-transit"></script><script src="./room-calendar.js?v=20261123-feed"></script>
     <script src="./audit-scope.js"></script>
     <script>
         const STORAGE_KEY = 'CHARISNA_HOMESTAY_ENTERPRISE_V6:' + (sessionStorage.getItem('CHARISNA_ACTIVE_UID') || 'guest');
@@ -2897,7 +2907,7 @@
                 { id: 'plg-passport', name: 'Foreign Guest Passport & WNA Registry', version: 'v1.0.0', desc: 'Validasi nomor Paspor, tanggal kedaluwarsa, tipe Visa (VoA/Tourist/KITAS), kebangsaan (Nationality), serta ekspor formulir cetak Wajib Lapor Tamu Asing ke RT/Lingkungan.', enabled: false },
                 { id: 'plg-daily', name: 'Daily Homestay & Dynamic Rate Engine', version: 'v1.0.2', desc: 'Dukungan sewa harian/transit, penetapan tarif per malam (Weekday, Weekend, & Musim Liburan), serta pelacakan jam Check-In (14:00) dan Check-Out (12:00).', enabled: false },
                 { id: 'plg-i18n', name: 'Bilingual Receipt & English Communication Pack', version: 'v1.0.5', desc: 'Sakelar dwibahasa (ID/EN) untuk Kwitansi resmi, invoice PDF, serta draf pesan WhatsApp berbahasa Inggris (Official Receipt, Room Charge, Settlement).', enabled: true },
-                { id: 'plg-ical', name: 'OTA & iCal Two-Way Calendar Sync', version: 'v1.1.0', desc: 'Impor dan ekspor ketersediaan kamar harian melalui file iCal. Blok tanggal impor diperiksa saat check-in.', enabled: false },
+                { id: 'plg-ical', name: 'Kalender OTA & iCal', version: 'v1.1.0', desc: 'Impor feed yang mendukung browser, impor file iCal, dan ekspor ketersediaan per unit. Blok tanggal diperiksa saat check-in.', enabled: false },
                 { id: 'plg-turnover', name: 'Housekeeping Dispatch & Room Turnover', version: 'v1.2.0', desc: 'Otomasi status kamar pasca check-out (Dirty ➔ In-Progress ➔ Clean & Ready) terhubung ke checklist tugas petugas kebersihan untuk pergantian sprei & handuk kilat.', enabled: false },
                 { id: 'plg-qris', name: 'Smart QRIS & Multi-Currency Converter', version: 'v1.0.3', desc: 'Generator kode QRIS pembayaran instan m-Banking/e-Wallet di invoice, serta kalkulator konversi kurs estimasi valuta asing (USD/EUR/AUD ke IDR).', enabled: true }
             ],
@@ -3456,6 +3466,7 @@
             renderComplaints();
             renderOperasional();
             renderPluginsAndLogs();
+            window.dispatchEvent(new Event("charisna:rooms-updated"));
             populateSettingsForm();
             window.CharisnaFeatureModules?.renderDashboardReminders();
             window.CharisnaFeatureModules?.renderRoomTimeline(document.getElementById('roomTimelineContainer')?.dataset.month);
@@ -3932,6 +3943,7 @@
                 document.getElementById('roomFormStatus').value = 'KOSONG';
             }
             const plan=appData.rooms.find(room=>room.id===roomId)?.ratePlan || {};
+            document.getElementById('roomTransitRate').value=plan.transit || '';
             document.getElementById('roomWeekendRate').value=plan.weekend || '';
             document.getElementById('roomHolidayRate').value=plan.holiday || '';
             document.getElementById('roomHolidayDates').value=(plan.holidays || []).join(', ');
@@ -3968,7 +3980,7 @@
                 const holidays=document.getElementById('roomHolidayDates').value.split(',').map(date=>date.trim()).filter(Boolean);
                 if(holidays.some(date=>!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0,10)!==date))
                     return showToast('Tanggal libur harus valid dalam format YYYY-MM-DD.','warning');
-                roomObj.ratePlan={weekend:Number(document.getElementById('roomWeekendRate').value),holiday:Number(document.getElementById('roomHolidayRate').value),holidays:[...new Set(holidays)],checkIn:document.getElementById('roomCheckInTime').value || '14:00',checkOut:document.getElementById('roomCheckOutTime').value || '12:00'};
+                roomObj.ratePlan={transit:Number(document.getElementById('roomTransitRate').value),weekend:Number(document.getElementById('roomWeekendRate').value),holiday:Number(document.getElementById('roomHolidayRate').value),holidays:[...new Set(holidays)],checkIn:document.getElementById('roomCheckInTime').value || '14:00',checkOut:document.getElementById('roomCheckOutTime').value || '12:00'};
             }
             let beforeRoom = null;
             if (id) {
@@ -4108,17 +4120,33 @@
             popup.document.body.append(report);
             popup.print();
         }
+        function transitTimes(){
+            return {startTime:document.getElementById('tenantTransitStart').value,endTime:document.getElementById('tenantTransitEnd').value};
+        }
         function syncTenantRental(){
             const room=appData.rooms.find(r=>r.number===document.getElementById('tenantFormRoom').value);
             const interval=document.getElementById('tenantFormInterval');
             for(const option of interval.options)option.disabled=room?!CharisnaRental.supports(room,option.value):false;
             if(room && !CharisnaRental.supports(room,interval.value))interval.value=CharisnaRental.mode(room)==='DAILY'?'Harian':'Bulanan';
-            const daily=interval.value==='Harian';
+            const transitOption=interval.querySelector('[value="Transit"]');
+            const existing=appData.tenants.find(t=>t.id===document.getElementById('tenantFormId').value);
+            transitOption.disabled=!room || (!existing?.transitRate && (!pluginEnabled('plg-daily') || !room.ratePlan?.transit)) || !CharisnaRental.supports(room,'Transit');
+            if(interval.value==='Transit' && transitOption.disabled)interval.value='Harian';
+            const transit=interval.value==='Transit';
+            const transitFields=document.getElementById('tenantTransitTimes');
+            transitFields.classList.toggle('hidden',!transit);transitFields.disabled=!transit;
+            const daily=CharisnaRental.shortStay(interval.value);
             document.getElementById('tenantFormEndDate').required=daily;
             const status=document.getElementById('tenantRentalSummary');
             if(!daily){status.textContent=room?CharisnaRental.rateLabel(room):'';return;}
             try{
-                const existing=appData.tenants.find(t=>t.id===document.getElementById('tenantFormId').value);
+                if(transit){
+                    const date=document.getElementById('tenantFormDate').value;
+                    document.getElementById('tenantFormEndDate').value=date;
+                    const quote=CharisnaRental.quote(room,{leaseInterval:'Transit',entryDate:date,endDate:date,...transitTimes(),transitRate:existing?.transitRate});
+                    status.textContent='Transit · '+quote.startTime+'–'+quote.endTime+' · '+formatRupiah(quote.baseAmount);
+                    return;
+                }
                 const q=CharisnaRental.quote(room,{leaseInterval:'Harian',entryDate:document.getElementById('tenantFormDate').value,endDate:document.getElementById('tenantFormEndDate').value,ratePlan:pluginEnabled('plg-daily') && room.ratePlan,stayRateBreakdown:existing?.roomNumber===room.number?existing.stayRateBreakdown:undefined,nightlyRate:existing?.roomNumber===room.number && !existing.stayRateBreakdown?existing.nightlyRate:undefined});
                 status.textContent=q.nights+' malam'+(q.nightlyBreakdown?' (tarif sesuai tanggal)':' × '+formatRupiah(q.nightlyRate))+' = '+formatRupiah(q.baseAmount)+'. Check-out tidak dihitung sebagai malam tambahan.';
             }catch(error){status.textContent=error.message;}
@@ -4160,6 +4188,8 @@
             document.getElementById('tenantFormDeposit').value = '500000';
             document.getElementById('tenantFormDate').valueAsDate = new Date();
             document.getElementById('tenantFormEndDate').value = '';
+            document.getElementById('tenantTransitStart').value='';
+            document.getElementById('tenantTransitEnd').value='';
             syncTenantRental();
 
             const modal = document.getElementById('tenantModal');
@@ -4194,6 +4224,8 @@
             document.getElementById('tenantFormDeposit').value = tenant.deposit || 0;
             document.getElementById('tenantFormDate').value = tenant.entryDate;
             document.getElementById('tenantFormEndDate').value = tenant.endDate || '';
+            document.getElementById('tenantTransitStart').value=tenant.transitStart || '';
+            document.getElementById('tenantTransitEnd').value=tenant.transitEnd || '';
             syncTenantRental();
 
             const prevContainer = document.getElementById('ktpPreviewContainer');
@@ -4238,8 +4270,8 @@
             if(matches.length!==1)return showToast('Pastikan nomor kamar unik sebelum menyimpan sewa.','warning');
             const rentalRoom=matches[0];
             if(!CharisnaRental.supports(rentalRoom,leaseInterval))return showToast('Mode sewa tidak tersedia untuk kamar ini.','warning');
-            if(pluginEnabled('plg-ical') && leaseInterval==='Harian' && endDate &&
-                rentalRoom.calendarBlocks?.some(block=>entryDate<block.end && block.start<endDate))
+            if(pluginEnabled('plg-ical') && CharisnaRental.shortStay(leaseInterval) && endDate &&
+                [...(rentalRoom.calendarBlocks || []),...(rentalRoom.feedCalendarBlocks || [])].some(block=>entryDate<block.end && (leaseInterval==='Transit'?block.start<=entryDate:block.start<endDate)))
                 return showToast('Tanggal menginap bentrok dengan blok kalender kamar.','warning');
             if(rentalRoom.turnover && appData.tenants.find(t=>t.id===id)?.roomNumber!==roomNumber)
                 return showToast('Kamar masih menunggu kebersihan.','warning');
@@ -4252,8 +4284,10 @@
                     return showToast('Isi kebangsaan dan visa. Paspor harus berlaku sampai akhir masa inap.','warning');
                 }
             }
+            if(leaseInterval==='Transit' && !pluginEnabled('plg-daily') && !appData.tenants.find(t=>t.id===id)?.transitRate)
+                return showToast('Aktifkan plugin sewa harian untuk transit baru.','warning');
             let rentQuote;
-            try {const existing=appData.tenants.find(t=>t.id===id);rentQuote=CharisnaRental.quote(rentalRoom,{leaseInterval,entryDate,endDate,ratePlan:pluginEnabled('plg-daily') && rentalRoom.ratePlan,stayRateBreakdown:existing?.roomNumber===roomNumber?existing.stayRateBreakdown:undefined,nightlyRate:existing?.roomNumber===roomNumber && !existing.stayRateBreakdown?existing.nightlyRate:undefined});}
+            try {const existing=appData.tenants.find(t=>t.id===id);rentQuote=CharisnaRental.quote(rentalRoom,{leaseInterval,entryDate,endDate,...transitTimes(),transitRate:existing?.roomNumber===roomNumber?existing.transitRate:undefined,ratePlan:pluginEnabled('plg-daily') && rentalRoom.ratePlan,stayRateBreakdown:existing?.roomNumber===roomNumber?existing.stayRateBreakdown:undefined,nightlyRate:existing?.roomNumber===roomNumber && !existing.stayRateBreakdown?existing.nightlyRate:undefined});}
             catch(error){return showToast(error.message,'warning');}
             let uploadedKtpData = null;
             if (tempUploadedKtpData?.pendingFile) {
@@ -4277,7 +4311,7 @@
                 const ktpImage = uploadedKtpData || (id ? appData.tenants[idx].ktpImage : null);
                 appData.tenants[idx] = {
                         ...appData.tenants[idx],
-                        ...guestDetails, name, nik, identityType, communicationLanguage, nightlyRate:rentQuote.nightlyRate || null, stayRateBreakdown:rentQuote.nightlyBreakdown || null, checkInTime:pluginEnabled('plg-daily') && leaseInterval==='Harian'?rentalRoom.ratePlan?.checkIn || '14:00':null, checkOutTime:pluginEnabled('plg-daily') && leaseInterval==='Harian'?rentalRoom.ratePlan?.checkOut || '12:00':null, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate, endDate,
+                        ...guestDetails, transitRate:leaseInterval==='Transit'?rentQuote.baseAmount:null,transitStart:rentQuote.startTime || null,transitEnd:rentQuote.endTime || null, name, nik, identityType, communicationLanguage, nightlyRate:rentQuote.nightlyRate || null, stayRateBreakdown:rentQuote.nightlyBreakdown || null, checkInTime:pluginEnabled('plg-daily') && leaseInterval==='Harian'?rentalRoom.ratePlan?.checkIn || '14:00':null, checkOutTime:pluginEnabled('plg-daily') && leaseInterval==='Harian'?rentalRoom.ratePlan?.checkOut || '12:00':null, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate, endDate,
                         ktpVerified: identityType==='NIK' && Boolean(nik.length===16 || ktpImage),
                         ktpImage: ktpImage || null
                     };
@@ -4297,7 +4331,7 @@
                 const newTenant = {
                     id: newTenantId,
                     checkedInAt:new Date().toISOString(),
-                    ...guestDetails, name, nik, identityType, communicationLanguage, nightlyRate:rentQuote.nightlyRate || null, stayRateBreakdown:rentQuote.nightlyBreakdown || null, checkInTime:pluginEnabled('plg-daily') && leaseInterval==='Harian'?rentalRoom.ratePlan?.checkIn || '14:00':null, checkOutTime:pluginEnabled('plg-daily') && leaseInterval==='Harian'?rentalRoom.ratePlan?.checkOut || '12:00':null, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate, endDate,
+                    ...guestDetails, transitRate:leaseInterval==='Transit'?rentQuote.baseAmount:null,transitStart:rentQuote.startTime || null,transitEnd:rentQuote.endTime || null, name, nik, identityType, communicationLanguage, nightlyRate:rentQuote.nightlyRate || null, stayRateBreakdown:rentQuote.nightlyBreakdown || null, checkInTime:pluginEnabled('plg-daily') && leaseInterval==='Harian'?rentalRoom.ratePlan?.checkIn || '14:00':null, checkOutTime:pluginEnabled('plg-daily') && leaseInterval==='Harian'?rentalRoom.ratePlan?.checkOut || '12:00':null, roomNumber, leaseInterval, phone, emergency, job, vehicle, deposit, entryDate, endDate,
                     ktpVerified: identityType==='NIK' && Boolean(uploadedKtpData || nik.length===16),
                     ktpImage: uploadedKtpData || null
                 };
@@ -4316,7 +4350,7 @@
                         tenantName: name,
                         phone: phone,
                         roomNumber: roomNumber,
-                        period: leaseInterval==='Harian'?entryDate+' – '+endDate:`${months[now.getMonth()]} ${now.getFullYear()}`,
+                        period: CharisnaRental.shortStay(leaseInterval)?CharisnaRental.period(rentQuote):`${months[now.getMonth()]} ${now.getFullYear()}`,
                         dueDate: entryDate,
                         baseAmount: rentQuote.baseAmount,
                         electricAmount: 0,
@@ -4338,6 +4372,7 @@
         window.getRoomTurnoverProperty=propertyId=>getPropertyName(propertyId);
         window.setRoomTurnover=async(roomId,checkoutId,next)=>{
             const room=appData.rooms.find(item=>item.id===roomId);
+            if(!room?.turnover && next===null)return;
             if(room?.turnover?.checkoutId!==checkoutId)throw Error('Status kamar sudah berubah.');
             const previous=room.turnover;
             room.turnover=next;
@@ -4430,7 +4465,7 @@
                 appData.tenants = appData.tenants.filter(t => t.id !== tenantId);
                 if (!appData.tenants.some(t => t.roomNumber === tenant.roomNumber)){
                     rooms[0].status='KOSONG';
-                    if(tenant.leaseInterval==='Harian' && pluginEnabled('plg-turnover'))rooms[0].turnover={state:'DIRTY',checkoutId:record.id};
+                    if(CharisnaRental.shortStay(tenant.leaseInterval) && pluginEnabled('plg-turnover'))rooms[0].turnover={state:'DIRTY',checkoutId:record.id};
                 }
                 window.CharisnaFeatureModules?.recordAuditLog({ action: 'HAPUS', entity: 'Penghuni', entityId: tenantId, summary: `Check-out penghuni ${tenant.name}`, before: structuredClone(tenant) });
                 const saved = await saveData();
@@ -4845,9 +4880,10 @@
             const tenant = appData.tenants.find(t => t.id === tenantId);
             if (tenant) {
                 const room = appData.rooms.find(r => r.number === tenant.roomNumber);
+                const transit=tenant.leaseInterval==='Transit';
                 const daily=tenant.leaseInterval==='Harian';
                 document.getElementById('billDailyFields').classList.toggle('hidden',!daily);
-                document.getElementById('billFormBase').readOnly=daily;
+                document.getElementById('billFormBase').readOnly=daily || transit;
                 for(const id of ['billStayStart','billStayEnd','billNightlyRate'])document.getElementById(id).required=daily && id!=='billNightlyRate';
                 if(daily){
                     document.getElementById('billStayStart').value=tenant.entryDate;
@@ -4855,7 +4891,10 @@
                     document.getElementById('billNightlyRate').value=tenant.stayRateBreakdown || (pluginEnabled('plg-daily') && room?.ratePlan) ? '' : tenant.nightlyRate || room?.nightlyPrice || '';
                     updateDailyBill();return;
                 }
-                if (room) document.getElementById('billFormBase').value = room.price;
+                if(transit){
+                    document.getElementById('billFormBase').value=tenant.transitRate;
+                    document.getElementById('billFormPeriod').value=tenant.entryDate+' · '+tenant.transitStart+'–'+tenant.transitEnd;
+                }else if (room) document.getElementById('billFormBase').value = room.price;
             }
             recalcTotalBillModal();
         }
@@ -4892,8 +4931,9 @@
             let rental={rentalMode:'MONTHLY'};
             try{
                 if(tenant.leaseInterval==='Harian')rental=dailyBillQuote();
+                if(tenant.leaseInterval==='Transit')rental=CharisnaRental.quote(appData.rooms.find(room=>room.number===tenant.roomNumber),{...tenant,startTime:tenant.transitStart,endTime:tenant.transitEnd});
                 for(const value of [baseAmount,electricAmount,otherAmount,baseAmount+electricAmount+otherAmount])CharisnaRental.money(value);
-                if(tenant.leaseInterval==='Harian' && baseAmount!==rental.baseAmount)throw Error('Hitung ulang sewa harian.');
+                if(CharisnaRental.shortStay(tenant.leaseInterval) && baseAmount!==rental.baseAmount)throw Error('Hitung ulang sewa harian.');
             }catch(error){return showToast(error.message,'warning');}
             const newBill = {
                 id: generateRecordId('INV'),
@@ -4930,7 +4970,7 @@
             const beforeBills = structuredClone(appData.bills);
             let createdCount = 0;
             appData.tenants.forEach(t => {
-                if(t.leaseInterval==='Harian')return;
+                if(CharisnaRental.shortStay(t.leaseInterval))return;
                 const exists = appData.bills.some(b => b.roomNumber === t.roomNumber && b.period === periodName);
                 if (!exists) {
                     const room = appData.rooms.find(r => r.number === t.roomNumber);
@@ -5948,6 +5988,65 @@
         function calendarRoom(){
             return getScopedRooms().find(room=>room.id===document.getElementById('calendarPluginRoom').value);
         }
+        let calendarFeedBusy=false;
+        const calendarFeedResults=new Map();
+        function renderCalendarFeedStatus(){
+            const room=calendarRoom();
+            const configured=Boolean(appData.privateIntegrations?.calendarFeeds?.[room?.id]);
+            document.getElementById('calendarFeedUrl').value='';
+            document.getElementById('calendarFeedStatus').textContent=calendarFeedResults.get(room?.id) ||
+                (configured?'Feed tersimpan. URL disamarkan.':'Belum ada feed. Isi URL untuk mengaktifkan penyegaran.');
+        }
+        async function saveCalendarFeed(remove=false){
+            const room=calendarRoom();
+            if(!room || !pluginEnabled('plg-ical') || !window.charisnaVault)return;
+            try{
+                const raw=document.getElementById('calendarFeedUrl').value.trim();
+                if(!remove && !raw)return showToast('Isi URL kalender.','warning');
+                if(remove && !confirm('Hentikan penyegaran? Blok terakhir tetap berlaku.'))return;
+                const url=remove?'':CharisnaRoomCalendar.feedUrl(raw);
+                appData.privateIntegrations ||= {};
+                const previous=appData.privateIntegrations.calendarFeeds;
+                appData.privateIntegrations.calendarFeeds={...previous};
+                if(url)appData.privateIntegrations.calendarFeeds[room.id]=url;
+                else delete appData.privateIntegrations.calendarFeeds[room.id];
+                if(!await saveData()){appData.privateIntegrations.calendarFeeds=previous;return;}
+                calendarFeedResults.delete(room.id);
+                renderCalendarFeedStatus();
+                void refreshCalendarFeeds();
+            }catch(error){showToast(error.message,'warning');}
+        }
+        async function refreshCalendarFeeds(){
+            if(calendarFeedBusy || !window.charisnaVault || window.CHARISNA_ROLE!=='OWNER' || !pluginEnabled('plg-ical') || !navigator.onLine)return;
+            const vault=window.charisnaVault;
+            const source=appData.privateIntegrations?.calendarFeeds || {};
+            calendarFeedBusy=true;
+            try{
+                for(const [id,url] of Object.entries(source)){
+                    try{
+                        const blocks=await CharisnaRoomCalendar.fetchFeed(url);
+                        if(window.charisnaVault!==vault || appData.privateIntegrations?.calendarFeeds?.[id]!==url || !pluginEnabled('plg-ical'))continue;
+                        const room=appData.rooms.find(item=>item.id===id);
+                        if(!room)continue;
+                        const previous=room.feedCalendarBlocks;
+                        if(JSON.stringify(previous)!==JSON.stringify(blocks)){
+                            room.feedCalendarBlocks=blocks;
+                            if(!await saveData()){room.feedCalendarBlocks=previous;throw Error('Penyimpanan gagal.');}
+                        }
+                        calendarFeedResults.set(id,'Feed diperbarui · '+new Date().toLocaleString('id-ID'));
+                    }catch{
+                        calendarFeedResults.set(id,'Feed belum dapat dibaca. Blok terakhir tetap berlaku. Periksa akses URL atau impor file .ics.');
+                    }
+                }
+            }finally{
+                calendarFeedBusy=false;
+                const room=calendarRoom();
+                if(room && calendarFeedResults.has(room.id))document.getElementById('calendarFeedStatus').textContent=calendarFeedResults.get(room.id);
+            }
+        }
+        window.addEventListener('online',refreshCalendarFeeds);
+        window.addEventListener('charisna:owner-ready',refreshCalendarFeeds);
+        setInterval(()=>{if(!document.hidden)void refreshCalendarFeeds();},5*60*1000);
         async function importRoomCalendar(input){
             const room=calendarRoom(), file=input.files[0];
             input.value='';
@@ -5966,8 +6065,8 @@
             if(!pluginEnabled('plg-ical') || !room)return;
             if(appData.rooms.filter(item=>item.number===room.number).length!==1)return showToast('Nomor kamar harus unik sebelum ekspor.','warning');
             const stays=appData.tenants.filter(guest=>guest.roomNumber===room.number && guest.entryDate && guest.endDate)
-                .map(guest=>({start:guest.entryDate,end:guest.endDate}));
-            const data=CharisnaRoomCalendar.export([...stays,...(room.calendarBlocks || [])],room.id);
+                .map(guest=>({start:guest.entryDate,end:guest.leaseInterval==='Transit'?new Date(Date.parse(guest.entryDate)+86400000).toISOString().slice(0,10):guest.endDate}));
+            const data=CharisnaRoomCalendar.export(stays,room.id);
             const url=URL.createObjectURL(new Blob([data],{type:'text/calendar;charset=utf-8'}));
             const link=document.createElement('a');
             link.href=url;link.download='charisna-calendar.ics';link.click();
@@ -5981,6 +6080,7 @@
                 const selected=select.value;
                 select.replaceChildren(...getScopedRooms().filter(room=>CharisnaRental.mode(room)!=='MONTHLY').map(room=>new Option(room.number,room.id)));
                 if([...select.options].some(option=>option.value===selected))select.value=selected;
+                if(!document.getElementById("calendarFeedUrl").value)renderCalendarFeedStatus();
             }
             const pGrid = document.getElementById('pluginsRegistryGrid');
             if (pGrid && appData.plugins) {
@@ -6031,7 +6131,7 @@
             if (!p) return;
             p.enabled = !p.enabled;
             showToast(`Plugin "${p.name}" ${p.enabled ? 'diaktifkan' : 'dinonaktifkan'}!`);
-            saveData();
+            void saveData().then(saved=>{if(saved && pluginId==='plg-ical' && p.enabled)void refreshCalendarFeeds();});
         }
 
         function clearWaLogs() {
@@ -6255,8 +6355,8 @@
     </script>
 
 <script>setTimeout(() => { if (!window.CHARISNA_AUTH_READY) document.getElementById("auth-error").textContent = "Login memerlukan internet untuk memuat Firebase."; }, 12000);</script>
-    <script src="./feature-modules.js?v=20261123-plugins"></script>
-    <script type="module" src="./cloud-sync.js?v=20261123-plugins"></script>
+    <script src="./feature-modules.js?v=20261123-transit"></script>
+    <script type="module" src="./cloud-sync.js?v=20261123-turnover"></script>
 <script src="./vendor/qrcode.js"></script>
 <script src="./vendor/jsQR.js"></script>
 <script src="./qris.js"></script>

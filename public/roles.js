@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { collection, doc, getDoc, getDocs, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import { getAuth, inMemoryPersistence, setPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, signOut } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 
@@ -84,10 +84,6 @@ export function setupOwnerManager({ db, account, firebaseConfig, onMessage }) {
       batch.set(doc(db, 'staff', credential.user.uid), { ownerUid: account.uid, role: 'CLEANER', username, name, active: true, createdAt: new Date().toISOString() });
       batch.set(doc(db, 'users', account.uid, 'staffPins', credential.user.uid), { pin, username, updatedAt: new Date().toISOString() });
       await batch.commit();
-      if(turnover){
-        await window.setRoomTurnover(turnover.roomId,turnover.checkoutId,{state:'IN_PROGRESS',checkoutId:turnover.checkoutId,taskId:'turnover-'+turnover.checkoutId});
-        turnoverDraft=null;
-      }
       event.target.reset(); status(`Akun ${username} dibuat. Berikan PIN ke petugas secara pribadi.`); await refresh();
     } catch (error) { status(`Gagal membuat petugas: ${error.message}. Jika username sudah dipakai, pilih username lain.`); }
     finally { dialog.querySelector('#clean-pin').value = ''; await signOut(secondaryAuth).catch(() => {}); button.disabled = false; }
@@ -181,6 +177,32 @@ export function setupOwnerManager({ db, account, firebaseConfig, onMessage }) {
       status('Siap.');
     } catch (error) { status(`Gagal memuat: ${error.message}`); }
   }
+  const turnoverListeners=new Map();
+  function stopTurnover(){
+    window.removeEventListener('charisna:rooms-updated',trackTurnover);
+    for(const stop of turnoverListeners.values())stop();
+    turnoverListeners.clear();
+  }
+  function trackTurnover(){
+    const pending=(window.charisnaData.snapshot().rooms || []).filter(room=>room.turnover?.taskId);
+    for(const [id,stop] of turnoverListeners){
+      if(!pending.some(room=>room.turnover.taskId===id)){stop();turnoverListeners.delete(id);}
+    }
+    for(const room of pending){
+      const {taskId,checkoutId}=room.turnover;
+      if(turnoverListeners.has(taskId))continue;
+      const stop=onSnapshot(doc(db,'users',account.uid,'cleaningTasks',taskId),{includeMetadataChanges:true},snapshot=>{
+        if(getAuth(db.app).currentUser?.uid!==account.uid || snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites)return;
+        if(snapshot.exists() && snapshot.data().status==='DONE'){
+          void window.setRoomTurnover(room.id,checkoutId,null).catch(error=>status(error.message));
+        }
+      },error=>status('Tugas kebersihan belum dapat dipantau: '+error.message));
+      turnoverListeners.set(taskId,stop);
+    }
+  }
+  window.stopRoomTurnoverListeners=stopTurnover;
+  window.addEventListener('charisna:rooms-updated',trackTurnover);
+  trackTurnover();
   let turnoverDraft=null;
   dialog.addEventListener('close',()=>{turnoverDraft=null;});
   window.openRoomTurnover=async room=>{

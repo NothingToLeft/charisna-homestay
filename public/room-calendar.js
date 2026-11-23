@@ -37,5 +37,27 @@
     }
     return [...lines,'END:VCALENDAR',''].join('\r\n');
   }
-  root.CharisnaRoomCalendar={parse,export:exportCalendar};
+  function feedUrl(value){
+    const url=new URL(value);
+    if(url.protocol!=='https:' || url.username || url.password || url.hash)throw Error('Gunakan URL HTTPS tanpa kredensial di alamat.');
+    return url.href;
+  }
+  async function fetchFeed(value){
+    const response=await fetch(feedUrl(value),{credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',signal:AbortSignal.timeout(12000)});
+    if(!response.ok || !response.body)throw Error('Kalender tidak dapat dimuat.');
+    const reader=response.body.getReader();
+    let size=0, source='';
+    const decoder=new TextDecoder();
+    try{
+      for(;;){
+        const {done,value:chunk}=await reader.read();
+        if(done)break;
+        size+=chunk.byteLength;
+        if(size>250000)throw Error('Kalender maksimal 250 KB.');
+        source+=decoder.decode(chunk,{stream:true});
+      }
+      return parse(source+decoder.decode());
+    }finally{await reader.cancel().catch(()=>{});}
+  }
+  root.CharisnaRoomCalendar={parse,export:exportCalendar,feedUrl,fetchFeed};
 })(globalThis);

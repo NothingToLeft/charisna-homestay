@@ -36,3 +36,11 @@ it('prices holiday ahead of weekend and preserves the agreed nightly breakdown',
   expect(quote.baseAmount).toBe(950000);
   expect(api.quote({...planned,nightlyPrice:500000},{...dates,stayRateBreakdown:quote.nightlyBreakdown}).baseAmount).toBe(950000);
 });
+
+it('charges transit once and rejects invalid time windows',()=>{
+  const transit={leaseInterval:'Transit',entryDate:'2026-11-22',endDate:'2026-11-22',startTime:'10:00',endTime:'12:00'};
+  const transitRoom={...room,ratePlan:{transit:120000}};
+  expect(api.quote(transitRoom,transit)).toMatchObject({rentalMode:'TRANSIT',baseAmount:120000});
+  expect(()=>api.quote(transitRoom,{...transit,endTime:'09:00'})).toThrow();
+  expect(()=>api.quote(transitRoom,{...transit,endDate:'2026-11-23'})).toThrow();
+});

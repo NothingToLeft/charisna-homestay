@@ -881,14 +881,14 @@
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const date=targetMonth+'-'+String(day).padStart(2,'0');
-                const occupied=tenantInRoom && (tenantInRoom.leaseInterval!=='Harian' || (date>=tenantInRoom.entryDate && date<tenantInRoom.endDate));
+                const occupied=tenantInRoom && (tenantInRoom.leaseInterval==='Transit'?date===tenantInRoom.entryDate:tenantInRoom.leaseInterval!=='Harian' || (date>=tenantInRoom.entryDate && date<tenantInRoom.endDate));
                 let cellClass = 'bg-slate-50 dark:bg-slate-800/40'; // Kosong
                 let title = `Unit ${r.number}: Kosong`;
 
                 if (isRepaired) {
                     cellClass = 'bg-amber-200 dark:bg-amber-900/60 text-amber-800';
                     title = `Unit ${r.number}: Dalam Perbaikan / Tiket Maintenance`;
-                } else if (r.turnover || (data.plugins?.some(plugin=>plugin.id==='plg-ical' && plugin.enabled) && r.calendarBlocks?.some(block=>block.start<=date && date<block.end))) {
+                } else if (r.turnover || (data.plugins?.some(plugin=>plugin.id==='plg-ical' && plugin.enabled) && [...(r.calendarBlocks || []),...(r.feedCalendarBlocks || [])].some(block=>block.start<=date && date<block.end))) {
                     cellClass='bg-amber-200 text-amber-900';
                     title='Unit '+r.number+': Tidak tersedia';
                 } else if (occupied) {
