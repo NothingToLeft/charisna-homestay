@@ -677,71 +677,7 @@
                                 <label>Impor blok kalender (.ics) <input id="calendarPluginFile" type="file" accept=".ics,text/calendar" onchange="importRoomCalendar(this)"></label>
                                 <button type="button" onclick="exportRoomCalendar()" class="border rounded-lg p-2">Unduh kalender kamar</button>
                             </section>
-                            <div id="pluginsRegistryGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/30 flex flex-col justify-between gap-3">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-extrabold text-slate-800">WhatsApp Pluggable Driver</span>
-                                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-700">v1.2.0</span>
-                            </div>
-                            <p class="text-[11px] text-slate-500 mt-1">Kirim Kwitansi Digital &amp; Pengingat Jatuh Tempo langsung ke WhatsApp + Outbox Logger</p>
-                        </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                            <span class="text-[10px] font-bold text-emerald-600">● ACTIVE</span>
-                            <button onclick="togglePlugin('plg-wa')" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-white">
-                                Nonaktifkan
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/30 flex flex-col justify-between gap-3">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-extrabold text-slate-800">KYC Identity &amp; KTP Vault</span>
-                                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-700">v1.1.0</span>
-                            </div>
-                            <p class="text-[11px] text-slate-500 mt-1">Penyimpanan terkompresi foto KTP/SIM penghuni &amp; validasi NIK di setiap kartu kamar</p>
-                        </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                            <span class="text-[10px] font-bold text-emerald-600">● ACTIVE</span>
-                            <button onclick="togglePlugin('plg-ktp')" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-white">
-                                Nonaktifkan
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/30 flex flex-col justify-between gap-3">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-extrabold text-slate-800">Multi-Tenant Capacity Guard</span>
-                                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-700">v1.0.4</span>
-                            </div>
-                            <p class="text-[11px] text-slate-500 mt-1">Dukungan kapasitas 1-2 penghuni per kamar dengan pelacakan kontrak sewa (Lease)</p>
-                        </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                            <span class="text-[10px] font-bold text-emerald-600">● ACTIVE</span>
-                            <button onclick="togglePlugin('plg-cap')" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-white">
-                                Nonaktifkan
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/30 flex flex-col justify-between gap-3">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-extrabold text-slate-800">Payment Proof &amp; Overdue Detector</span>
-                                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-700">v1.0.8</span>
-                            </div>
-                            <p class="text-[11px] text-slate-500 mt-1">Unggah foto bukti transfer pembayaran sewa &amp; deteksi otomatis keterlambatan jatuh tempo</p>
-                        </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                            <span class="text-[10px] font-bold text-emerald-600">● ACTIVE</span>
-                            <button onclick="togglePlugin('plg-proof')" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-white">
-                                Nonaktifkan
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                            <div id="pluginsRegistryGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                         </div>
                     </div>
                 </section>
@@ -5256,6 +5192,7 @@
             if (!p) return;
             p.enabled = !p.enabled;
             showToast(`Plugin "${p.name}" ${p.enabled ? 'diaktifkan' : 'dinonaktifkan'}!`);
+            renderPluginsAndLogs();
             void saveData().then(saved=>{if(saved && pluginId==='plg-ical' && p.enabled)void refreshCalendarFeeds();});
         }
 
