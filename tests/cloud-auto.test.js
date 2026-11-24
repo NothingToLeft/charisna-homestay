@@ -97,4 +97,34 @@ describe('automatic cloud synchronization engine',()=>{
     t.remote({data:{...t.cloud.data,rooms:[{id:'A',price:100,status:'TERISI'}]}});t.api.queueSync(0);await vi.advanceTimersByTimeAsync(0);
     expect(t.cloud.data.rooms[0]).toMatchObject({price:200,status:'TERISI'});expect(t.local.privateIntegrations.privateKey).toBe('test-only');
   });
+  it('uploads when the transaction returns the same revision with reordered map keys',async()=>{
+    const t=setup();
+    await t.api.reconcileAtStartup();
+    t.edit({rooms:[{id:'A',price:125,status:'KOSONG'}]});
+    const cloud=t.cloud;
+    const reordered={...cloud,data:{bills:[],tenants:[],rooms:[{status:'KOSONG',price:100,id:'A'}],meta:cloud.data.meta}};
+    const set=vi.fn();
+    t.transaction.mockImplementationOnce((_db,run)=>run({get:async()=>({exists:()=>true,data:()=>reordered}),set}));
+    await t.api.reconcileAtStartup();
+    expect(set).toHaveBeenCalledTimes(1);
+    expect(set.mock.calls[0][1].data.rooms[0].price).toBe(125);
+    expect(t.node('badge').textContent).toBe('Tersinkron');
+  });
+  it('shows a real revision conflict immediately and retries with the newer cloud base',async()=>{
+    const t=setup();
+    await t.api.reconcileAtStartup();
+    t.edit({rooms:[{id:'A',price:150,status:'KOSONG'}]});
+    const set=vi.fn();
+    t.transaction.mockImplementationOnce((_db,run)=>{
+      t.remote({data:{...t.cloud.data,rooms:[{id:'A',price:100,status:'TERISI'}]}});
+      return run({get:async()=>({exists:()=>true,data:()=>t.cloud}),set});
+    });
+    await t.api.reconcileAtStartup();
+    expect(set).not.toHaveBeenCalled();
+    expect(t.node('#cloud-message').textContent).toContain('Cloud berubah');
+    expect(t.node('badge').dataset.state).toBe('error');
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(t.cloud.data.rooms[0]).toMatchObject({price:150,status:'TERISI'});
+    expect(t.node('badge').textContent).toBe('Tersinkron');
+  });
 });
