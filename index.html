@@ -762,7 +762,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Tarif kWh Listrik (Rp)</label>
-                                    <input type="number" id="settingKwhRate" required="" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                                    <input data-rupiah inputmode="numeric" type="text" id="settingKwhRate" required="" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                                 </div>
                             </div>
                             <div>
@@ -974,7 +974,7 @@
                                 <input id="prbFormDate" type="date" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="prbFormAsset" placeholder="Aset / fasilitas" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="prbFormDesc" placeholder="Deskripsi kerusakan" class="border rounded-xl px-3 py-2 text-xs w-full">
-                                <input id="prbFormCost" type="number" min="0" value="0" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input data-rupiah inputmode="numeric" id="prbFormCost" type="text" value="0" class="border rounded-xl px-3 py-2 text-xs w-full">
                             </div>
                             <div class="flex items-center gap-3">
                                 <label class="flex items-center gap-2 text-xs text-slate-500 border rounded-xl px-3 py-2 cursor-pointer">
@@ -1037,7 +1037,7 @@
                                 <input id="tgbFormTenant" placeholder="Nama penghuni" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="tgbFormPhone" placeholder="No. WA" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="tgbFormPeriod" placeholder="Periode (mis. Oktober 2026)" class="border rounded-xl px-3 py-2 text-xs w-full">
-                                <input id="tgbFormTotal" type="number" min="0" placeholder="Total tagihan" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input data-rupiah inputmode="numeric" id="tgbFormTotal" type="text" placeholder="Total tagihan" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="tgbFormStages" type="number" min="2" max="6" value="3" placeholder="Jumlah tahap" class="border rounded-xl px-3 py-2 text-xs w-full">
                             </div>
                             <div class="flex items-center gap-3">
@@ -1062,7 +1062,7 @@
                                 <input id="mtrFormRef" placeholder="Kamar / area (mis. 101)" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="mtrFormDate" type="date" class="border rounded-xl px-3 py-2 text-xs w-full">
                                 <input id="mtrFormReading" type="number" min="0" placeholder="Angka meter sekarang" class="border rounded-xl px-3 py-2 text-xs w-full">
-                                <input id="mtrFormRate" type="number" min="0" placeholder="Tarif" class="border rounded-xl px-3 py-2 text-xs w-full">
+                                <input data-rupiah inputmode="numeric" id="mtrFormRate" type="text" placeholder="Tarif" class="border rounded-xl px-3 py-2 text-xs w-full">
                             </div>
                             <div class="flex justify-end"><button onclick="addMeter()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">Simpan Catatan Meter</button></div>
                         </div>
@@ -1247,7 +1247,7 @@
                         </label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400 select-none">Rp</span>
-                            <input type="text" inputmode="numeric" id="roomFormPrice" placeholder="1.500.000" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <input data-rupiah type="text" inputmode="numeric" id="roomFormPrice" placeholder="1.500.000" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
                         </div>
                     </div>
                 </div>
@@ -1260,7 +1260,7 @@
                         </label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400 select-none">Rp</span>
-                            <input type="text" inputmode="numeric" id="roomFormNightlyPrice" placeholder="250.000" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <input data-rupiah type="text" inputmode="numeric" id="roomFormNightlyPrice" placeholder="250.000" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
                         </div>
                         <p id="roomRentalHelperText" class="text-[11px] text-slate-500 mt-1">Harga bulanan tetap tersimpan. Harga per malam wajib untuk kamar harian.</p>
                     </div>
@@ -1272,14 +1272,14 @@
                                 <label for="roomWeekendRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Weekend (Sabtu–Minggu)</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
-                                    <input type="text" inputmode="numeric" id="roomWeekendRate" placeholder="300.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                                    <input data-rupiah type="text" inputmode="numeric" id="roomWeekendRate" placeholder="300.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                                 </div>
                             </div>
                             <div>
                                 <label for="roomHolidayRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Musim Liburan (Peak)</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
-                                    <input type="text" inputmode="numeric" id="roomHolidayRate" placeholder="350.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                                    <input data-rupiah type="text" inputmode="numeric" id="roomHolidayRate" placeholder="350.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                                 </div>
                             </div>
                         </div>
@@ -1287,7 +1287,7 @@
                             <label for="roomTransitRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Tarif Transit (per kunjungan singkat)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
-                                <input type="text" inputmode="numeric" id="roomTransitRate" placeholder="150.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                                <input data-rupiah type="text" inputmode="numeric" id="roomTransitRate" placeholder="150.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                             </div>
                         </div>
                         <div>
@@ -1434,13 +1434,13 @@
                             <label for="massalRate" class="block text-xs font-semibold text-slate-700 mb-1">Tarif bulanan</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400 select-none">Rp</span>
-                                <input type="text" id="massalRate" inputmode="numeric" placeholder="1.500.000" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                                <input data-rupiah type="text" id="massalRate" inputmode="numeric" placeholder="1.500.000" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
                             </div>
                         </div>
                     </div>
                     <div id="massalNightlyField" hidden>
                         <label for="massalNightlyRate" class="block text-xs font-semibold text-slate-700 mb-1">Tarif per malam</label>
-                        <input type="text" inputmode="numeric" id="massalNightlyRate" placeholder="250.000" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200">
+                        <input data-rupiah type="text" inputmode="numeric" id="massalNightlyRate" placeholder="250.000" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200">
                     </div>
                     <label class="block text-xs font-semibold">Meteran awal (kWh)
                         <input id="massalKwh" type="number" min="0" step="any" class="w-full px-3 py-2 rounded-xl border border-slate-200">
@@ -1459,14 +1459,14 @@
                                 <label for="massalRoomWeekendRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Weekend (Sabtu–Minggu)</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
-                                    <input type="text" inputmode="numeric" id="massalRoomWeekendRate" placeholder="300.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                                    <input data-rupiah type="text" inputmode="numeric" id="massalRoomWeekendRate" placeholder="300.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                                 </div>
                             </div>
                             <div>
                                 <label for="massalRoomHolidayRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Musim Liburan (Peak)</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
-                                    <input type="text" inputmode="numeric" id="massalRoomHolidayRate" placeholder="350.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                                    <input data-rupiah type="text" inputmode="numeric" id="massalRoomHolidayRate" placeholder="350.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                                 </div>
                             </div>
                         </div>
@@ -1474,7 +1474,7 @@
                             <label for="massalRoomTransitRate" class="block text-[11px] font-semibold text-slate-600 mb-1">Tarif Transit (per kunjungan singkat)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400 select-none">Rp</span>
-                                <input type="text" inputmode="numeric" id="massalRoomTransitRate" placeholder="150.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                                <input data-rupiah type="text" inputmode="numeric" id="massalRoomTransitRate" placeholder="150.000" class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
                             </div>
                         </div>
                         <div>
@@ -1641,7 +1641,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Uang Deposit (Rp)</label>
-                        <input type="number" id="tenantFormDeposit" placeholder="500000" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                        <input data-rupiah inputmode="numeric" type="text" id="tenantFormDeposit" placeholder="500000" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                 </div>
                 <div>
@@ -1694,19 +1694,19 @@
                         <input type="date" id="billFormDue" required="" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                 </div>
-                <fieldset id="billDailyFields" class="hidden space-y-3 border rounded-xl p-4"><legend class="text-sm font-semibold">Sewa harian</legend><label class="block text-sm">Tanggal masuk<input id="billStayStart" type="date" onchange="updateDailyBill()" class="w-full border rounded-xl p-2"></label><label class="block text-sm">Tanggal check-out<input id="billStayEnd" type="date" onchange="updateDailyBill()" class="w-full border rounded-xl p-2"></label><label class="block text-sm">Tarif tetap (opsional jika ada tarif otomatis)<input id="billNightlyRate" type="number" min="1" step="1" oninput="updateDailyBill()" class="w-full border rounded-xl p-2"></label><p id="billNightSummary" role="status" class="text-sm text-slate-600"></p></fieldset>
+                <fieldset id="billDailyFields" class="hidden space-y-3 border rounded-xl p-4"><legend class="text-sm font-semibold">Sewa harian</legend><label class="block text-sm">Tanggal masuk<input id="billStayStart" type="date" onchange="updateDailyBill()" class="w-full border rounded-xl p-2"></label><label class="block text-sm">Tanggal check-out<input id="billStayEnd" type="date" onchange="updateDailyBill()" class="w-full border rounded-xl p-2"></label><label class="block text-sm">Tarif tetap (opsional jika ada tarif otomatis)<input data-rupiah inputmode="numeric" id="billNightlyRate" type="text" oninput="updateDailyBill()" class="w-full border rounded-xl p-2"></label><p id="billNightSummary" role="status" class="text-sm text-slate-600"></p></fieldset>
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Sewa Pokok</label>
-                        <input type="number" id="billFormBase" oninput="recalcTotalBillModal()" required="" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                        <input data-rupiah inputmode="numeric" type="text" id="billFormBase" oninput="recalcTotalBillModal()" required="" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Listrik/Air</label>
-                        <input type="number" id="billFormElectric" oninput="recalcTotalBillModal()" value="0" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                        <input data-rupiah inputmode="numeric" type="text" id="billFormElectric" oninput="recalcTotalBillModal()" value="0" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Lainnya</label>
-                        <input type="number" id="billFormOther" oninput="recalcTotalBillModal()" value="0" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                        <input data-rupiah inputmode="numeric" type="text" id="billFormOther" oninput="recalcTotalBillModal()" value="0" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                 </div>
                 <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
@@ -1777,7 +1777,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Nominal (Rp) *</label>
-                    <input type="number" id="expFormAmount" placeholder="450000" required="" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
+                    <input data-rupiah inputmode="numeric" type="text" id="expFormAmount" placeholder="450000" required="" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500">
                 </div>
                 <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                     <button type="button" onclick="closeModal('expenseModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
@@ -2111,6 +2111,10 @@
             return clean ? Number(clean) : 0;
         }
 
+        document.addEventListener('input', event => {
+            if (event.target.matches('input[data-rupiah]')) handleCurrencyInput(event);
+        }, true);
+
         function handleCurrencyInput(e) {
             const input = e.target;
             const originalVal = input.value;
@@ -2121,8 +2125,9 @@
             }
             const oldCursor = input.selectionStart || 0;
             const oldDigitsBeforeCursor = (originalVal.slice(0, oldCursor).match(/\d/g) || []).length;
-            const formatted = Number(clean).toLocaleString('id-ID');
+            const formatted = clean.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             input.value = formatted;
+            if (!oldDigitsBeforeCursor) { input.setSelectionRange(0, 0); return; }
             let newCursor = 0;
             let digitsSeen = 0;
             for (let i = 0; i < formatted.length; i++) {
@@ -3186,13 +3191,6 @@
             document.getElementById('roomHolidayDates').value = (plan.holidays || []).join(', ');
             document.getElementById('roomCheckInTime').value = plan.checkIn || '14:00';
             document.getElementById('roomCheckOutTime').value = plan.checkOut || '12:00';
-            ['roomFormPrice', 'roomFormNightlyPrice', 'roomWeekendRate', 'roomHolidayRate', 'roomTransitRate'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el && !el._hasCurrencyListener) {
-                    el.addEventListener('input', handleCurrencyInput);
-                    el._hasCurrencyListener = true;
-                }
-            });
             syncRoomRentalFields();
             if (modal) {
                 modal.classList.remove('hidden');
@@ -3513,7 +3511,7 @@
             document.getElementById('tenantFormEmergency').value = '';
             document.getElementById('tenantFormJob').value = '';
             document.getElementById('tenantFormVehicle').value = '';
-            document.getElementById('tenantFormDeposit').value = '500000';
+            document.getElementById('tenantFormDeposit').value = formatNumberWithDots('500000');
             document.getElementById('tenantFormDate').valueAsDate = new Date();
             document.getElementById('tenantFormEndDate').value = '';
             document.getElementById('tenantTransitStart').value='';
@@ -3549,7 +3547,7 @@
             document.getElementById('tenantFormEmergency').value = tenant.emergency || '';
             document.getElementById('tenantFormJob').value = tenant.job || '';
             document.getElementById('tenantFormVehicle').value = tenant.vehicle || '';
-            document.getElementById('tenantFormDeposit').value = tenant.deposit || 0;
+            document.getElementById('tenantFormDeposit').value = formatNumberWithDots(tenant.deposit || 0);
             document.getElementById('tenantFormDate').value = tenant.entryDate;
             document.getElementById('tenantFormEndDate').value = tenant.endDate || '';
             document.getElementById('tenantTransitStart').value=tenant.transitStart || '';
@@ -3584,7 +3582,7 @@
             const emergency = document.getElementById('tenantFormEmergency').value.trim();
             const job = document.getElementById('tenantFormJob').value.trim();
             const vehicle = document.getElementById('tenantFormVehicle').value.trim();
-            const deposit = Number(document.getElementById('tenantFormDeposit').value || 0);
+            const deposit = getNumericValue(document.getElementById('tenantFormDeposit'));
             const entryDate = document.getElementById('tenantFormDate').value;
             const endDate = document.getElementById('tenantFormEndDate').value;
             const identityType=document.getElementById('tenantFormIdentityType').value;
@@ -3757,10 +3755,10 @@
             const submit = form.querySelector('[type="submit"]');
             modal.querySelector('.checkout-tenant').textContent = `${tenant.name} · Unit ${tenant.roomNumber} · Deposit ${formatRupiah(deposit)}`;
             function updateRefund() {
-                const deduction = deductionInput.valueAsNumber;
+                const deduction = getNumericValue(deductionInput);
                 noteInput.required = deduction > 0;
                 noteInput.setCustomValidity(deduction > 0 && !noteInput.value.trim() ? 'Isi alasan potongan.' : '');
-                form.querySelector('output').textContent = deductionInput.validity.valid
+                form.querySelector('output').textContent = deductionInput.validity.valid && Number.isSafeInteger(deduction) && deduction <= deposit
                     ? `Rencana pengembalian ${formatRupiah(deposit - deduction)}` : 'Masukkan potongan yang valid.';
             }
             form.oninput = updateRefund;
@@ -3774,7 +3772,7 @@
                 if (!form.reportValidity() || !appData.tenants.includes(tenant)) return;
                 submit.disabled = true;
                 modal.querySelector('[type="button"]').disabled = true;
-                const deduction = deductionInput.valueAsNumber;
+                const deduction = getNumericValue(deductionInput);
                 const record = {
                     id: tenant.id, name: tenant.name, roomNumber: tenant.roomNumber,
                     entryDate: tenant.entryDate, endDate: tenant.endDate || '',
@@ -4320,21 +4318,21 @@
                 if(daily){
                     document.getElementById('billStayStart').value=tenant.entryDate;
                     document.getElementById('billStayEnd').value=tenant.endDate || '';
-                    document.getElementById('billNightlyRate').value=tenant.stayRateBreakdown || (pluginEnabled('plg-daily') && room?.ratePlan) ? '' : tenant.nightlyRate || room?.nightlyPrice || '';
+                    document.getElementById('billNightlyRate').value=formatNumberWithDots(tenant.stayRateBreakdown || (pluginEnabled('plg-daily') && room?.ratePlan) ? '' : tenant.nightlyRate || room?.nightlyPrice || '');
                     updateDailyBill();return;
                 }
                 if(transit){
-                    document.getElementById('billFormBase').value=tenant.transitRate;
+                    document.getElementById('billFormBase').value=formatNumberWithDots(tenant.transitRate);
                     document.getElementById('billFormPeriod').value=tenant.entryDate+' · '+tenant.transitStart+'–'+tenant.transitEnd;
-                }else if (room) document.getElementById('billFormBase').value = room.price;
+                }else if (room) document.getElementById('billFormBase').value = formatNumberWithDots(room.price);
             }
             recalcTotalBillModal();
         }
 
         function recalcTotalBillModal() {
-            const base = Number(document.getElementById('billFormBase').value || 0);
-            const elec = Number(document.getElementById('billFormElectric').value || 0);
-            const other = Number(document.getElementById('billFormOther').value || 0);
+            const base = getNumericValue(document.getElementById('billFormBase'));
+            const elec = getNumericValue(document.getElementById('billFormElectric'));
+            const other = getNumericValue(document.getElementById('billFormOther'));
             document.getElementById('billFormTotalPreview').textContent = formatRupiah(base + elec + other);
         }
         function dailyBillQuote(){
@@ -4344,7 +4342,7 @@
         }
         function updateDailyBill(){
             try{
-                const q=dailyBillQuote();document.getElementById('billFormBase').value=q.baseAmount;
+                const q=dailyBillQuote();document.getElementById('billFormBase').value=formatNumberWithDots(q.baseAmount);
                 document.getElementById('billFormPeriod').value=q.stayStart+' – '+q.stayEnd;
                 document.getElementById('billNightSummary').textContent=q.nights+' malam'+(q.nightlyBreakdown?' (tarif sesuai tanggal)':' × '+formatRupiah(q.nightlyRate))+' = '+formatRupiah(q.baseAmount);
             }catch(error){document.getElementById('billFormBase').value='';document.getElementById('billNightSummary').textContent=error.message;}
@@ -4357,9 +4355,9 @@
             const tenant = appData.tenants.find(t => t.id === tenantId);
             if (!tenant) return;
 
-            const baseAmount = Number(document.getElementById('billFormBase').value || 0);
-            const electricAmount = Number(document.getElementById('billFormElectric').value || 0);
-            const otherAmount = Number(document.getElementById('billFormOther').value || 0);
+            const baseAmount = getNumericValue(document.getElementById('billFormBase'));
+            const electricAmount = getNumericValue(document.getElementById('billFormElectric'));
+            const otherAmount = getNumericValue(document.getElementById('billFormOther'));
             let rental={rentalMode:'MONTHLY'};
             try{
                 if(tenant.leaseInterval==='Harian')rental=dailyBillQuote();
@@ -4483,7 +4481,7 @@
                 date: document.getElementById('expFormDate').value,
                 category: document.getElementById('expFormCategory').value,
                 title: document.getElementById('expFormTitle').value.trim(),
-                amount: Number(document.getElementById('expFormAmount').value)
+                amount: getNumericValue(document.getElementById('expFormAmount'))
             };
             if (!newExpense.title || !newExpense.date || !Number.isFinite(newExpense.amount) || newExpense.amount <= 0) {
                 return showToast('Isi tanggal, nama pengeluaran, dan nominal yang lebih besar dari nol.', 'warning');
@@ -4987,7 +4985,7 @@
                 date: document.getElementById('prbFormDate').value || new Date().toISOString().slice(0, 10),
                 asset: asset || 'Fasilitas Umum',
                 desc,
-                cost: Number(document.getElementById('prbFormCost').value) || 0,
+                cost: getNumericValue(document.getElementById('prbFormCost')) || 0,
                 photo,
                 status: document.getElementById('prbFormStatus').value,
                 propertyId: document.getElementById('prbFormProperty')?.value || document.getElementById('pwtFormProperty')?.value || ''
@@ -5119,7 +5117,7 @@
 
         function addTagihanBertahap() {
             const tenant = document.getElementById('tgbFormTenant').value.trim();
-            const total = Number(document.getElementById('tgbFormTotal').value) || 0;
+            const total = getNumericValue(document.getElementById('tgbFormTotal')) || 0;
             const stages = Math.max(2, Math.min(6, Number(document.getElementById('tgbFormStages').value) || 3));
             if (!tenant || total <= 0) { showToast('Nama dan total tagihan wajib diisi.', 'warning'); return; }
             const per = Math.floor(total / stages);
@@ -5201,7 +5199,7 @@
             if (!reading) { showToast('Angka meter wajib diisi.', 'warning'); return; }
             const prev = (appData.meter || []).filter(m => m.type === type && m.ref === ref).sort((a, b) => b.date.localeCompare(a.date))[0];
             const usage = prev ? Math.max(0, reading - Number(prev.reading)) : 0;
-            const rate = Number(document.getElementById('mtrFormRate').value) || (type === 'LISTRIK' ? Number(appData.settings.kwhRate || 1600) : 7500);
+            const rate = getNumericValue(document.getElementById('mtrFormRate')) || (type === 'LISTRIK' ? Number(appData.settings.kwhRate || 1600) : 7500);
             if (type === 'LISTRIK' && reading < Number(prev?.reading || 0)) return showToast('Meter baru tidak boleh lebih kecil dari meter sebelumnya.', 'warning');
             const record = {
                 id: 'MTR-' + Date.now(),
@@ -5215,7 +5213,7 @@
             };
             appData.meter.unshift(record);
             document.getElementById('mtrFormReading').value = '';
-            if (prev) document.getElementById('mtrFormRate').value = rate;
+            if (prev) document.getElementById('mtrFormRate').value = formatNumberWithDots(rate);
             showToast('Catatan meter disimpan.');
             window.CharisnaFeatureModules?.recordAuditLog({ action: 'TAMBAH', entity: 'Meter', entityId: record.id, summary: `Tambah catatan meter ${record.type} ${record.ref}`, after: { ...record } });
             saveData();
@@ -5808,7 +5806,7 @@
             const el4 = document.getElementById('settingBankInfo');
             if (el4) el4.value = appData.settings.bankInfo;
             const el5 = document.getElementById('settingKwhRate');
-            if (el5) el5.value = appData.settings.kwhRate || 1600;
+            if (el5) el5.value = formatNumberWithDots(appData.settings.kwhRate || 1600);
             const el6 = document.getElementById('settingKostAddress');
             if (el6) el6.value = appData.settings.kostAddress;
             const el7 = document.getElementById('settingDriveScriptUrl');
@@ -5825,7 +5823,7 @@
                 ownerName: document.getElementById('settingOwnerName').value.trim(),
                 ownerPhone: document.getElementById('settingOwnerPhone').value.trim(),
                 bankInfo: document.getElementById('settingBankInfo').value.trim(),
-                kwhRate: Number(document.getElementById('settingKwhRate').value || 1600),
+                kwhRate: getNumericValue(document.getElementById('settingKwhRate')) || 1600,
                 kostAddress: document.getElementById('settingKostAddress').value.trim(),
                 driveScriptUrl: document.getElementById('settingDriveScriptUrl').value.trim()
             };
