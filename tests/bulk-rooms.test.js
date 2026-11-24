@@ -38,12 +38,13 @@ it('retains leading zeroes and parses CRLF and LF from pasted columns', () => {
 
 it('rejects cross-property duplicates, batch duplicates and invalid rates', () => {
   const { fields, context, state } = fixture();
+  context.appData.properties.push({ id: 'P2', name: 'Kost 2' });
   context.appData.rooms.push({ number: 'A-01', propertyId: 'P2' });
   state.units = ['a-01', 'A-03', 'a-03'].map(number => ({ number }));
   fields.massalNightlyRate.value = '200.00';
   const { errors } = context.validateMassalBatch();
   expect(errors).toEqual([expect.stringContaining('tarif per malam')]);
-  expect(state.units.map(unit => unit.error)).toEqual(['Nomor sudah dipakai.', 'Nomor ganda dalam batch.', 'Nomor ganda dalam batch.']);
+  expect(state.units.map(unit => unit.error)).toEqual(['Sudah dipakai di Kost 2. Gunakan nomor berbeda untuk unit ini.', 'Nomor ganda dalam batch.', 'Nomor ganda dalam batch.']);
 });
 
 it('keeps the preview on failure, then saves the whole batch once on retry', async () => {
