@@ -1,6 +1,6 @@
 {
   "name": "charisna-kost",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "private": true,
   "description": "CHARISNA KOST web, Android and Windows app",
   "main": "desktop/main.cjs",
@@ -28,6 +28,7 @@
     "@capacitor/core": "8.6.0",
     "dexie": "4.2.0",
     "dexie-react-hooks": "1.1.7",
+    "electron-updater": "6.8.11",
     "firebase": "12.16.0",
     "lucide-react": "0.536.0",
     "react": "19.1.0",
@@ -73,6 +74,11 @@
     ],
     "win": {
       "icon": "build/icon.png",
+      "publish": {
+        "provider": "github",
+        "owner": "NothingToLeft",
+        "repo": "charisna-homestay"
+      },
       "target": [
         {
           "target": "nsis",
@@ -89,6 +95,7 @@
       ]
     },
     "nsis": {
+      "artifactName": "CHARISNA.KOST.Setup.${version}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,

@@ -48,10 +48,18 @@ jobs:
           $packages = @(Get-ChildItem release -File -Filter *.exe | Where-Object { $_.Name -notlike '*.__uninstaller.exe' })
           if ($packages.Count -lt 2) { throw 'Installer dan portable belum lengkap.' }
           if ($packages.Where({ $_.Length -lt 1MB }).Count) { throw 'Paket Windows tidak valid.' }
+          $installer = "CHARISNA.KOST.Setup.$($env:RELEASE_TAG.TrimStart('v')).exe"
+          $manifest = Get-Content -LiteralPath release/latest.yml -Raw
+          if (!$manifest.Contains($installer) -or !(Test-Path -LiteralPath "release/$installer.blockmap")) {
+            throw 'Metadata OTA Windows atau blockmap belum lengkap.'
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-packages
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/latest.yml
+            release/*.exe.blockmap
           retention-days: 7
   android:
     needs: verify
@@ -122,5 +130,5 @@ jobs:
             normalized="${file// /.}"
             if [ "$file" != "$normalized" ]; then mv -- "$file" "$normalized"; fi
           done
-          sha256sum *.exe *.apk > SHA256SUMS.txt
-          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" --title "CHARISNA KOST $RELEASE_TAG" --notes 'APK release bertanda tangan, installer Windows dan portable. Windows belum memakai sertifikat Authenticode. Cadangkan data sebelum berpindah dari APK debug karena tanda tangan berbeda. Uji perangkat fisik sebelum Publish.' *.exe *.apk SHA256SUMS.txt
+          sha256sum *.exe *.apk latest.yml *.exe.blockmap > SHA256SUMS.txt
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" --title "CHARISNA KOST $RELEASE_TAG" --notes 'APK release bertanda tangan, installer Windows dengan OTA, dan portable. Windows belum memakai sertifikat Authenticode. Cadangkan data sebelum berpindah dari APK debug karena tanda tangan berbeda. Uji perangkat fisik sebelum Publish.' *.exe *.apk latest.yml *.exe.blockmap SHA256SUMS.txt
