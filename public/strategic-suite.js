@@ -419,7 +419,8 @@
     modal.append(button('Buat / perbarui tautan', async () => {
       const tenant = selectableTenants().find(item => item.id === select.value);
       if (!tenant) throw Error('Pilih penghuni.');
-      if (appData.rooms.filter(room => room.number === tenant.roomNumber).length !== 1) throw Error('Nomor unit ambigu.');
+      const room = resolveRoom(tenant);
+      if (!room) throw Error('Unit penghuni belum terhubung dengan jelas.');
       appData.privateIntegrations ||= {};
       appData.privateIntegrations.portalTokens ||= {};
       let token = appData.privateIntegrations.portalTokens[tenant.id];
@@ -428,7 +429,8 @@
         appData.privateIntegrations.portalTokens[tenant.id] = token;
         if (!await saveData()) throw Error('Tautan belum disimpan.');
       }
-      const bills = appData.bills.filter(bill => bill.roomNumber === tenant.roomNumber && (bill.tenantId === tenant.id || bill.tenantName === tenant.name));
+      const bills = appData.bills.filter(bill => bill.tenantId ? bill.tenantId === tenant.id :
+        resolveRoom(bill)?.id === room.id && bill.tenantName === tenant.name);
       await window.charisnaPortal.publish(token, {
         name: tenant.name, room: tenant.roomNumber, endDate: tenant.endDate || '',
         qrisImage: appData.settings.qrisImage || '', qrisPayload: appData.settings.qrisPayload || '',
@@ -607,8 +609,8 @@
     if(!token){whatsappSettings();return;}
     const message=document.getElementById('broadcastMessage').value.trim();
     if(!message||message.length>2000){showToast('Isi pesan maksimum 2.000 karakter.','warning');return;}
-    const rooms=new Set(getScopedRooms().map(room=>room.number));
-    const recipients=appData.tenants.filter(tenant=>rooms.has(tenant.roomNumber)&&appData.rooms.filter(room=>room.number===tenant.roomNumber).length===1);
+    const scopedRooms=new Set(getScopedRooms());
+    const recipients=appData.tenants.filter(tenant=>scopedRooms.has(resolveRoom(tenant)));
     const phones=[...new Set(recipients.map(tenant=>cleanWaNumber(tenant.phone)).filter(phone=>/^62[0-9]{8,13}$/.test(phone)))];
     if(!phones.length||phones.length>50){showToast('Pilih 1–50 penerima valid dalam cakupan properti.','warning');return;}
     if(!confirm('Kirim otomatis melalui WhatsApp PC ke '+phones.length+' nomor?\n\n'+message))return;
