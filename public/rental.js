@@ -28,6 +28,7 @@
   function nights(start,end){const count=(dateValue(end)-dateValue(start))/86400000;if(!Number.isInteger(count)||count<1)throw Error('Check-out sewa harian harus setelah tanggal masuk, minimal satu malam.');return count;}
   const mode=room=>['MONTHLY','DAILY','BOTH'].includes(room?.rentalMode)?room.rentalMode:'MONTHLY';
   const shortStay=interval=>interval==='Harian' || interval==='Transit';
+  const quarterly=interval=>interval==='3 Bulanan';
   const supports=(room,interval)=>mode(room)==='BOTH'||mode(room)===(shortStay(interval)?'DAILY':'MONTHLY');
   function priceNights(room,start,end){
     const count=nights(start,end), startTime=dateValue(start);
@@ -44,6 +45,21 @@
   }
   function quote(room,stay){
     if(!room)throw Error('Kamar tidak ditemukan.');
+    if(quarterly(stay.leaseInterval)){
+      if(!supports(room,stay.leaseInterval))throw Error('Paket 3 bulan hanya tersedia untuk kamar yang mendukung sewa bulanan.');
+      const baseAmount=Number(stay.quarterlyRate ?? room.quarterlyPrice);
+      if(!Number.isSafeInteger(baseAmount) || baseAmount<=0)throw Error('Atur harga paket 3 bulan pada unit kamar.');
+      const start=new Date(dateValue(stay.entryDate));
+      const end=new Date(start);
+      end.setUTCDate(1);
+      end.setUTCMonth(end.getUTCMonth()+3);
+      const last=new Date(end);
+      last.setUTCMonth(last.getUTCMonth()+1,0);
+      end.setUTCDate(Math.min(start.getUTCDate(),last.getUTCDate()));
+      const nextDue=end.toISOString().slice(0,10);
+      end.setUTCDate(end.getUTCDate()-1);
+      return {rentalMode:'QUARTERLY',baseAmount,stayStart:stay.entryDate,stayEnd:end.toISOString().slice(0,10),nextDue};
+    }
     if(stay.leaseInterval==='Transit'){
       dateValue(stay.entryDate);
       const time=/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/;
@@ -79,6 +95,10 @@
     return mode(room)==='DAILY'?daily:mode(room)==='BOTH'?monthly+' · '+daily:monthly;
   }
   function period(bill,lang='id'){
+    if(bill.rentalMode==='QUARTERLY'){
+      const labels={id:'Paket 3 bulan',en:'3-month package',both:'Paket 3 bulan / 3-month package'};
+      return labels[language(lang)]+' · '+bill.stayStart+' – '+bill.stayEnd;
+    }
     if(bill.rentalMode==='TRANSIT')return bill.stayStart+' · '+bill.startTime+'–'+bill.endTime;
     if(bill.rentalMode==='DAILY')return `${bill.stayStart} – ${bill.stayEnd} (${bill.nights} ${nightWord(bill.nights,lang)})`;
     if(language(lang)==='id')return bill.period || '-';

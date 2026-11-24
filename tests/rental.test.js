@@ -13,7 +13,20 @@ describe('rental pricing compatibility',()=>{
  it('counts leap days without timezone or daylight-saving drift',()=>expect(api.nights('2028-02-28','2028-03-01')).toBe(2));
  for(const end of ['2026-11-22','2026-11-21','2026-02-30','invalid',''])it('rejects invalid checkout '+end,()=>expect(()=>api.nights(stay.entryDate,end)).toThrow());
  for(const rate of [-1,0,1.5,Infinity,NaN,Number.MAX_SAFE_INTEGER])it('rejects invalid nightly rate '+rate,()=>expect(()=>api.quote({...room,nightlyPrice:rate},stay)).toThrow());
- it('keeps monthly and daily prices independent and supports both offerings',()=>{expect(api.quote(room,{leaseInterval:'3 Bulanan'}).baseAmount).toBe(1500000);expect(api.supports(room,'Harian')).toBe(true);expect(api.supports({rentalMode:'DAILY'},'Bulanan')).toBe(false);expect(api.supports({},'Harian')).toBe(false);});
+ it('keeps monthly and daily prices independent and supports both offerings',()=>{expect(api.quote(room,{leaseInterval:'Bulanan'}).baseAmount).toBe(1500000);expect(api.supports(room,'Harian')).toBe(true);expect(api.supports({rentalMode:'DAILY'},'Bulanan')).toBe(false);expect(api.supports({},'Harian')).toBe(false);});
+ it('uses the special total and covers exactly three calendar months',()=>{
+  const quote=api.quote({...room,quarterlyPrice:2250000},{leaseInterval:'3 Bulanan',entryDate:'2026-12-01'});
+  expect(quote).toEqual({rentalMode:'QUARTERLY',baseAmount:2250000,stayStart:'2026-12-01',stayEnd:'2027-02-28',nextDue:'2027-03-01'});
+  const receipt=api.message('RECEIPT',{bill:{...quote,amount:2250000,status:'LUNAS'}},'both');
+  expect(receipt).toContain('Paket 3 bulan · 2026-12-01 – 2027-02-28');
+  expect(receipt).toContain('3-month package · 2026-12-01 – 2027-02-28');
+  expect(receipt).toContain('Rp 2.250.000');
+ });
+ it('clamps a month-end renewal and retains the agreed price',()=>{
+  const q=api.quote({...room,quarterlyPrice:2400000},{leaseInterval:'3 Bulanan',entryDate:'2027-01-31',quarterlyRate:2250000});
+  expect(q).toMatchObject({baseAmount:2250000,stayEnd:'2027-04-29',nextDue:'2027-04-30'});
+ });
+ it('requires an explicit price for the package',()=>expect(()=>api.quote(room,{leaseInterval:'3 Bulanan',entryDate:'2026-12-01'})).toThrow('harga paket'));
  it('retains agreed rate when a room price changes',()=>expect(api.quote({...room,nightlyPrice:300000},{...stay,nightlyRate:250000}).baseAmount).toBe(750000));
  it('shows both rates and labels daily-only rooms per night',()=>{expect(api.rateLabel(room)).toContain('250.000 / malam');expect(api.rateLabel({...room,rentalMode:'DAILY'},'en')).toBe('IDR 250,000 / night');});
 });
