@@ -12,7 +12,7 @@ function fixture({ saved = true, rooms = [] } = {}) {
   const fields = Object.fromEntries(Object.entries({
     roomFormId: '', roomFormProperty: 'P2', roomFormNumber: 'B-101',
     roomFormFloor: 'Lantai 1', roomFormType: 'Standar', roomFormCapacity: '1',
-    roomFormPrice: '1500000', roomQuarterlyPrice: '4250000', roomFormNightlyPrice: '', roomFormRentalMode: 'MONTHLY',
+    roomFormPrice: '1500000', roomPackageMonths: '4', roomQuarterlyPrice: '4250000', roomFormNightlyPrice: '', roomFormRentalMode: 'MONTHLY',
     roomFormKwh: '0', roomFormFacilities: '', roomFormStatus: 'KOSONG', searchRoomInput: 'A-101'
   }).map(([id, value]) => [id, { value }]));
   const filter = { id: 'filter-room-ALL', setAttribute: vi.fn(), classList: { toggle: vi.fn() } };
@@ -20,6 +20,7 @@ function fixture({ saved = true, rooms = [] } = {}) {
   const context = {
     appData: { rooms, tenants: [], auditLogs: [], properties: [{ id: 'P1' }, { id: 'P2' }] },
     currentPropertyFilter: 'P1', currentRoomFilter: 'TERISI',
+    validRoomPackageMonths: value => Number.isInteger(value) && value >= 2 && value <= 120,
     document: { getElementById: id => fields[id], querySelectorAll: () => [filter] },
     crypto: { randomUUID: () => 'fixture' },
     getNumericValue: field => Number(field.value), getPropertyFloors: () => ['Lantai 1'],
@@ -40,7 +41,7 @@ describe('unit creation and visibility', () => {
     const { context, fields, filter, event } = fixture();
     await Promise.all([context.saveRoom(event), context.saveRoom(event)]);
     expect(context.saveData).toHaveBeenCalledTimes(1);
-    expect(context.appData.rooms[0]).toMatchObject({ number: 'B-101', propertyId: 'P2', quarterlyPrice: 4250000 });
+    expect(context.appData.rooms[0]).toMatchObject({ number: 'B-101', propertyId: 'P2', packagePrice: 4250000, packageMonths: 4 });
     expect(context.currentPropertyFilter).toBe('P2');
     expect(context.currentRoomFilter).toBe('ALL');
     expect(fields.searchRoomInput.value).toBe('');

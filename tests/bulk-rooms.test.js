@@ -10,11 +10,12 @@ function fixture() {
     massalPrefix: 'A-', massalStart: '01', massalEnd: '03', massalPaste: ' A-01\r\n\r\nA-03 \nB-07',
     massalProperty: 'P1', massalFloor: 'Lantai 1', massalRentalMode: 'BOTH',
     massalType: 'Reguler AC', massalCapacity: '1', massalRate: '1.500.000',
-    massalNightlyRate: '200.000', massalQuarterlyPrice: '4.250.000', massalFacilities: '', massalKwh: '125', massalStatus: 'PERBAIKAN', searchRoomInput: 'hidden'
+    massalNightlyRate: '200.000', massalPackageMonths: '4', massalQuarterlyPrice: '4.250.000', massalFacilities: '', massalKwh: '125', massalStatus: 'PERBAIKAN', searchRoomInput: 'hidden'
   }).map(([key, value]) => [key, { value, focus: vi.fn() }]));
   for (const key of ['massalModal', 'massalSaveBtn']) fields[key] = { focus: vi.fn() };
   let id = 0;
   const context = {
+    validRoomPackageMonths: value => Number.isInteger(value) && value >= 2 && value <= 120,
     document: { getElementById: key => fields[key] }, crypto: { randomUUID: () => String(++id) },
     appData: { properties: [{ id: 'P1', name: 'Kost 1' }], rooms: [], auditLogs: [] },
     getPropertyFloors: () => ['Lantai 1'], getPropertyName: () => 'Kost 1',
@@ -64,7 +65,7 @@ it('keeps the preview on failure, then saves the whole batch once on retry', asy
     ['A-01', 1500000, 200000], ['A-02', 1500000, 200000]
   ]);
   expect(new Set(context.appData.rooms.map(room => room.id)).size).toBe(2);
-  expect(context.appData.rooms[0]).toMatchObject({ kwh: 125, status: 'PERBAIKAN', quarterlyPrice: 4250000, ratePlan: { weekend: 250000 } });
+  expect(context.appData.rooms[0]).toMatchObject({ kwh: 125, status: 'PERBAIKAN', packagePrice: 4250000, packageMonths: 4, ratePlan: { weekend: 250000 } });
   expect(context.currentPropertyFilter).toBe('P1');
   expect(fields.searchRoomInput.value).toBe('');
 });

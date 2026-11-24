@@ -901,7 +901,7 @@
                 const tenantInRoom = roomTenants.find(tenant => {
                     if (!tenant.entryDate || date < tenant.entryDate) return false;
                     if (tenant.leaseInterval === 'Transit') return date === tenant.entryDate;
-                    if (tenant.leaseInterval === 'Harian') return Boolean(tenant.endDate && date < tenant.endDate);
+                    if (['Harian', 'Mingguan'].includes(tenant.leaseInterval)) return Boolean(tenant.endDate && date < tenant.endDate);
                     return !tenant.endDate || date <= tenant.endDate;
                 });
                 let cellClass = 'bg-slate-50 dark:bg-slate-800/40'; // Kosong
