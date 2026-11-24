@@ -101,6 +101,27 @@
     if(!Number.isSafeInteger(rate)||rate<=0||!Number.isSafeInteger(rate*count))throw Error('Isi harga per malam berupa Rupiah bulat yang valid.');
     return {rentalMode:'DAILY',nightlyRate:rate,nights:count,stayStart:stay.entryDate,stayEnd:stay.endDate,baseAmount:rate*count};
   }
+  function shareAmount(total,share){
+    if(share===1)return Math.floor(total/2);
+    if(share===2)return Math.ceil(total/2);
+    return total;
+  }
+  function shareQuote(quote,share){
+    if(!share)return quote;
+    const baseAmount=shareAmount(quote.baseAmount,share);
+    if(quote.rentalMode!=='DAILY')return {...quote,baseAmount};
+    let runningTotal=0;
+    const source=quote.nightlyBreakdown || Array.from({length:quote.nights},(_,index)=>({
+      date:new Date(dateValue(quote.stayStart)+index*86400000).toISOString().slice(0,10),
+      rate:quote.nightlyRate
+    }));
+    const nightlyBreakdown=source.map(({date,rate})=>{
+      const previous=shareAmount(runningTotal,share);
+      runningTotal+=rate;
+      return {date,rate:shareAmount(runningTotal,share)-previous};
+    });
+    return {...quote,baseAmount,nightlyRate:nightlyBreakdown[0].rate,nightlyBreakdown};
+  }
   function rateLabel(room,lang='id'){
     const daily=money(Number(room.nightlyPrice)||0,lang)+(language(lang)==='en'?' / night':' / malam');
     const monthly=money(Number(room.price)||0,lang)+(language(lang)==='en'?' / month':' / bulan');
@@ -163,5 +184,5 @@
     lang=language(lang);
     return lang==='both'?singleMessage(type,data,'id')+'\n\n──────────\n\n'+singleMessage(type,data,'en'):singleMessage(type,data,lang);
   }
-  root.CharisnaRental={language,nightWord,text,money,nights,mode,shortStay,isPackage,validPackageMonths,packagePlan,supports,quote,rateLabel,period,charges,message};
+  root.CharisnaRental={language,nightWord,text,money,nights,mode,shortStay,isPackage,validPackageMonths,packagePlan,supports,quote,shareAmount,shareQuote,rateLabel,period,charges,message};
 })(globalThis);
