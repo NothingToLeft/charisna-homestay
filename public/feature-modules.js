@@ -45,6 +45,7 @@
             if (action === 'reminder') {
                 const bill = (window.charisnaData?.snapshot()?.bills || []).find(item => item.id === control.dataset.id);
                 if (bill) sendWaMessage(bill.phone, 'REMINDER', {
+                    billId: bill.id,
                     tenantName: bill.tenantName,
                     roomNumber: bill.roomNumber,
                     period: bill.period,
@@ -757,8 +758,8 @@
         const kostName = settings.kostName || 'CHARISNA KOST';
         const bankInfo = settings.bankInfo || 'BCA 8291048291 a/n CHARISNA KOST';
         if(window.CharisnaRental && ['INVOICE','REMINDER','RECEIPT','BOOKING_WELCOME'].includes(type)){
-            const bill=(data.bills || []).find(item=>item.tenantName===params.tenantName && item.roomNumber===params.roomNumber && item.period===params.period);
-            const tenant=(data.tenants || []).find(item=>item.name===params.tenantName && item.roomNumber===params.roomNumber);
+            const bill=(data.bills || []).find(item=>params.billId && item.id===params.billId);
+            const tenant=(data.tenants || []).find(item=>(bill?.tenantId || params.tenantId) === item.id);
             const language=data.plugins?.some(plugin=>plugin.id==='plg-i18n' && plugin.enabled) ? params.language || tenant?.communicationLanguage || bill?.communicationLanguage || settings.communicationLanguage : 'id';
             return window.CharisnaRental.message(type,{bill:bill || params,settings},language);
         }

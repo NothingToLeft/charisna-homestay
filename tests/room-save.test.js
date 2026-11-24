@@ -29,7 +29,8 @@ function fixture({ saved = true, rooms = [] } = {}) {
     switchTab: vi.fn(), renderRooms: vi.fn(), showToast: vi.fn(), getPropertyName: id => id,
     window: { CharisnaFeatureModules: { recordAuditLog: () => context.appData.auditLogs.push({ id: 'log' }) } }
   };
-  runInNewContext(saveRoomSource + filterRoomsSource, context);
+  const identity = html.slice(html.indexOf('        function resolveRoom('), html.indexOf('        function getScopedRoomNumbers('));
+  runInNewContext(saveRoomSource + filterRoomsSource + identity, context);
   const event = { preventDefault: vi.fn(), currentTarget: { querySelector: () => submit } };
   return { context, fields, filter, submit, event };
 }
@@ -57,11 +58,22 @@ describe('unit creation and visibility', () => {
     expect(submit.disabled).toBe(false);
   });
 
-  it('rejects a duplicate number across properties', async () => {
-    const { context, event } = fixture({ rooms: [{ id: 'old', number: 'b-101', propertyId: 'P1' }] });
+  it('rejects a duplicate number within one property', async () => {
+    const { context, event } = fixture({ rooms: [{ id: 'old', number: 'b-101', propertyId: 'P2' }] });
     await context.saveRoom(event);
     expect(context.saveData).not.toHaveBeenCalled();
-    expect(context.showToast).toHaveBeenCalledWith(expect.stringContaining('unik'), 'warning');
+    expect(context.showToast).toHaveBeenCalledWith(expect.stringContaining('properti ini'), 'warning');
+  });
+
+  it('allows the same number in another property and resolves leases by room ID', async () => {
+    const { context, event } = fixture({ rooms: [{ id: 'old', number: 'B-101', propertyId: 'P1' }] });
+    const tenant = { id: 't1', roomNumber: 'B-101' };
+    context.appData.tenants.push(tenant);
+    context.linkLegacyRoomRecords(context.appData);
+    await context.saveRoom(event);
+    expect(context.appData.rooms).toHaveLength(2);
+    expect(context.resolveRoom(tenant).id).toBe('old');
+    expect(context.tenantsInRoom(context.appData.rooms[1])).toHaveLength(0);
   });
 
   it('blocks removal of an occupied room and keeps its tenant', async () => {

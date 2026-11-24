@@ -4,6 +4,7 @@ function auditScopeData(data, propertyId) {
   const rooms = data.rooms || [];
   const belongs = (item, ref = item.roomNumber) => {
     if (item.propertyId) return item.propertyId === propertyId;
+    if (item.roomId) return rooms.some(room => room.id === item.roomId && (room.propertyId || 'PROP-1') === propertyId);
     const matches = rooms.filter(room => room.number === ref);
     return matches.length === 1 && (matches[0].propertyId || 'PROP-1') === propertyId;
   };
