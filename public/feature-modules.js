@@ -830,7 +830,15 @@
         if (!container) return;
 
         const data = window.charisnaData?.snapshot() || {};
-        const rooms = data.rooms || [];
+        const allRooms = data.rooms || [];
+        const rooms = typeof window.getScopedRooms === 'function' ? window.getScopedRooms() : allRooms;
+        const belongs = (item, room) => {
+            if (item.roomId) return item.roomId === room.id;
+            const number = item.roomNumber || item.roomRef;
+            if (!number || number !== room.number) return false;
+            if (item.propertyId) return item.propertyId === (room.propertyId || 'PROP-1');
+            return allRooms.filter(candidate => candidate.number === number).length === 1;
+        };
         const tenants = data.tenants || [];
         const complaints = data.complaints || [];
         const repairs = data.perbaikan || [];
@@ -843,15 +851,15 @@
         const daysInMonth = new Date(year, month, 0).getDate();
 
         let html = `
-            <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="room-timeline-panel p-4 rounded-2xl border space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Visual Kalender Unit Kamar (${targetMonth})</h3>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Kalender unit</h3>
                     <div class="flex items-center gap-2">
-                        <input type="month" data-feature-action="timeline-month" value="${escapeHtml(targetMonth)}"
+                        <input type="month" aria-label="Bulan kalender unit" data-feature-action="timeline-month" value="${escapeHtml(targetMonth)}"
                             class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200">
                     </div>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Kalender unit per hari">
                     <table class="w-full text-[10px] border-collapse min-w-[700px]">
                         <thead>
                             <tr class="bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300">
@@ -862,8 +870,15 @@
                         <tbody>
         `;
 
+        if (!rooms.length) {
+            container.innerHTML = `<div class="p-4 bg-white rounded-2xl border border-slate-200">
+                <h3 class="font-bold text-slate-800 text-sm">Kalender unit</h3>
+                <p class="mt-2 text-sm text-slate-600">Belum ada unit di properti yang dipilih.</p>
+            </div>`;
+            return;
+        }
         rooms.forEach(r => {
-            const tenantInRoom = tenants.find(t => t.roomNumber === r.number && (!r.propertyId || !t.propertyId || t.propertyId === r.propertyId));
+            const roomTenants = tenants.filter(tenant => belongs(tenant, r));
             const overlaps = (start, end) => {
                 const rangeStart = start || end;
                 const rangeEnd = end || start;
@@ -874,16 +889,20 @@
                 const monthEnd = new Date(year, month, 0, 23, 59, 59);
                 return startDate <= monthEnd && endDate >= monthStart;
             };
-            const tenantActive = tenantInRoom && overlaps(tenantInRoom.entryDate, tenantInRoom.endDate || new Date().toISOString().slice(0, 10));
-            const repairActive = repairs.some(p => (p.roomNumber === r.number || p.roomRef === r.number || p.propertyId === r.propertyId) && p.status !== 'SELESAI' && overlaps(p.startDate || p.date, p.endDate || p.date));
-            const complaintActive = complaints.some(c => c.roomNumber === r.number && (!r.propertyId || !c.propertyId || c.propertyId === r.propertyId) && c.status !== 'RESOLVED' && c.status !== 'SELESAI' && overlaps(c.date, c.resolvedDate || c.date));
+            const repairActive = repairs.some(p => belongs(p, r) && p.status !== 'SELESAI' && overlaps(p.startDate || p.date, p.endDate || p.date));
+            const complaintActive = complaints.some(c => belongs(c, r) && c.status !== 'RESOLVED' && c.status !== 'SELESAI' && overlaps(c.date, c.resolvedDate || c.date));
             const isRepaired = r.status === 'PERBAIKAN' || repairActive || complaintActive;
 
             html += `<tr><td class="p-2 border border-slate-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">Unit ${escapeHtml(r.number)}</td>`;
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const date=targetMonth+'-'+String(day).padStart(2,'0');
-                const occupied=tenantInRoom && (tenantInRoom.leaseInterval==='Transit'?date===tenantInRoom.entryDate:tenantInRoom.leaseInterval!=='Harian' || (date>=tenantInRoom.entryDate && date<tenantInRoom.endDate));
+                const tenantInRoom = roomTenants.find(tenant => {
+                    if (!tenant.entryDate || date < tenant.entryDate) return false;
+                    if (tenant.leaseInterval === 'Transit') return date === tenant.entryDate;
+                    if (tenant.leaseInterval === 'Harian') return Boolean(tenant.endDate && date < tenant.endDate);
+                    return !tenant.endDate || date <= tenant.endDate;
+                });
                 let cellClass = 'bg-slate-50 dark:bg-slate-800/40'; // Kosong
                 let title = `Unit ${r.number}: Kosong`;
 
@@ -893,7 +912,7 @@
                 } else if (r.turnover || (data.plugins?.some(plugin=>plugin.id==='plg-ical' && plugin.enabled) && [...(r.calendarBlocks || []),...(r.feedCalendarBlocks || [])].some(block=>block.start<=date && date<block.end))) {
                     cellClass='bg-amber-200 text-amber-900';
                     title='Unit '+r.number+': Tidak tersedia';
-                } else if (occupied) {
+                } else if (tenantInRoom) {
                     cellClass = 'bg-emerald-500 text-white font-bold';
                     title = `Unit ${r.number}: Terisi oleh ${tenantInRoom.name}`;
                 }
@@ -985,7 +1004,7 @@
 
         if (totalAlerts === 0) {
             container.innerHTML = `
-                <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
+                <div class="dashboard-reminders-clear p-4 rounded-2xl border flex items-center gap-3">
                     <i class="fa-solid fa-circle-check text-emerald-600 text-xl"></i>
                     <div>
                         <h4 class="font-bold text-emerald-900 dark:text-emerald-200 text-xs">Semua Tagihan & Kontrak Lancar</h4>

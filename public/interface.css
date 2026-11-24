@@ -272,3 +272,24 @@ body.public-page {margin:0 auto;padding:32px 24px 64px;max-width:1040px;}
 .registry-server output { display: block; overflow-wrap: anywhere; }
 .registry-empty { padding: 16px; background: var(--ck-soft); border-radius: 10px; }
 .registry-empty button { margin-top: 12px; }
+.charisna-ui .room-timeline-panel,
+.charisna-ui .dashboard-reminders-clear {
+  background: var(--ck-paper);
+  border-color: var(--ck-line);
+  color: var(--ck-ink);
+}
+.charisna-ui .room-timeline-panel table { min-width: 780px; }
+.charisna-ui .room-timeline-panel thead th {
+  background: var(--ck-soft);
+  color: var(--ck-ink);
+}
+.charisna-ui .room-timeline-panel tr > :first-child {
+  position: sticky;
+  left: 0;
+  background: var(--ck-soft);
+  color: var(--ck-ink);
+  min-width: 88px;
+}
+.charisna-ui .room-timeline-panel td[title$=": Kosong"] { background: var(--ck-paper); }
+.charisna-ui .room-timeline-panel .text-slate-500,
+.charisna-ui .dashboard-reminders-clear :is(h4,p) { color: var(--ck-ink); }
