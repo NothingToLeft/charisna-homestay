@@ -25,10 +25,12 @@
     if(!Number.isFinite(time)||new Date(time).toISOString().slice(0,10)!==value)throw Error('Tanggal tidak valid.');
     return time;
   }
-  function nights(start,end){const count=(dateValue(end)-dateValue(start))/86400000;if(!Number.isInteger(count)||count<1)throw Error('Check-out sewa harian harus setelah tanggal masuk, minimal satu malam.');return count;}
+  function nights(start,end){const count=(dateValue(end)-dateValue(start))/86400000;if(!Number.isInteger(count)||count<1)throw Error('Tanggal keluar harus setelah tanggal masuk, minimal satu malam.');return count;}
   const mode=room=>['MONTHLY','DAILY','BOTH'].includes(room?.rentalMode)?room.rentalMode:'MONTHLY';
-  const shortStay=interval=>interval==='Harian' || interval==='Transit';
-  const quarterly=interval=>interval==='3 Bulanan';
+  const shortStay=interval=>['Harian','Mingguan','Transit'].includes(interval);
+  const isPackage=interval=>interval==='Paket Bulanan' || interval==='3 Bulanan';
+  const validPackageMonths=months=>Number.isInteger(months) && months>=2 && months<=120;
+  const packagePlan=room=>({months:room?.packageMonths ?? 3, price:room?.packagePrice ?? room?.quarterlyPrice ?? 0});
   const supports=(room,interval)=>mode(room)==='BOTH'||mode(room)===(shortStay(interval)?'DAILY':'MONTHLY');
   function priceNights(room,start,end){
     const count=nights(start,end), startTime=dateValue(start);
@@ -45,20 +47,30 @@
   }
   function quote(room,stay){
     if(!room)throw Error('Kamar tidak ditemukan.');
-    if(quarterly(stay.leaseInterval)){
-      if(!supports(room,stay.leaseInterval))throw Error('Paket 3 bulan hanya tersedia untuk kamar yang mendukung sewa bulanan.');
-      const baseAmount=Number(stay.quarterlyRate ?? room.quarterlyPrice);
-      if(!Number.isSafeInteger(baseAmount) || baseAmount<=0)throw Error('Atur harga paket 3 bulan pada unit kamar.');
+    if(isPackage(stay.leaseInterval)){
+      if(!supports(room,stay.leaseInterval))throw Error('Paket tersedia untuk kamar yang mendukung sewa bulanan.');
+      const plan=packagePlan(room);
+      const packageMonths=stay.leaseInterval==='3 Bulanan'?3:Number(stay.packageMonths ?? plan.months);
+      if(!validPackageMonths(packageMonths))throw Error('Durasi paket harus 2–120 bulan.');
+      const baseAmount=Number(stay.packageRate ?? stay.quarterlyRate ?? (plan.months===packageMonths ? plan.price : 0));
+      if(!Number.isSafeInteger(baseAmount) || baseAmount<=0)throw Error('Atur harga paket sesuai durasi pada unit kamar.');
       const start=new Date(dateValue(stay.entryDate));
       const end=new Date(start);
       end.setUTCDate(1);
-      end.setUTCMonth(end.getUTCMonth()+3);
+      end.setUTCMonth(end.getUTCMonth()+packageMonths);
       const last=new Date(end);
       last.setUTCMonth(last.getUTCMonth()+1,0);
       end.setUTCDate(Math.min(start.getUTCDate(),last.getUTCDate()));
       const nextDue=end.toISOString().slice(0,10);
       end.setUTCDate(end.getUTCDate()-1);
-      return {rentalMode:'QUARTERLY',baseAmount,stayStart:stay.entryDate,stayEnd:end.toISOString().slice(0,10),nextDue};
+      return {rentalMode:'PACKAGE',packageMonths,baseAmount,stayStart:stay.entryDate,stayEnd:end.toISOString().slice(0,10),nextDue};
+    }
+    if(stay.leaseInterval==='Mingguan'){
+      if(!supports(room,stay.leaseInterval))throw Error('Unit ini belum mendukung sewa mingguan.');
+      const count=nights(stay.entryDate,stay.endDate);
+      const baseAmount=Number(stay.weeklyTotal);
+      if(!Number.isSafeInteger(baseAmount)||baseAmount<=0)throw Error('Isi total harga menginap dalam Rupiah bulat positif.');
+      return {rentalMode:'WEEKLY',nights:count,stayStart:stay.entryDate,stayEnd:stay.endDate,baseAmount};
     }
     if(stay.leaseInterval==='Transit'){
       dateValue(stay.entryDate);
@@ -95,8 +107,13 @@
     return mode(room)==='DAILY'?daily:mode(room)==='BOTH'?monthly+' · '+daily:monthly;
   }
   function period(bill,lang='id'){
-    if(bill.rentalMode==='QUARTERLY'){
-      const labels={id:'Paket 3 bulan',en:'3-month package',both:'Paket 3 bulan / 3-month package'};
+    if(bill.rentalMode==='PACKAGE' || bill.rentalMode==='QUARTERLY'){
+      const count=bill.rentalMode==='QUARTERLY'?3:bill.packageMonths;
+      const labels={id:`Paket ${count} bulan`,en:`${count}-month package`,both:`Paket ${count} bulan / ${count}-month package`};
+      return labels[language(lang)]+' · '+bill.stayStart+' – '+bill.stayEnd;
+    }
+    if(bill.rentalMode==='WEEKLY'){
+      const labels={id:'Mingguan',en:'Weekly',both:'Mingguan / Weekly'};
       return labels[language(lang)]+' · '+bill.stayStart+' – '+bill.stayEnd;
     }
     if(bill.rentalMode==='TRANSIT')return bill.stayStart+' · '+bill.startTime+'–'+bill.endTime;
@@ -116,8 +133,10 @@
   function singleMessage(type,data,lang){
     const bill=data.bill || data;const settings=data.settings || {};const paid=type==='RECEIPT'&&bill.status==='LUNAS';
     if(type==='BOOKING_WELCOME'){
-      const plans={Transit:'Day use',Harian:'Nightly',Bulanan:'Monthly','3 Bulanan':'Every 3 months','6 Bulanan':'Every 6 months',Tahunan:'Yearly'};
-      const interval=lang==='en'?(plans[bill.leaseInterval] || 'Monthly'):bill.leaseInterval || 'Bulanan';
+      const plans={Transit:'Day use',Harian:'Nightly',Mingguan:'Weekly',Bulanan:'Monthly','3 Bulanan':'Every 3 months','6 Bulanan':'Every 6 months',Tahunan:'Yearly'};
+      const interval=isPackage(bill.leaseInterval)
+        ? (lang==='en'?`${bill.packageMonths || 3}-month package`:`Paket ${bill.packageMonths || 3} bulan`)
+        : lang==='en'?(plans[bill.leaseInterval] || 'Monthly'):bill.leaseInterval || 'Bulanan';
       return lang==='en'?`Welcome to ${settings.kostName || 'CHARISNA KOST'}!\n\nHello ${bill.tenantName},\nRoom: ${bill.roomNumber}\nCheck-in: ${bill.entryDate || '-'}\nCheck-out / lease end: ${bill.endDate || '-'}\nRental plan: ${interval}\nDeposit: ${money(Number(bill.deposit || 0),lang)}\n\nPlease contact management for house rules and Wi-Fi details. We hope you enjoy your stay.`:`Selamat datang di ${settings.kostName || 'CHARISNA KOST'}!\n\nHalo ${bill.tenantName},\nUnit: ${bill.roomNumber}\nTanggal masuk: ${bill.entryDate || '-'}\nCheck-out / akhir sewa: ${bill.endDate || '-'}\nMode sewa: ${interval}\nDeposit: ${money(Number(bill.deposit || 0),lang)}\n\nSilakan hubungi pengelola untuk tata tertib dan informasi Wi-Fi. Semoga nyaman tinggal bersama kami.`;
     }
     const title=type==='REMINDER'?text('reminder',lang):text(paid?'receipt':'invoice',lang);
@@ -144,5 +163,5 @@
     lang=language(lang);
     return lang==='both'?singleMessage(type,data,'id')+'\n\n──────────\n\n'+singleMessage(type,data,'en'):singleMessage(type,data,lang);
   }
-  root.CharisnaRental={language,nightWord,text,money,nights,mode,shortStay,supports,quote,rateLabel,period,charges,message};
+  root.CharisnaRental={language,nightWord,text,money,nights,mode,shortStay,isPackage,validPackageMonths,packagePlan,supports,quote,rateLabel,period,charges,message};
 })(globalThis);

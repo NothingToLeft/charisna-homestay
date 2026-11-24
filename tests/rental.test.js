@@ -16,7 +16,7 @@ describe('rental pricing compatibility',()=>{
  it('keeps monthly and daily prices independent and supports both offerings',()=>{expect(api.quote(room,{leaseInterval:'Bulanan'}).baseAmount).toBe(1500000);expect(api.supports(room,'Harian')).toBe(true);expect(api.supports({rentalMode:'DAILY'},'Bulanan')).toBe(false);expect(api.supports({},'Harian')).toBe(false);});
  it('uses the special total and covers exactly three calendar months',()=>{
   const quote=api.quote({...room,quarterlyPrice:2250000},{leaseInterval:'3 Bulanan',entryDate:'2026-12-01'});
-  expect(quote).toEqual({rentalMode:'QUARTERLY',baseAmount:2250000,stayStart:'2026-12-01',stayEnd:'2027-02-28',nextDue:'2027-03-01'});
+  expect(quote).toEqual({rentalMode:'PACKAGE',packageMonths:3,baseAmount:2250000,stayStart:'2026-12-01',stayEnd:'2027-02-28',nextDue:'2027-03-01'});
   const receipt=api.message('RECEIPT',{bill:{...quote,amount:2250000,status:'LUNAS'}},'both');
   expect(receipt).toContain('Paket 3 bulan · 2026-12-01 – 2027-02-28');
   expect(receipt).toContain('3-month package · 2026-12-01 – 2027-02-28');
@@ -56,4 +56,23 @@ it('charges transit once and rejects invalid time windows',()=>{
   expect(api.quote(transitRoom,transit)).toMatchObject({rentalMode:'TRANSIT',baseAmount:120000});
   expect(()=>api.quote(transitRoom,{...transit,endTime:'09:00'})).toThrow();
   expect(()=>api.quote(transitRoom,{...transit,endDate:'2026-11-23'})).toThrow();
+});
+
+it('quotes a six-month package at the agreed total and retains legacy receipt labels', () => {
+  const quote = api.quote({...room, packageMonths:6, packagePrice:7800000},
+    {leaseInterval:'Paket Bulanan', entryDate:'2026-11-30'});
+  expect(quote).toMatchObject({packageMonths:6, baseAmount:7800000, stayEnd:'2027-05-29', nextDue:'2027-05-30'});
+  expect(api.period({...quote, rentalMode:'QUARTERLY'}, 'en')).toContain('3-month package');
+});
+
+it('keeps weekly dates and the negotiated total on a bilingual receipt', () => {
+  const weekly = {...stay, leaseInterval:'Mingguan', endDate:'2026-12-06', weeklyTotal:350000};
+  const quote = api.quote(room, weekly);
+  expect(quote).toMatchObject({rentalMode:'WEEKLY', nights:14, baseAmount:350000, stayEnd:'2026-12-06'});
+  const receipt = api.message('RECEIPT', {bill:{...quote, amount:350000, status:'LUNAS'}}, 'both');
+  expect(receipt).toContain('Mingguan · 2026-11-22 – 2026-12-06');
+  expect(receipt).toContain('Weekly · 2026-11-22 – 2026-12-06');
+  expect(receipt).toContain('Rp 350.000');
+  expect(() => api.quote(room, {...weekly, weeklyTotal:0})).toThrow('total harga');
+  expect(() => api.quote(room, {...weekly, endDate:weekly.entryDate})).toThrow('Tanggal keluar');
 });
