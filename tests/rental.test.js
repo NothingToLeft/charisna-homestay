@@ -76,3 +76,15 @@ it('keeps weekly dates and the negotiated total on a bilingual receipt', () => {
   expect(() => api.quote(room, {...weekly, weeklyTotal:0})).toThrow('total harga');
   expect(() => api.quote(room, {...weekly, endDate:weekly.entryDate})).toThrow('Tanggal keluar');
 });
+
+it('splits room rent without duplicating income or losing odd rupiah', () => {
+  const quote=api.quote({...room, nightlyPrice:250001},stay);
+  const first=api.shareQuote(quote,1);
+  const second=api.shareQuote(quote,2);
+  expect(first.baseAmount+second.baseAmount).toBe(quote.baseAmount);
+  expect(first.nightlyBreakdown.reduce((total,night)=>total+night.rate,0)).toBe(first.baseAmount);
+  expect(second.nightlyBreakdown.reduce((total,night)=>total+night.rate,0)).toBe(second.baseAmount);
+  expect(api.shareQuote(quote)).toBe(quote);
+  expect(api.shareAmount(350001,1)).toBe(175000);
+  expect(api.shareAmount(350001,2)).toBe(175001);
+});
