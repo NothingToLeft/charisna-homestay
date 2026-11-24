@@ -19,6 +19,17 @@ function setup(local,cloud){
  return {state,engine:context.engine,context,storage};
 }
 describe('automatic sync through production engine',()=>{
+ it('pulls cloud rooms into a new empty vault even if a local preference has a newer timestamp',async()=>{
+  const local={...data(1,'2026-11-04T00:00:00.000Z'),rooms:[],settings:{defaultRoomFacilities:'WiFi'}};
+  const {engine,state,context}=setup(local,{data:data(3),updatedAt:'2026-11-02T00:00:00.000Z'});
+  context.window.charisnaVault.save=async()=>{throw Error('Temporary vault error');};
+  await engine.reconcileAtStartup();
+  expect(engine.syncState.initialized).toBe(false);
+  context.window.charisnaVault.save=async()=>{};
+  await engine.reconcileAtStartup();
+  expect(state.local.rooms[0].price).toBe(3);
+  expect(state.writes).toBe(0);
+ });
  it('pulls a newer cloud snapshot automatically and retains local integration keys',async()=>{
   const {engine,state,context,storage}=setup(data(),{data:data(3),updatedAt:'2026-11-02T00:00:00.000Z'});
   await engine.reconcileAtStartup();
