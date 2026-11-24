@@ -73,6 +73,9 @@ ipcMain.handle('file:open-text', async () => {
 
 app.whenReady().then(() => {
   createWindow();
+  if (process.platform === 'win32' && app.isPackaged && !isDevelopment && !process.env.PORTABLE_EXECUTABLE_FILE) {
+    require('./updates.cjs').startWindowsUpdates();
+  }
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
