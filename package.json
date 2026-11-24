@@ -1,6 +1,6 @@
 {
   "name": "charisna-kost",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": true,
   "description": "CHARISNA KOST web, Android and Windows app",
   "main": "desktop/main.cjs",

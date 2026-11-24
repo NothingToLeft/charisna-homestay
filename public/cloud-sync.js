@@ -260,6 +260,9 @@ const setBadge = (kind, text) => {
 const currentOwner = (uid, epoch) => user?.uid === uid && auth.currentUser?.uid === uid && verifiedRole === 'OWNER' && window.charisnaVault && syncEpoch === epoch;
 const cloudVersion = cloud => cloud ? JSON.stringify([cloud.revision || '', cloud.updatedAt || '', syncContent(cloud.data)]) : null;
 const hasUnsyncedChanges = () => Boolean(window.charisnaVault && !sameSyncData(syncContent(window.charisnaData.snapshot()), syncState.lastLocal));
+const hasOperationalRecords = data => ['rooms', 'tenants', 'bills', 'expenses', 'complaints', 'inventaris',
+  'stok', 'stokMutasi', 'perawatan', 'perbaikan', 'kontrak', 'tagihanBertahap', 'meter', 'handovers',
+  'tenantNotes', 'tenantHistory', 'announcements'].some(key => data[key]?.length > 0);
 async function rememberSyncBackup(data) {
   const prefix = SYNC_BACKUP_PREFIX + user.uid + ':';
   const envelope = await window.charisnaVault.backup(data);
@@ -321,8 +324,7 @@ async function performUpload({interactive = false} = {}) {
     const observed = await readCloudFromServer(ref);
     if (!currentOwner(uid, epoch)) return false;
     const cloud = observed.exists() ? observed.data() : null;
-    if (cloud) window.charisnaData.validate(cloud.data);
-    const remote = cloud ? syncContent(cloud.data) : syncContent(local);
+    const remote = cloud ? syncContent(window.charisnaData.validate(cloud.data)) : syncContent(local);
     const changedRemote = cloud && cloudVersion(cloud) !== syncState.cloudVersion;
     let merged = syncContent(local), conflicts = 0;
     if (changedRemote) {
@@ -386,9 +388,9 @@ async function reconcileAtStartup() {
     if (!snapshot.exists()) { await performUpload(); return; }
     const cloud = snapshot.data();
     const local = window.charisnaData.snapshot();
-    window.charisnaData.validate(cloud.data);
-    if (sameSyncData(syncContent(local),syncContent(cloud.data))) {
-      syncState.initialized = true; syncState.base = syncContent(cloud.data); syncState.lastLocal = syncContent(local); syncState.cloudVersion = cloudVersion(cloud);
+    const remote = window.charisnaData.validate(cloud.data);
+    if (sameSyncData(syncContent(local),syncContent(remote))) {
+      syncState.initialized = true; syncState.base = syncContent(remote); syncState.lastLocal = syncContent(local); syncState.cloudVersion = cloudVersion(cloud);
       if(needsFeedback || syncBadge()?.dataset.state!=='ok')setBadge('ok','Sinkron otomatis aktif'); return;
     }
     if (syncState.initialized && syncState.base) {
@@ -396,9 +398,9 @@ async function reconcileAtStartup() {
     } else {
       const localStamp = Date.parse(local.meta?.localUpdatedAt || '') || 0;
       const remoteStamp = Date.parse(cloud.updatedAt || '') || 0;
-      if (localStamp > remoteStamp) await performUpload(); else await downloadCloudData();
+      const freshEmptyVault = !local.meta?.cloudUpdatedAt && !hasOperationalRecords(local) && hasOperationalRecords(remote);
+      if (!freshEmptyVault && localStamp > remoteStamp) await performUpload(); else await downloadCloudData();
     }
-    syncState.initialized = true;
   } catch (error) { if (currentOwner(uid, epoch)) { setBadge('error','Sinkron tertunda; akan dicoba ulang'); message(error.message); queueSync(5000,false); } }
   finally{if(reconcilingEpoch===epoch)reconcilingEpoch=null;}
 }
@@ -415,6 +417,7 @@ const scheduleAutoUpload = () => queueSync();
 const flushPendingUpload = () => queueSync(0);
 window.addEventListener('charisna:data-saved',scheduleAutoUpload);
 window.addEventListener('online',flushPendingUpload);
+window.addEventListener('focus',flushPendingUpload);
 window.addEventListener('offline',()=>setBadge('off','○ Offline · perubahan tersimpan di perangkat'));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)queueSync(0);});
 setInterval(()=>queueSync(0),30000);
