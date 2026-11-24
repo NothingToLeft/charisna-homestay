@@ -62,6 +62,26 @@ describe('automatic cloud synchronization engine',()=>{
     const first=t.api.reconcileAtStartup();await vi.advanceTimersByTimeAsync(0);await t.api.reconcileAtStartup();expect(t.read).toHaveBeenCalledTimes(1);
     resolve(response);await first;expect(t.node('badge').dataset.state).toBe('ok');
   });
+  it('shows a pending upload after a stalled write and prevents the late callback from writing',async()=>{
+    const t=setup();
+    await t.api.reconcileAtStartup();
+    t.edit({rooms:[{id:'A',price:450,status:'KOSONG'}]});
+    let late;
+    const set=vi.fn();
+    t.transaction.mockImplementationOnce((_db,run)=>new Promise((resolve,reject)=>{
+      late=()=>run({get:async()=>({exists:()=>true,data:()=>t.cloud}),set}).then(resolve,reject);
+    }));
+    const pending=t.api.performUpload();
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(await pending).toBe(false);
+    expect(t.node('badge').dataset.state).toBe('error');
+    expect(t.local.rooms[0].price).toBe(450);
+    await late();
+    expect(set).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(t.cloud.data.rooms[0].price).toBe(450);
+    expect(t.node('badge').dataset.state).toBe('ok');
+  });
   it('ignores old account results after account switch',async()=>{
     const t=setup();let resolve;t.read.mockImplementationOnce(()=>new Promise(done=>{resolve=done;}));
     const first=t.api.reconcileAtStartup();await vi.advanceTimersByTimeAsync(0);t.api.stopAutoSync();t.api.switchOwner();resolve({exists:()=>true,data:()=>t.cloud});await first;

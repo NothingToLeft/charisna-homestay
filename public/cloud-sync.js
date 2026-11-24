@@ -281,7 +281,7 @@ function queueSync(delay = SYNC_DEBOUNCE_MS, announce = true) {
   if (!user || verifiedRole !== 'OWNER' || !window.charisnaVault || syncState.paused) return;
   clearTimeout(syncState.uploadTimer);
   if (!navigator.onLine) { setBadge('off','○ Offline · perubahan tersimpan di perangkat'); return; }
-  if(announce && hasUnsyncedChanges())setBadge('busy','Perubahan tersimpan di perangkat; menunggu sinkronisasi otomatis');
+  if(announce && syncBadge()?.dataset.state !== 'error' && hasUnsyncedChanges())setBadge('busy','Perubahan tersimpan di perangkat; menunggu sinkronisasi otomatis');
   syncState.uploadTimer = setTimeout(() => { void reconcileAtStartup(); }, delay);
 }
 async function readCloudFromServer(ref){
@@ -289,6 +289,24 @@ async function readCloudFromServer(ref){
   try{
     return await Promise.race([getDocFromServer(ref),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Cloud belum merespons. Data perangkat tetap tersimpan; sinkronisasi akan dicoba lagi.')),20000);})]);
   }finally{clearTimeout(timer);}
+}
+async function writeCloudSnapshot(ref, cloud, payload, uid, epoch) {
+  let timer;
+  let expired = false;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      expired = true;
+      reject(Error('Cloud belum mengonfirmasi unggahan. Data tetap tersimpan di perangkat.'));
+    }, 20000);
+  });
+  const write = runTransaction(db, async transaction => {
+    const latest = await transaction.get(ref);
+    if (expired || !currentOwner(uid, epoch)) throw Error('SYNC_CANCELLED');
+    if (cloudVersion(latest.exists() ? latest.data() : null) !== cloudVersion(cloud)) throw Error('SYNC_RETRY');
+    transaction.set(ref, payload);
+  });
+  try { await Promise.race([write, deadline]); }
+  finally { clearTimeout(timer); }
 }
 async function applyCloud(cloud, localStart, uid, epoch) {
   if (!currentOwner(uid, epoch)) return false;
@@ -320,7 +338,7 @@ async function performUpload({interactive = false} = {}) {
     if (!currentOwner(uid, epoch)) return false;
     const local = window.charisnaData.snapshot();
     if (interactive && !confirm('Sinkronkan perubahan perangkat ini ke cloud?')) return false;
-    setBadge('busy','Menyimpan perubahan ke cloud secara otomatis');
+    if (syncBadge()?.dataset.state !== 'error') setBadge('busy','Menyimpan perubahan ke cloud secara otomatis');
     const observed = await readCloudFromServer(ref);
     if (!currentOwner(uid, epoch)) return false;
     const cloud = observed.exists() ? observed.data() : null;
@@ -337,12 +355,7 @@ async function performUpload({interactive = false} = {}) {
     const outgoing = {...merged,meta:{...local.meta,localUpdatedAt:new Date().toISOString()}};
     const updatedAt = outgoing.meta.localUpdatedAt;
     const revision = crypto.randomUUID();
-    await runTransaction(db, async transaction => {
-      const latest = await transaction.get(ref);
-      if (cloudVersion(latest.exists() ? latest.data() : null) !== cloudVersion(cloud)) throw Error('SYNC_RETRY');
-      if (!currentOwner(uid, epoch)) throw Error('SYNC_ACCOUNT_CHANGED');
-      transaction.set(ref,{data:outgoing,updatedAt,revision,device:deviceId});
-    });
+    await writeCloudSnapshot(ref, cloud, {data:outgoing,updatedAt,revision,device:deviceId}, uid, epoch);
     const applied = await applyCloud({data:outgoing,updatedAt,revision},local,uid,epoch);
     if (conflicts && applied) message('Perubahan bersamaan digabung. Perubahan lokal dipakai pada kolom yang sama; cadangan terenkripsi tersedia di Pengaturan.');
     return applied;
@@ -381,7 +394,7 @@ async function reconcileAtStartup() {
   reconcilingEpoch=epoch;
   try {
     const needsFeedback=!syncState.initialized || hasUnsyncedChanges();
-    if(needsFeedback)setBadge('busy','Memulai sinkronisasi otomatis');
+    if(needsFeedback && syncBadge()?.dataset.state !== 'error')setBadge('busy','Memulai sinkronisasi otomatis');
     await window.charisnaVault.flush();
     const snapshot = await readCloudFromServer(cloudDoc());
     if (!currentOwner(uid, epoch)) return;
@@ -413,7 +426,7 @@ function startAutoSync() {
   queueSync(0);
 }
 const checkCloudForNewerData = reconcileAtStartup;
-const scheduleAutoUpload = () => queueSync();
+const scheduleAutoUpload = () => queueSync(0);
 const flushPendingUpload = () => queueSync(0);
 window.addEventListener('charisna:data-saved',scheduleAutoUpload);
 window.addEventListener('online',flushPendingUpload);
