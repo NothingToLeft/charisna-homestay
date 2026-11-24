@@ -328,18 +328,18 @@ async function applyCloud(cloud, localStart, uid, epoch) {
   setBadge(dirty ? 'busy' : 'ok', dirty ? '⟳ Menyinkronkan perubahan berikutnya…' : '☁ Sinkron otomatis');
   return true;
 }
-async function performUpload({interactive = false} = {}) {
+async function performUpload({interactive = false, observedSnapshot} = {}) {
   if (syncState.syncing || !window.charisnaVault) { queueSync(); return false; }
   syncState.syncing = true;
   const uid = user?.uid, epoch = syncEpoch;
   try {
     const ref = cloudDoc();
-    await window.charisnaVault.flush();
+    if (!observedSnapshot) await window.charisnaVault.flush();
     if (!currentOwner(uid, epoch)) return false;
     const local = window.charisnaData.snapshot();
     if (interactive && !confirm('Sinkronkan perubahan perangkat ini ke cloud?')) return false;
     if (syncBadge()?.dataset.state !== 'error') setBadge('busy','Menyimpan perubahan ke cloud secara otomatis');
-    const observed = await readCloudFromServer(ref);
+    const observed = observedSnapshot || await readCloudFromServer(ref);
     if (!currentOwner(uid, epoch)) return false;
     const cloud = observed.exists() ? observed.data() : null;
     const remote = cloud ? syncContent(window.charisnaData.validate(cloud.data)) : syncContent(local);
@@ -365,21 +365,21 @@ async function performUpload({interactive = false} = {}) {
     return false;
   } finally { if(syncEpoch===epoch)syncState.syncing = false; if (currentOwner(uid, epoch) && hasUnsyncedChanges()) queueSync(3000,false); }
 }
-async function downloadCloudData({interactive = false} = {}) {
+async function downloadCloudData({interactive = false, observedSnapshot} = {}) {
   if (syncState.syncing || !window.charisnaVault) { queueSync(); return false; }
   syncState.syncing = true;
   const uid = user?.uid, epoch = syncEpoch;
   try {
-    await window.charisnaVault.flush();
+    if (!observedSnapshot) await window.charisnaVault.flush();
     const local = window.charisnaData.snapshot();
-    const snapshot = await readCloudFromServer(cloudDoc());
+    const snapshot = observedSnapshot || await readCloudFromServer(cloudDoc());
     if (!snapshot.exists()) return false;
     const cloud = snapshot.data();
     window.charisnaData.validate(cloud.data);
     if (interactive && !confirm('Ambil data cloud terbaru? Salinan perangkat disimpan terenkripsi.')) return false;
     if (!currentOwner(uid, epoch)) return false;
     if (!sameSyncData(syncContent(local),syncContent(cloud.data))) await rememberSyncBackup(local);
-    setBadge('busy','Menerima perubahan dari cloud');
+    if (syncBadge()?.dataset.state !== 'error') setBadge('busy','Menerima perubahan dari cloud');
     return await applyCloud(cloud,local,uid,epoch);
   } catch (error) {
     if (currentOwner(uid, epoch)) { setBadge('error','⚠ Sinkron tertunda · akan dicoba ulang'); message('Gagal mengambil cloud: ' + error.message); }
@@ -392,13 +392,18 @@ async function reconcileAtStartup() {
   if (!navigator.onLine) { setBadge('off','○ Offline · perubahan tersimpan di perangkat'); return; }
   const uid = user.uid, epoch = syncEpoch;
   reconcilingEpoch=epoch;
+  const slowNotice = setTimeout(() => {
+    if (!currentOwner(uid, epoch) || syncBadge()?.dataset.state !== 'busy') return;
+    setBadge('error','Sinkronisasi belum dikonfirmasi');
+    message('Sinkronisasi berlangsung lebih lama dari biasanya. Perubahan yang sudah disimpan tetap ada di perangkat.');
+  },12000);
   try {
     const needsFeedback=!syncState.initialized || hasUnsyncedChanges();
     if(needsFeedback && syncBadge()?.dataset.state !== 'error')setBadge('busy','Memulai sinkronisasi otomatis');
     await window.charisnaVault.flush();
     const snapshot = await readCloudFromServer(cloudDoc());
     if (!currentOwner(uid, epoch)) return;
-    if (!snapshot.exists()) { await performUpload(); return; }
+    if (!snapshot.exists()) { await performUpload({observedSnapshot:snapshot}); return; }
     const cloud = snapshot.data();
     const local = window.charisnaData.snapshot();
     const remote = window.charisnaData.validate(cloud.data);
@@ -407,15 +412,17 @@ async function reconcileAtStartup() {
       if(needsFeedback || syncBadge()?.dataset.state!=='ok')setBadge('ok','Sinkron otomatis aktif'); return;
     }
     if (syncState.initialized && syncState.base) {
-      if (hasUnsyncedChanges()) await performUpload(); else await downloadCloudData();
+      if (hasUnsyncedChanges()) await performUpload({observedSnapshot:snapshot});
+      else await downloadCloudData({observedSnapshot:snapshot});
     } else {
       const localStamp = Date.parse(local.meta?.localUpdatedAt || '') || 0;
       const remoteStamp = Date.parse(cloud.updatedAt || '') || 0;
       const freshEmptyVault = !local.meta?.cloudUpdatedAt && !hasOperationalRecords(local) && hasOperationalRecords(remote);
-      if (!freshEmptyVault && localStamp > remoteStamp) await performUpload(); else await downloadCloudData();
+      if (!freshEmptyVault && localStamp > remoteStamp) await performUpload({observedSnapshot:snapshot});
+      else await downloadCloudData({observedSnapshot:snapshot});
     }
   } catch (error) { if (currentOwner(uid, epoch)) { setBadge('error','Sinkron tertunda; akan dicoba ulang'); message(error.message); queueSync(5000,false); } }
-  finally{if(reconcilingEpoch===epoch)reconcilingEpoch=null;}
+  finally{clearTimeout(slowNotice);if(reconcilingEpoch===epoch)reconcilingEpoch=null;}
 }
 function startAutoSync() {
   stopAutoSync();

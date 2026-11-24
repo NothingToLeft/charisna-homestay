@@ -33,8 +33,10 @@ function setup(){
 describe('automatic cloud synchronization engine',()=>{
   it('uploads a saved edit after debounce without manual controls',async()=>{
     const t=setup();await t.api.reconcileAtStartup();t.edit({rooms:[{id:'A',price:200,status:'KOSONG'}]});t.api.queueSync();
+    t.read.mockClear();
     await vi.advanceTimersByTimeAsync(1500);
     expect(t.cloud.data.rooms[0].price).toBe(200);expect(t.node('badge').dataset.state).toBe('ok');expect(t.transaction).toHaveBeenCalledTimes(1);
+    expect(t.read).toHaveBeenCalledTimes(1);
   });
   it('receives another device edit automatically from the listener',async()=>{
     const t=setup();t.api.startAutoSync();await vi.advanceTimersByTimeAsync(0);
@@ -53,7 +55,10 @@ describe('automatic cloud synchronization engine',()=>{
   });
   it('retries a stalled read automatically instead of showing syncing forever',async()=>{
     const t=setup();t.read.mockImplementationOnce(()=>new Promise(()=>{}));const pending=t.api.reconcileAtStartup();
-    await vi.advanceTimersByTimeAsync(20000);await pending;
+    await vi.advanceTimersByTimeAsync(12000);
+    expect(t.node('badge').dataset.state).toBe('error');
+    expect(t.node('#cloud-message').textContent).toContain('lebih lama');
+    await vi.advanceTimersByTimeAsync(8000);await pending;
     expect(t.node('badge').dataset.state).toBe('error');expect(t.node('#cloud-message').textContent).toContain('Cloud belum merespons');
     await vi.advanceTimersByTimeAsync(5000);expect(t.node('badge').dataset.state).toBe('ok');
   });
